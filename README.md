@@ -1,4 +1,6 @@
-# Dashboard
+<h1 align="center">Content Sentinel</h1>
+
+<div align="center">
 
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -6,7 +8,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![alt text](assets/screenshot.png)
+<img src="assets/baner.png" alt="baner">
+
+</div>
+
+## Description
 
 This application allows you to monitor, generate, and manage GitHub repositories from [content-alchemist](https://github.com/think-root/content-alchemist) app.
 
@@ -25,6 +31,10 @@ This application allows you to monitor, generate, and manage GitHub repositories
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
 - **Icons**: Lucide React
+
+## Screenshots
+
+![alt text](assets/screenshot.png)
 
 ## Getting Started
 
