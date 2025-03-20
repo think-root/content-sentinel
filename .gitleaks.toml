@@ -1,0 +1,5 @@
+[allowlist]
+files = [
+  '''README.md''',
+  '''.env.example'''
+]
