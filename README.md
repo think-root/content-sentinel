@@ -95,6 +95,64 @@ npm run preview
 yarn preview
 ```
 
+### Running with Docker
+
+#### Prerequisites
+
+- Docker
+- Docker Compose
+
+#### Using Docker Compose
+
+1. Make sure you have a `.env` file with the necessary environment variables:
+   ```
+   VITE_API_BASE_URL=your_api_url
+   VITE_BEARER_TOKEN=your_token
+   PORT=3000
+   ```
+
+2. Build and start the container:
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will build the image and start the container named `content-sentinel` on the port specified in your `.env` file (defaults to 3000).
+
+3. Access the application at http://localhost:3000
+
+#### Using Docker Directly
+
+1. Build the Docker image:
+   ```bash
+   docker build -t content-sentinel:latest .
+   ```
+
+2. Run the container:
+   ```bash
+   docker run -d \
+     --name content-sentinel \
+     -p 3000:3000 \
+     -e VITE_API_BASE_URL=your_api_url \
+     -e VITE_BEARER_TOKEN=your_token \
+     -e PORT=3000 \
+     content-sentinel:latest
+   ```
+
+3. Access the application at http://localhost:3000
+
+#### Stopping the Container
+
+Using Docker Compose:
+```bash
+docker-compose down
+```
+
+Using Docker directly:
+```bash
+docker stop content-sentinel
+docker rm content-sentinel
+```
+
 ## API Integration
 
 The dashboard connects to a backend API with the following endpoints:
