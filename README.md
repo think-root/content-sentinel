@@ -6,6 +6,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+![alt text](assets/screenshot.png)
+
 Managing repositories from [content-alchemist](https://github.com/think-root/content-alchemist). This application allows you to monitor, generate, and manage GitHub repositories.
 
 ## Features
