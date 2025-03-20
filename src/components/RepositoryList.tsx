@@ -131,49 +131,99 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Repository</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {totalItems === 0 ? (
+        <div className="md:block hidden">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                  No repositories found
-                </td>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Repository</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/4">Description</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Status</th>
               </tr>
-            ) : (
-              paginatedItems.map((repo) => (
-                <tr key={repo.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {totalItems === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                    No repositories found
+                  </td>
+                </tr>
+              ) : (
+                paginatedItems.map((repo) => (
+                  <tr key={repo.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <a 
+                        href={repo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      >
+                        {repo.url.replace('https://github.com/', '')}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      <div className="overflow-hidden">
+                        <p className="whitespace-normal break-words">{repo.text}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        repo.posted ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                      }`}>
+                        {repo.posted ? 'Posted' : 'Unposted'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="md:hidden block">
+          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Repositories</span>
+          </div>
+          {totalItems === 0 ? (
+            <div className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No repositories found
+            </div>
+          ) : (
+            paginatedItems.map((repo) => (
+              <div key={repo.id} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Repository</span>
+                  <div className="mt-1">
                     <a 
                       href={repo.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                     >
                       {repo.url.replace('https://github.com/', '')}
                     </a>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    <p className="line-clamp-2">{repo.text}</p>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  </div>
+                </div>
+                
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    <p className="whitespace-normal break-words">{repo.text}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</span>
+                  <div className="mt-1">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium inline-block ${
                       repo.posted ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
                     }`}>
                       {repo.posted ? 'Posted' : 'Unposted'}
                     </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
       
 
