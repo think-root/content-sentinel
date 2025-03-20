@@ -155,7 +155,7 @@ docker rm content-sentinel
 
 ## API Integration
 
-The dashboard connects to a backend API with the following endpoints:
+The dashboard connects to a [content-alchemist](https://github.com/think-root/content-alchemist) API with the following endpoints:
 
 - `/api/get-repository/` - Fetch repositories with filtering options
 - `/api/manual-generate/` - Manually add repositories by URL
