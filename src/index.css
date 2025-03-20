@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.select-wrapper label {
+  cursor: pointer;
+}
+
+.number-input-wrapper,
+.select-wrapper {
+  position: relative;
+}
+
+.number-input-controls,
+.select-arrow {
+  position: absolute;
+  right: 0;
+  top: 1px;
+  height: calc(100% - 2px);
+  display: flex;
+  flex-direction: column;
+  width: 2rem;
+  border-left: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+.dark .number-input-controls,
+.dark .select-arrow {
+  border-left-color: #4b5563;
+}
+
+.number-input-up,
+.number-input-down,
+.select-arrow-icon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.number-input-up:hover,
+.number-input-down:hover,
+.select-arrow:hover .select-arrow-icon {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .number-input-up:hover,
+.dark .number-input-down:hover,
+.dark .select-arrow:hover .select-arrow-icon {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.number-input-up {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark .number-input-up {
+  border-bottom-color: #4b5563;
+}
+
+.date-range-dropdown,
+.spoken-language-dropdown {
+  cursor: pointer;
+}
