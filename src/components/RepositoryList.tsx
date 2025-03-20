@@ -179,7 +179,7 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
 
       {totalItems > 0 && (
         <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
             <div className="text-sm text-gray-700 dark:text-gray-300">
               {itemsPerPage === 0 ? (
                 <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
@@ -199,15 +199,14 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
 
 
             {itemsPerPage > 0 && totalItems > itemsPerPage && (
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
                 <button
                   type="button"
                   onClick={() => {
-                    console.log(`Changing to page ${currentPage - 1}`);
                     setCurrentPage(prev => Math.max(1, prev - 1));
                   }}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -231,10 +230,9 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                       key={pageNum}
                       type="button"
                       onClick={() => {
-                        console.log(`Changing to page ${pageNum}`);
                         setCurrentPage(pageNum);
                       }}
-                      className={`relative inline-flex items-center px-4 py-2 border ${currentPage === pageNum ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'} text-sm font-medium rounded-md`}
+                      className={`relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border ${currentPage === pageNum ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'} text-xs sm:text-sm font-medium rounded-md min-w-[30px] sm:min-w-[40px] text-center justify-center`}
                       title={`Go to page ${pageNum}`}
                     >
                       {pageNum}
@@ -245,11 +243,10 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log(`Changing to page ${currentPage + 1}`);
                     setCurrentPage(prev => Math.min(totalPages, prev + 1));
                   }}
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
