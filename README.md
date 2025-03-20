@@ -8,7 +8,7 @@
 
 ![alt text](assets/screenshot.png)
 
-Managing repositories from [content-alchemist](https://github.com/think-root/content-alchemist). This application allows you to monitor, generate, and manage GitHub repositories.
+This application allows you to monitor, generate, and manage GitHub repositories from [content-alchemist](https://github.com/think-root/content-alchemist) app.
 
 ## Features
 
