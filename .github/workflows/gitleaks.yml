@@ -23,3 +23,13 @@ jobs:
           wget https://github.com/zricethezav/gitleaks/releases/download/v8.23.3/gitleaks_8.23.3_linux_x64.tar.gz
           tar -xzf gitleaks_8.23.3_linux_x64.tar.gz
           ./gitleaks detect --source . -v --config .gitleaks.toml
+          
+  trigger-release:
+    needs: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Release Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          event-type: gitleaks-success
