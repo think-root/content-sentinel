@@ -1,7 +1,7 @@
 import { Repository } from './types';
 
 const API_BASE_URL = '/api';
-const BEARER_TOKEN = import.meta.env.VITE_BEARER_TOKEN || 'your_token_here';
+const BEARER_TOKEN = import.meta.env.BEARER_TOKEN || '';
 
 const headers = {
   'Authorization': `Bearer ${BEARER_TOKEN}`,
