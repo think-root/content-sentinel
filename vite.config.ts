@@ -2,13 +2,16 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd());
+  const env = loadEnv(mode, process.cwd(), '');
   const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:9111/think-root';
 
   return {
   plugins: [react()],
   resolve: {
     dedupe: ['react', 'react-dom'],
+  },
+  define: {
+    'import.meta.env.BEARER_TOKEN': JSON.stringify(env.BEARER_TOKEN),
   },
   server: {
     proxy: {
