@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:9111/think-root';
+  const apiBaseUrl = env.API_BASE_URL || 'http://localhost:9111/think-root';
 
   return {
   plugins: [react()],
@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
   },
   define: {
     'import.meta.env.BEARER_TOKEN': JSON.stringify(env.BEARER_TOKEN),
+    'import.meta.env.API_BASE_URL': JSON.stringify(env.API_BASE_URL),
   },
   server: {
     proxy: {
