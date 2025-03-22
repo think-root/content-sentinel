@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/think-root/content-sentinel/compare/v1.0.0...v1.1.0) (2025-03-22)
+
+
+### Features
+
+* add Bearer Token to Vite environment ([d3087c1](https://github.com/think-root/content-sentinel/commit/d3087c1f95f6e7dc3ee15591878a1674cb441616))
+
 # 1.0.0 (2025-03-20)
 
 
