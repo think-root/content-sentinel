@@ -106,7 +106,7 @@ yarn preview
 
 1. Make sure you have a `.env` file with the necessary environment variables:
    ```
-   VITE_API_BASE_URL=your_api_url
+   API_BASE_URL=your_api_url
    BEARER_TOKEN=your_token
    PORT=3000
    ```
@@ -132,7 +132,7 @@ yarn preview
    docker run -d \
      --name content-sentinel \
      -p 3000:3000 \
-     -e VITE_API_BASE_URL=your_api_url \
+     -e API_BASE_URL=your_api_url \
      -e BEARER_TOKEN=your_token \
      -e PORT=3000 \
      content-sentinel:latest
