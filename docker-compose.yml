@@ -9,7 +9,7 @@ services:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
       - API_BASE_URL=${API_BASE_URL}
-      - BEARER_TOKEN=${BEARER_TOKEN}
+      - API_BEARER_TOKEN=${API_BEARER_TOKEN}
       - PORT=${PORT:-3000}
     restart: unless-stopped
     networks:

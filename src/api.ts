@@ -1,10 +1,10 @@
 import { Repository } from './types';
 
 const API_BASE_URL = '/api';
-const BEARER_TOKEN = import.meta.env.BEARER_TOKEN || '';
+const API_BEARER_TOKEN = import.meta.env.API_BEARER_TOKEN || '';
 
 const headers = {
-  'Authorization': `Bearer ${BEARER_TOKEN}`,
+  'Authorization': `Bearer ${API_BEARER_TOKEN}`,
   'Content-Type': 'application/json',
 };
 

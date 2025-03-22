@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     dedupe: ['react', 'react-dom'],
   },
   define: {
-    'import.meta.env.BEARER_TOKEN': JSON.stringify(env.BEARER_TOKEN),
+    'import.meta.env.API_BEARER_TOKEN': JSON.stringify(env.API_BEARER_TOKEN),
     'import.meta.env.API_BASE_URL': JSON.stringify(env.API_BASE_URL),
   },
   server: {
