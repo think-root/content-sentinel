@@ -23,26 +23,30 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const fetchRepositories = async (statusFilter?: boolean, page: number = 1, append: boolean = false, fetchAll: boolean = false, itemsPerPage: number = 10) => {
+  const fetchRepositories = async (statusFilter?: boolean, append: boolean = false, fetchAll: boolean = false, itemsPerPage: number = 10, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC') => {
     try {
       if (!append) {
         setLoading(true);
       }
       
       const limit = itemsPerPage || 10;
-      const response = await getRepositories(limit, statusFilter, page, fetchAll);
+      const response = await getRepositories(limit, statusFilter, fetchAll, sortBy, sortOrder);
       
-      const processedItems = response.data.items.map((item: Repository) => ({
-        ...item,
-        posted: Boolean(item.posted)
-      }));
-      
-      setRepositories(processedItems);
-      setStats({
-        all: response.data.all,
-        posted: response.data.posted,
-        unposted: response.data.unposted,
-      });
+      if (response && response.data && response.data.items) {
+        const processedItems = response.data.items.map((item: Repository) => ({
+          ...item,
+          posted: Boolean(item.posted)
+        }));
+        
+        setRepositories(processedItems);
+        setStats({
+          all: response.data.all,
+          posted: response.data.posted,
+          unposted: response.data.unposted,
+        });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch {
       setErrorWithScroll('Failed to fetch repositories');
     } finally {
@@ -68,7 +72,7 @@ function App() {
   };
 
   useEffect(() => {
-    fetchRepositories(undefined, 1, false, true);
+    fetchRepositories(undefined, false, true);
     fetchPreviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -171,7 +175,6 @@ function App() {
             <RepositoryList
               repositories={repositories}
               fetchRepositories={fetchRepositories}
-              stats={stats}
             />
           )}
 
