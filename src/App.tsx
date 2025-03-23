@@ -3,7 +3,8 @@ import { Stats } from './components/Stats';
 import { RepositoryList } from './components/RepositoryList';
 import { GenerateForm } from './components/GenerateForm';
 import { CronJobs } from './components/CronJobs';
-import { getRepositories, manualGenerate, autoGenerate, ManualGenerateResponse } from './api';
+import { RepositoryPreview } from './components/RepositoryPreview';
+import { getRepositories, manualGenerate, autoGenerate, ManualGenerateResponse, getLatestPostedRepository, getNextRepository } from './api';
 import type { Repository } from './types';
 import { X } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -13,6 +14,9 @@ function App() {
   const [stats, setStats] = useState({ all: 0, posted: 0, unposted: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [latestPost, setLatestPost] = useState<Repository | undefined>();
+  const [nextPost, setNextPost] = useState<Repository | undefined>();
+  const [previewsLoading, setPreviewsLoading] = useState(true);
 
   const setErrorWithScroll = (errorMessage: string) => {
     setError(errorMessage);
@@ -46,8 +50,26 @@ function App() {
     }
   };
 
+  const fetchPreviews = async () => {
+    try {
+      setPreviewsLoading(true);
+      const [latestResponse, nextResponse] = await Promise.all([
+        getLatestPostedRepository(),
+        getNextRepository()
+      ]);
+      
+      setLatestPost(latestResponse.data.items[0]);
+      setNextPost(nextResponse.data.items[0]);
+    } catch {
+      setErrorWithScroll('Failed to fetch repository previews');
+    } finally {
+      setPreviewsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRepositories(undefined, 1, false, true);
+    fetchPreviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -121,6 +143,19 @@ function App() {
             posted={stats.posted}
             unposted={stats.unposted}
           />
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <RepositoryPreview
+              title="Latest post"
+              repository={latestPost}
+              loading={previewsLoading}
+            />
+            <RepositoryPreview
+              title="Next post"
+              repository={nextPost}
+              loading={previewsLoading}
+            />
+          </div>
 
           <GenerateForm
             onManualGenerate={handleManualGenerate}
