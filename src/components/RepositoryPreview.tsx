@@ -10,7 +10,7 @@ interface RepositoryPreviewProps {
 export function RepositoryPreview({ title, repository, loading }: RepositoryPreviewProps) {
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           {title === "Latest post" ? (
