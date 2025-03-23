@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
   define: {
     'import.meta.env.API_BEARER_TOKEN': JSON.stringify(env.API_BEARER_TOKEN),
     'import.meta.env.API_BASE_URL': JSON.stringify(env.API_BASE_URL),
+    'import.meta.env.DATE_FORMAT': JSON.stringify(env.DATE_FORMAT),
+    'import.meta.env.TIMEZONE': JSON.stringify(env.TIMEZONE),
   },
   server: {
     proxy: {
