@@ -98,4 +98,32 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
   return response.json();
 }
 
+export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
+  const response = await fetch(`${API_BASE_URL}/get-repository/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      limit: 1,
+      posted: true,
+      sort_order: 'DESC',
+      sort_by: 'date_posted'
+    }),
+  });
+  return response.json();
+}
+
+export async function getNextRepository(): Promise<RepositoryResponse> {
+  const response = await fetch(`${API_BASE_URL}/get-repository/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      limit: 1,
+      posted: false,
+      sort_order: 'DESC',
+      sort_by: 'date_added'
+    }),
+  });
+  return response.json();
+}
+
 
