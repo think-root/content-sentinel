@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 
@@ -85,41 +84,40 @@ export function CronJobs() {
         </div>
         
         <div className="md:hidden block">
-          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Cron Jobs</span>
-          </div>
-          {jobs.map((job) => (
-            <div key={job.id} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-              <div className="mb-3">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</span>
-                <div className="mt-1 text-sm text-gray-900 dark:text-white">{job.name}</div>
-              </div>
-              
-              <div className="mb-3">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</span>
-                <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                  <p className="whitespace-normal break-words">{job.description}</p>
+          {jobs.map((job, index) => (
+            <div key={job.id} className={`bg-white dark:bg-gray-800 ${index !== jobs.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''} p-4`}>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">{job.name}</div>
                 </div>
-              </div>
-              
-              <div className="mb-3">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Schedule</span>
-                <div className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{job.schedule}</div>
-              </div>
-              
-              <div>
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</span>
-                <div className="mt-1">
-                  <button
-                    onClick={() => toggleJobStatus(job.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      job.active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}
-                  >
-                    {job.active ? 'Active' : 'Inactive'}
-                  </button>
+                
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    <p className="whitespace-normal break-words">{job.description}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Schedule</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{job.schedule}</div>
+                </div>
+                
+                <div>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</span>
+                  <div className="mt-1">
+                    <button
+                      onClick={() => toggleJobStatus(job.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        job.active
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}
+                    >
+                      {job.active ? 'Active' : 'Inactive'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
