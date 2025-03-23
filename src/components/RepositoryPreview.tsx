@@ -26,12 +26,22 @@ export function RepositoryPreview({ title, repository, loading }: RepositoryPrev
         </div>
         {!loading && repository && (
           <div className="flex flex-col items-end text-xs text-gray-500 dark:text-gray-400">
-            {repository.date_posted && (
-              <span>Published at: {formatDate(repository.date_posted)}</span>
-            )}
-            {repository.date_added && (
-              <span>Added at: {formatDate(repository.date_added)}</span>
-            )}
+            <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-1 sm:space-y-0 items-end sm:items-center">
+              {repository.date_posted && (
+                <div className="flex items-center space-x-1">
+                  <span className="hidden sm:inline">Published at:</span>
+                  <span className="sm:hidden">Published:</span>
+                  <span>{formatDate(repository.date_posted)}</span>
+                </div>
+              )}
+              {repository.date_added && (
+                <div className="flex items-center space-x-1">
+                  <span className="hidden sm:inline">Added at:</span>
+                  <span className="sm:hidden">Added:</span>
+                  <span>{formatDate(repository.date_added)}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
