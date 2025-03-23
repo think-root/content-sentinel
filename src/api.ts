@@ -18,9 +18,13 @@ interface RepositoryResponse {
   }
 }
 
-export async function getRepositories(limit: number, posted?: boolean, page: number = 1, fetchAll: boolean = false): Promise<RepositoryResponse> {
-  const offset = (page - 1) * limit;
-  
+export async function getRepositories(
+  limit: number, 
+  posted?: boolean, 
+  fetchAll: boolean = false,
+  sortBy?: 'id' | 'date_added' | 'date_posted',
+  sortOrder?: 'ASC' | 'DESC'
+): Promise<RepositoryResponse> {
   if (posted === undefined) {
     const actualLimit = fetchAll ? 5000 : limit;
     const halfLimit = Math.ceil(actualLimit / 2);
@@ -32,7 +36,8 @@ export async function getRepositories(limit: number, posted?: boolean, page: num
         body: JSON.stringify({ 
           limit: halfLimit, 
           posted: true,
-          offset: page > 1 ? offset / 2 : 0
+          sort_by: sortBy || 'date_posted',
+          sort_order: sortOrder || 'DESC'
         }),
       }),
       fetch(`${API_BASE_URL}/get-repository/`, {
@@ -41,7 +46,8 @@ export async function getRepositories(limit: number, posted?: boolean, page: num
         body: JSON.stringify({ 
           limit: halfLimit, 
           posted: false,
-          offset: page > 1 ? offset / 2 : 0
+          sort_by: sortBy || 'date_added',
+          sort_order: sortOrder || 'DESC'
         }),
       })
     ]);
@@ -68,7 +74,8 @@ export async function getRepositories(limit: number, posted?: boolean, page: num
     body: JSON.stringify({ 
       limit: fetchAll ? 5000 : limit, 
       posted,
-      offset: offset
+      sort_by: sortBy || (posted ? 'date_posted' : 'date_added'),
+      sort_order: sortOrder || 'DESC'
     }),
   });
   return response.json();
