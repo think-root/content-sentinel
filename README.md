@@ -4,7 +4,7 @@
 
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4.2-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.2.2-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -64,6 +64,11 @@ This application allows you to monitor, generate, and manage GitHub repositories
    ```
 
 4. Update the `.env` file with your data
+   - `API_BASE_URL` - URL of the content-alchemist API
+   - `API_BEARER_TOKEN` - Authentication token for API access
+   - `PORT` - Port for the application to run on (default: 3000)
+   - `DATE_FORMAT` - Format for displaying dates (e.g., DD.MM.YYYY HH:mm:ss)
+   - `TIMEZONE` - Timezone for date display (e.g., Europe/Kiev)
 
 ### Development
 
@@ -109,6 +114,8 @@ yarn preview
    API_BASE_URL=your_api_url
    API_BEARER_TOKEN=your_token
    PORT=3000
+   DATE_FORMAT=DD.MM.YYYY HH:mm:ss
+   TIMEZONE=Europe/Kiev
    ```
 
 2. Build and start the container:
@@ -135,6 +142,8 @@ yarn preview
      -e API_BASE_URL=your_api_url \
      -e API_BEARER_TOKEN=your_token \
      -e PORT=3000 \
+     -e DATE_FORMAT=preferred_format \
+     -e TIMEZONE=preferred_timezone \
      content-sentinel:latest
    ```
 
