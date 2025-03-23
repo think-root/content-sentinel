@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Clock } from 'lucide-react';
+
 
 interface CronJob {
   id: string;
@@ -39,7 +39,9 @@ export function CronJobs() {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
       <div className="flex items-center mb-6">
-        <Clock className="h-6 w-6 text-gray-500 dark:text-gray-400 mr-2" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-gray-500 dark:text-gray-400 mr-2">
+          <path d="M4 12h16M12 4v16M6.5 6.5l11 11M17.5 6.5l-11 11" />
+        </svg>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Cron Jobs</h2>
       </div>
 
