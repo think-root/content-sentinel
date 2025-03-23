@@ -128,9 +128,9 @@ function App() {
           </div>
         </header>
         
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           {error && (
-            <div className="mb-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
+            <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
               <span>{error}</span>
               <button 
                 onClick={() => setError(null)} 
