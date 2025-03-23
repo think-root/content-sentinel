@@ -267,7 +267,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Description</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Added</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Posted</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -301,13 +300,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {repo.date_posted ? formatDate(repo.date_posted) : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        repo.posted ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                      }`}>
-                        {repo.posted ? 'Posted' : 'Unposted'}
-                      </span>
                     </td>
                   </tr>
                 ))
@@ -361,21 +353,10 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                   </div>
                 </div>
 
-                <div className="mb-3">
+                <div>
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date Posted</span>
                   <div className="mt-1 text-sm text-gray-900 dark:text-white">
                     {repo.date_posted ? formatDate(repo.date_posted) : '-'}
-                  </div>
-                </div>
-                
-                <div>
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</span>
-                  <div className="mt-1">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium inline-block ${
-                      repo.posted ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                    }`}>
-                      {repo.posted ? 'Posted' : 'Unposted'}
-                    </span>
                   </div>
                 </div>
               </div>
