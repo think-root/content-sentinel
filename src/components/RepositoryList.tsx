@@ -1,19 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Repository } from '../types';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatDate } from '../utils/date';
 
 interface RepositoryListProps {
   repositories: Repository[];
-  fetchRepositories: (posted?: boolean, page?: number, append?: boolean, fetchAll?: boolean, itemsPerPage?: number) => Promise<void>;
-  stats: { all: number; posted: number; unposted: number };
+  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC') => Promise<void>;
 }
 
-export function RepositoryList({ repositories }: RepositoryListProps) {
-  const [allRepositories, setAllRepositories] = useState<Repository[]>([]);
+function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: number }) {
+  const [expanded, setExpanded] = useState(false);
   
-  useEffect(() => {
-    setAllRepositories(repositories);
-  }, [repositories]);
+  if (!text) return <p>-</p>;
+  
+  const hasMoreText = text.length > maxChars;
+  const displayText = expanded ? text : hasMoreText ? text.substring(0, maxChars) + '...' : text;
+  
+  return (
+    <div>
+      <p className="whitespace-pre-line break-words leading-relaxed tracking-wide">{displayText}</p>
+      {hasMoreText && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-xs flex items-center"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="h-3 w-3 mr-1" />
+              Show less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3 mr-1" />
+              Show more
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function RepositoryList({ repositories, fetchRepositories }: RepositoryListProps) {
   const [searchTerm, setSearchTerm] = useState(() => {
     const saved = localStorage.getItem('dashboardSearchTerm');
     return saved || '';
@@ -31,7 +59,53 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
     return saved ? parseInt(saved, 10) : 5;
   });
   
+  const [sortBy, setSortBy] = useState<'id' | 'date_added' | 'date_posted'>(() => {
+    const saved = localStorage.getItem('dashboardSortBy');
+    return (saved as 'id' | 'date_added' | 'date_posted') || 'date_added';
+  });
+
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>(() => {
+    const saved = localStorage.getItem('dashboardSortOrder');
+    return (saved as 'ASC' | 'DESC') || 'DESC';
+  });
+  
   const [loading] = useState(false);
+  
+
+  // Filter and sort repositories locally for immediate feedback
+  const filterAndSortRepositories = () => {
+    const filtered = [...repositories];
+    
+    // Apply local sorting if needed
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        let valA, valB;
+        
+        if (sortBy === 'id') {
+          valA = a.id;
+          valB = b.id;
+        } else if (sortBy === 'date_added') {
+          valA = a.date_added ? new Date(a.date_added).getTime() : 0;
+          valB = b.date_added ? new Date(b.date_added).getTime() : 0;
+        } else if (sortBy === 'date_posted') {
+          valA = a.date_posted ? new Date(a.date_posted).getTime() : 0;
+          valB = b.date_posted ? new Date(b.date_posted).getTime() : 0;
+        } else {
+          return 0;
+        }
+        
+        if (sortOrder === 'ASC') {
+          return valA > valB ? 1 : -1;
+        } else {
+          return valA < valB ? 1 : -1;
+        }
+      });
+    }
+    
+    return filtered;
+  };
+  
+
 
 
 
@@ -41,6 +115,10 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
     setStatusFilter(value);
     localStorage.setItem('dashboardStatusFilter', value);
     setCurrentPage(1);
+    
+    // Apply filter immediately for UI feedback
+    const posted = value === 'all' ? undefined : value === 'posted';
+    fetchRepositories(posted, false, value === 'all' && itemsPerPage === 0, itemsPerPage, sortBy, sortOrder);
   };
 
   const handleItemsPerPageChange = (value: number) => {
@@ -49,9 +127,41 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
     setItemsPerPage(value);
     localStorage.setItem('dashboardItemsPerPage', value.toString());
     setCurrentPage(1);
+    
+    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+    fetchRepositories(posted, false, statusFilter === 'all' && value === 0, value, sortBy, sortOrder);
   };
 
-  const filteredItems = allRepositories.filter(repo => {
+  const handleSortByChange = (value: 'id' | 'date_added' | 'date_posted') => {
+    if (loading) return;
+    
+    setSortBy(value);
+    localStorage.setItem('dashboardSortBy', value);
+    setCurrentPage(1);
+    
+    // Apply sort immediately for UI feedback
+    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder);
+  };
+
+  const handleSortOrderChange = (value: 'ASC' | 'DESC') => {
+    if (loading) return;
+    
+    setSortOrder(value);
+    localStorage.setItem('dashboardSortOrder', value);
+    setCurrentPage(1);
+    
+    // Apply sort order immediately for UI feedback
+    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value);
+  };
+
+  const toggleSortOrder = () => {
+    handleSortOrderChange(sortOrder === 'ASC' ? 'DESC' : 'ASC');
+  };
+
+  // Apply local filtering and sorting for immediate feedback
+  const filteredItems = filterAndSortRepositories().filter(repo => {
     const matchesSearch = searchTerm === '' || 
       repo.url.toLowerCase().includes(searchTerm.toLowerCase()) || 
       (repo.text && repo.text.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -102,7 +212,6 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
         
         <div className="flex items-center space-x-4 relative">
           <div className="flex items-center space-x-4 relative">
-
             <select
               value={statusFilter}
               onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
@@ -114,7 +223,6 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
               <option value="unposted">Unposted</option>
             </select>
             
-
             <select 
               value={itemsPerPage}
               onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
@@ -127,6 +235,25 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
               <option value={20}>20</option>
               <option value={50}>50</option>
             </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
+              className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm md:text-base py-2 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+              style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+            >
+              <option value="id">ID</option>
+              <option value="date_added">Date Added</option>
+              <option value="date_posted">Date Posted</option>
+            </select>
+
+            <button
+              onClick={toggleSortOrder}
+              className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm md:text-base py-2 pl-3 pr-3 h-[42px] focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center"
+              title={sortOrder === 'ASC' ? 'Ascending order' : 'Descending order'}
+            >
+              {sortOrder === 'ASC' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -135,9 +262,12 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Repository</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/4">Description</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Status</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">ID</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Repository</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Description</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Added</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Posted</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -151,6 +281,9 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                 paginatedItems.map((repo) => (
                   <tr key={repo.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      {repo.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       <a 
                         href={repo.url}
                         target="_blank"
@@ -161,9 +294,13 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                       </a>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      <div className="overflow-hidden">
-                        <p className="whitespace-normal break-words">{repo.text}</p>
-                      </div>
+                      <TruncatedText text={repo.text} maxChars={150} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      {repo.date_added ? formatDate(repo.date_added) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      {repo.date_posted ? formatDate(repo.date_posted) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -190,6 +327,13 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
             paginatedItems.map((repo) => (
               <div key={repo.id} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
                 <div className="mb-3">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ID</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    {repo.id}
+                  </div>
+                </div>
+
+                <div className="mb-3">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Repository</span>
                   <div className="mt-1">
                     <a 
@@ -206,7 +350,21 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                 <div className="mb-3">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</span>
                   <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                    <p className="whitespace-normal break-words">{repo.text}</p>
+                    <TruncatedText text={repo.text} maxChars={150} />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date Added</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    {repo.date_added ? formatDate(repo.date_added) : '-'}
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date Posted</span>
+                  <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    {repo.date_posted ? formatDate(repo.date_posted) : '-'}
                   </div>
                 </div>
                 
