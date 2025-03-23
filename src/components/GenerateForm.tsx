@@ -121,7 +121,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   height: 'auto'
                 }}
                 className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 ${isManualLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'} text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                placeholder="https://github.com/user/repo1 https://github.com/user/repo2"
+                placeholder="https://github.com/user/repo1"
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
                   target.style.height = 'auto';
@@ -140,7 +140,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
             <button
               type="submit"
               disabled={isManualLoading}
-              className={`inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isManualLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 w-auto max-w-[120px]`}
+              className={`inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isManualLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[120px]`}
             >
               {isManualLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -311,7 +311,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           <button
             type="submit"
             disabled={isAutoLoading}
-            className={`mt-4 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isAutoLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 w-auto max-w-[150px]`}
+            className={`mt-4 inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isAutoLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[150px]`}
           >
             {isAutoLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
