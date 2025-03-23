@@ -1,5 +1,5 @@
 export interface Repository {
-  id: string;
+  id: number;
   posted: boolean;
   url: string;
   text: string;
