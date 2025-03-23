@@ -3,6 +3,8 @@ export interface Repository {
   posted: boolean;
   url: string;
   text: string;
+  date_added?: string;
+  date_posted?: string;
 }
 
 export interface RepositoriesResponse {
