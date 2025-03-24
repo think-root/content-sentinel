@@ -1,3 +1,23 @@
+# [1.3.0](https://github.com/think-root/content-sentinel/compare/v1.2.0...v1.3.0) (2025-03-24)
+
+
+### Bug Fixes
+
+* **api:** update API base URL to use environment variable ([fd6be90](https://github.com/think-root/content-sentinel/commit/fd6be9019c53138f746adbaf4c8837a311cb6721))
+
+
+### Features
+
+* **App:** implement routing and authentication for dashboard ([812b2c3](https://github.com/think-root/content-sentinel/commit/812b2c3bcd470071d463c68de259dbc6dc476160))
+* **auth:** add AuthProvider component for authentication management ([b61f2c5](https://github.com/think-root/content-sentinel/commit/b61f2c538fd55aa0b4d5b15d12ee94a6b708ca45))
+* **auth:** add ProtectedRoute component for route protection ([cc91ae9](https://github.com/think-root/content-sentinel/commit/cc91ae9ad223b3f1a89869f1c6bed3b614fd6b94))
+* **auth:** create index file for authentication exports ([5bf9725](https://github.com/think-root/content-sentinel/commit/5bf972579528ea4d90c2eee1032f57f698780520))
+* **auth:** implement useAuth hook for authentication management ([d84a153](https://github.com/think-root/content-sentinel/commit/d84a153e6c2b37e48f87cb5531df255a6c58c6d6))
+* **Login:** create Login component for user authentication ([d228084](https://github.com/think-root/content-sentinel/commit/d228084bd59dabd2fa0e12f92d74e8538f5efd89))
+* **server:** implement dashboard routing and static file serving ([59a72a9](https://github.com/think-root/content-sentinel/commit/59a72a9722685aa1b3446f4b7ab091b771a2a9eb))
+* **ThemeToggle:** add title attribute for improved accessibility ([b4dbda9](https://github.com/think-root/content-sentinel/commit/b4dbda98bee24ec5fae4468fd862b466beb0503e))
+* **UserMenu:** add UserMenu component for user logout functionality ([614c99b](https://github.com/think-root/content-sentinel/commit/614c99b76c6792aecb80c9269f8f201131ef9210))
+
 # [1.2.0](https://github.com/think-root/content-sentinel/compare/v1.1.0...v1.2.0) (2025-03-23)
 
 
