@@ -26,7 +26,7 @@ export function RepositoryPreview({ title, repository, loading }: RepositoryPrev
         </div>
         {!loading && repository && (
           <div className="flex flex-col items-end text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-1 sm:space-y-0 items-end sm:items-center">
+            <div className="flex flex-col space-y-1 items-end">
               {repository.date_posted && (
                 <div className="flex items-center space-x-1">
                   <span className="hidden sm:inline">Published at:</span>
