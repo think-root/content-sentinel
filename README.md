@@ -38,6 +38,9 @@ This application allows you to monitor, generate, and manage GitHub repositories
 
 ![alt text](assets/screenshot1.png)
 
+![alt text](assets/screenshot2.png)
+
+
 ## Getting Started
 
 ### Prerequisites
