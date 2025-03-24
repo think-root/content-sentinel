@@ -7,10 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
-    environment:
-      - API_BASE_URL=${API_BASE_URL}
-      - API_BEARER_TOKEN=${API_BEARER_TOKEN}
-      - PORT=${PORT:-3000}
+    env_file:
+      - .env
     restart: unless-stopped
     networks:
       - app-network
