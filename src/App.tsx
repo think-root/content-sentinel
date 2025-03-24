@@ -8,6 +8,7 @@ import { getRepositories, manualGenerate, autoGenerate, ManualGenerateResponse, 
 import type { Repository } from './types';
 import { X } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
+import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, ProtectedRoute } from './auth';
 import { Login } from './pages/Login';
@@ -125,16 +126,14 @@ function App() {
                 <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
                   <div className="py-6">
                     <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between py-6">
                         <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-gray-900 dark:text-gray-300 mr-3">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="3" y1="9" x2="21" y2="9"></line>
-                            <line x1="9" y1="21" x2="9" y2="9"></line>
-                          </svg>
-                          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-300">Dashboard</h1>
+                          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                            Content Sentinel
+                          </h1>
                         </div>
                         <div className="flex items-center space-x-4">
+                          <SettingsButton />
                           <ThemeToggle />
                           <UserMenu />
                         </div>
