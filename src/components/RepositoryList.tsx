@@ -71,12 +71,9 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
   
   const [loading] = useState(false);
   
-
-  // Filter and sort repositories locally for immediate feedback
   const filterAndSortRepositories = () => {
     const filtered = [...repositories];
     
-    // Apply local sorting if needed
     if (sortBy) {
       filtered.sort((a, b) => {
         let valA, valB;
@@ -105,10 +102,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     return filtered;
   };
   
-
-
-
-
   const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
     if (loading) return;
     
@@ -116,7 +109,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     localStorage.setItem('dashboardStatusFilter', value);
     setCurrentPage(1);
     
-    // Apply filter immediately for UI feedback
     const posted = value === 'all' ? undefined : value === 'posted';
     fetchRepositories(posted, false, value === 'all' && itemsPerPage === 0, itemsPerPage, sortBy, sortOrder);
   };
@@ -139,7 +131,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     localStorage.setItem('dashboardSortBy', value);
     setCurrentPage(1);
     
-    // Apply sort immediately for UI feedback
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
     fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder);
   };
@@ -151,7 +142,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     localStorage.setItem('dashboardSortOrder', value);
     setCurrentPage(1);
     
-    // Apply sort order immediately for UI feedback
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
     fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value);
   };
@@ -160,7 +150,6 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     handleSortOrderChange(sortOrder === 'ASC' ? 'DESC' : 'ASC');
   };
 
-  // Apply local filtering and sorting for immediate feedback
   const filteredItems = filterAndSortRepositories().filter(repo => {
     const matchesSearch = searchTerm === '' || 
       repo.url.toLowerCase().includes(searchTerm.toLowerCase()) || 
