@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Repository } from '../types';
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatDate } from '../utils/date';
+import { formatDate } from '../utils/date-format';
 
 interface RepositoryListProps {
   repositories: Repository[];
