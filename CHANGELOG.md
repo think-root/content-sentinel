@@ -1,3 +1,23 @@
+# [1.4.0](https://github.com/think-root/content-sentinel/compare/v1.3.0...v1.4.0) (2025-03-24)
+
+
+### Bug Fixes
+
+* **server:** update PORT configuration to include VITE_PORT and remove deprecated API proxy middleware ([b6d8f0e](https://github.com/think-root/content-sentinel/commit/b6d8f0e7a019d0e4c920ad40a7290673e9ddbc27))
+
+
+### Features
+
+* **api-settings:** add ApiSettings interface and local storage management ([0351718](https://github.com/think-root/content-sentinel/commit/0351718674150dd2407f7e287d076cf8771d4055))
+* **App:** add SettingsButton and update header styling ([ef2ec43](https://github.com/think-root/content-sentinel/commit/ef2ec43324252299e4581a423d4b85ea07cf15b6))
+* **auth:** add configuration interfaces for API and context management ([c5b7259](https://github.com/think-root/content-sentinel/commit/c5b725975536d38439b33664d36d1f1b08d44526))
+* **auth:** implement ConfigProvider and useConfig hook for API configuration management ([ff0a1f6](https://github.com/think-root/content-sentinel/commit/ff0a1f6aa0ac282cfd5b8034497f47c40f68cdb5))
+* **date:** implement formatDate utility function and remove legacy date formatting ([ec09b93](https://github.com/think-root/content-sentinel/commit/ec09b93cf0476fc141bbe904a32fe44eaddca11b))
+* **SettingsButton:** add SettingsButton component with modal functionality ([f06bce8](https://github.com/think-root/content-sentinel/commit/f06bce822509442584d92f2197ad127e779f74b0))
+* **SettingsModal:** add SettingsModal component for user settings management ([113c6e0](https://github.com/think-root/content-sentinel/commit/113c6e033b766619e10ae95ab377e765f051f960))
+* **Toast:** add Toast component for displaying success and error messages ([3a25cba](https://github.com/think-root/content-sentinel/commit/3a25cba557e26d97a53fbfa8f51a80bf458e68c2))
+* **useDisclosure:** add custom hook for managing open/close state ([9164a4e](https://github.com/think-root/content-sentinel/commit/9164a4e62ddd307d7c562ed8336508356dcfa026))
+
 # [1.3.0](https://github.com/think-root/content-sentinel/compare/v1.2.0...v1.3.0) (2025-03-24)
 
 
