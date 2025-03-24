@@ -1,6 +1,6 @@
 import { Repository } from './types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = `${import.meta.env.API_BASE_URL}/api`;
 const API_BEARER_TOKEN = import.meta.env.API_BEARER_TOKEN || '';
 
 const headers = {
