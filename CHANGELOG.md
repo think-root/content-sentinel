@@ -1,3 +1,11 @@
+# [1.5.0](https://github.com/think-root/content-sentinel/compare/v1.4.0...v1.5.0) (2025-03-24)
+
+
+### Features
+
+* **App:** add LayoutDashboard icon to header and update title ([6f9bcbe](https://github.com/think-root/content-sentinel/commit/6f9bcbe69f1bd1f62c44c1390aba91fcef3622cb))
+* **README:** update README with new screenshot and enhance visual content ([8340a0b](https://github.com/think-root/content-sentinel/commit/8340a0bdf8933827179b0091957683b335246195))
+
 # [1.4.0](https://github.com/think-root/content-sentinel/compare/v1.3.0...v1.4.0) (2025-03-24)
 
 
