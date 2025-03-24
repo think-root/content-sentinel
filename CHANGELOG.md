@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/think-root/content-sentinel/compare/v1.5.0...v1.5.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* **SettingsModal:** update backdrop styling for improved visual clarity ([2728279](https://github.com/think-root/content-sentinel/commit/2728279a1686127a00aedc5dea71432a37a2f179))
+
 # [1.5.0](https://github.com/think-root/content-sentinel/compare/v1.4.0...v1.5.0) (2025-03-24)
 
 
