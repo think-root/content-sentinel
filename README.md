@@ -66,14 +66,25 @@ This application allows you to monitor, generate, and manage GitHub repositories
    ```
 
 4. Update the `.env` file with your data
-   - `API_BASE_URL` - URL of the content-alchemist API
-   - `API_BEARER_TOKEN` - Authentication token for API access
-   - `PORT` - Port for the application to run on (default: 3000)
-   - `DATE_FORMAT` - Format for displaying dates (e.g., DD.MM.YYYY HH:mm:ss)
-   - `TIMEZONE` - Timezone for date display (e.g., Europe/Kiev)
-   - `VITE_AUTH0_DOMAIN` - Your Auth0 application domain
-   - `VITE_AUTH0_CLIENT_ID` - Your Auth0 application client ID
-   - `VITE_APP_URL` - Your application URL
+   ```bash
+   # Application Settings
+   PORT=3000                           # Port for the application to run on
+   VITE_AUTH0_DOMAIN=dev-example.us.auth0.com   # Your Auth0 application domain
+   VITE_AUTH0_CLIENT_ID=your_client_id      # Your Auth0 application client ID
+   VITE_APP_URL=your_domain                 # Your application URL
+   ```
+
+### Configuration Settings
+
+After logging into the application, you can configure the following settings through the Settings button in the top navigation bar:
+
+1. **API Settings**:
+   - **API Base URL**: Enter the URL of your content-alchemist API
+   - **API Bearer Token**: Provide your authentication token for API access
+   - **Date Format**: Choose your preferred date format (default: DD.MM.YYYY HH:mm)
+   - **Timezone**: Select your timezone (default: Europe/Kyiv)
+
+All settings are automatically saved and persisted in your browser's local storage.
 
 ### Auth0 Setup
 
@@ -113,15 +124,11 @@ npm run dev
 ## Docker
 
 1. Make sure you have a `.env` file with the necessary environment variables:
-   ```
-   API_BASE_URL=your_api_url
-   API_BEARER_TOKEN=your_token
+   ```bash
    PORT=3000
-   DATE_FORMAT=DD.MM.YYYY HH:mm:ss
-   TIMEZONE=Europe/Kiev
-   VITE_AUTH0_DOMAIN=your-domain.region.auth0.com
-   VITE_AUTH0_CLIENT_ID=your-client-id
-   VITE_APP_URL=your-domain
+   VITE_AUTH0_DOMAIN=dev-example.us.auth0.com
+   VITE_AUTH0_CLIENT_ID=your_client_id
+   VITE_APP_URL=your_domain
    ```
 
 2. Run the container:
@@ -129,13 +136,9 @@ npm run dev
    docker run -d \
      --name content-sentinel \
      -p 3000:3000 \
-     -e API_BASE_URL=your_api_url \
-     -e API_BEARER_TOKEN=your_token \
      -e PORT=3000 \
-     -e DATE_FORMAT=preferred_format \
-     -e TIMEZONE=preferred_timezone \
-     -e VITE_AUTH0_DOMAIN=your-domain.region.auth0.com \
-     -e VITE_AUTH0_CLIENT_ID=your-client-id \
-     -e VITE_APP_URL=your-domain \
+     -e VITE_AUTH0_DOMAIN=dev-example.us.auth0.com \
+     -e VITE_AUTH0_CLIENT_ID=your_client_id \
+     -e VITE_APP_URL=your_domain \
      content-sentinel:latest
    ```
