@@ -1,12 +1,16 @@
 import { Repository } from './types';
+import { getApiSettings } from "./utils/api-settings";
 
-const API_BASE_URL = `${import.meta.env.API_BASE_URL}/api`;
-const API_BEARER_TOKEN = import.meta.env.API_BEARER_TOKEN || '';
-
-const headers = {
-  'Authorization': `Bearer ${API_BEARER_TOKEN}`,
-  'Content-Type': 'application/json',
-};
+function getApiConfig() {
+  const settings = getApiSettings();
+  return {
+    baseUrl: `${settings.apiBaseUrl}/api`,
+    headers: {
+      Authorization: `Bearer ${settings.apiBearerToken}`,
+      "Content-Type": "application/json",
+    },
+  };
+}
 
 interface RepositoryResponse {
   status: string;
@@ -15,69 +19,72 @@ interface RepositoryResponse {
     posted: number;
     unposted: number;
     items: Repository[];
-  }
+  };
 }
 
 export async function getRepositories(
-  limit: number, 
-  posted?: boolean, 
+  limit: number,
+  posted?: boolean,
   fetchAll: boolean = false,
-  sortBy?: 'id' | 'date_added' | 'date_posted',
-  sortOrder?: 'ASC' | 'DESC'
+  sortBy?: "id" | "date_added" | "date_posted",
+  sortOrder?: "ASC" | "DESC"
 ): Promise<RepositoryResponse> {
+  const { baseUrl, headers } = getApiConfig();
+
   if (posted === undefined) {
     const actualLimit = fetchAll ? 5000 : limit;
     const halfLimit = Math.ceil(actualLimit / 2);
-    
+
     const [postedResponse, unpostedResponse] = await Promise.all([
-      fetch(`${API_BASE_URL}/get-repository/`, {
-        method: 'POST',
+      fetch(`${baseUrl}/get-repository/`, {
+        method: "POST",
         headers,
-        body: JSON.stringify({ 
-          limit: halfLimit, 
+        body: JSON.stringify({
+          limit: halfLimit,
           posted: true,
-          sort_by: sortBy || 'date_posted',
-          sort_order: sortOrder || 'DESC'
+          sort_by: sortBy || "date_posted",
+          sort_order: sortOrder || "DESC",
         }),
       }),
-      fetch(`${API_BASE_URL}/get-repository/`, {
-        method: 'POST',
+      fetch(`${baseUrl}/get-repository/`, {
+        method: "POST",
         headers,
-        body: JSON.stringify({ 
-          limit: halfLimit, 
+        body: JSON.stringify({
+          limit: halfLimit,
           posted: false,
-          sort_by: sortBy || 'date_added',
-          sort_order: sortOrder || 'DESC'
+          sort_by: sortBy || "date_added",
+          sort_order: sortOrder || "DESC",
         }),
-      })
+      }),
     ]);
 
-    const postedData = await postedResponse.json();
-    const unpostedData = await unpostedResponse.json();
+    const [postedData, unpostedData] = await Promise.all([
+      postedResponse.json(),
+      unpostedResponse.json(),
+    ]);
 
-    const totalCount = postedData.data.posted + unpostedData.data.unposted;
-    
     return {
-      status: 'ok',
+      status: "ok",
       data: {
-        all: totalCount,
+        all: postedData.data.posted + unpostedData.data.unposted,
         posted: postedData.data.posted,
         unposted: unpostedData.data.unposted,
-        items: [...postedData.data.items, ...unpostedData.data.items]
-      }
+        items: [...postedData.data.items, ...unpostedData.data.items],
+      },
     };
   }
 
-  const response = await fetch(`${API_BASE_URL}/get-repository/`, {
-    method: 'POST',
+  const response = await fetch(`${baseUrl}/get-repository/`, {
+    method: "POST",
     headers,
-    body: JSON.stringify({ 
-      limit: fetchAll ? 5000 : limit, 
+    body: JSON.stringify({
+      limit,
       posted,
-      sort_by: sortBy || (posted ? 'date_posted' : 'date_added'),
-      sort_order: sortOrder || 'DESC'
+      sort_by: sortBy,
+      sort_order: sortOrder,
     }),
   });
+
   return response.json();
 }
 
@@ -88,48 +95,60 @@ export interface ManualGenerateResponse {
 }
 
 export async function manualGenerate(url: string): Promise<ManualGenerateResponse> {
-  const response = await fetch(`${API_BASE_URL}/manual-generate/`, {
-    method: 'POST',
+  const { baseUrl, headers } = getApiConfig();
+  const response = await fetch(`${baseUrl}/manual-generate/`, {
+    method: "POST",
     headers,
     body: JSON.stringify({ url }),
   });
+
   return response.json();
 }
 
 export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
-  const response = await fetch(`${API_BASE_URL}/auto-generate/`, {
-    method: 'POST',
+  const { baseUrl, headers } = getApiConfig();
+  const response = await fetch(`${baseUrl}/auto-generate/`, {
+    method: "POST",
     headers,
-    body: JSON.stringify({ max_repos: maxRepos, since, spoken_language_code: spokenLanguageCode }),
+    body: JSON.stringify({
+      max_repos: maxRepos,
+      since,
+      spoken_language_code: spokenLanguageCode,
+    }),
   });
+
   return response.json();
 }
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
-  const response = await fetch(`${API_BASE_URL}/get-repository/`, {
-    method: 'POST',
+  const { baseUrl, headers } = getApiConfig();
+  const response = await fetch(`${baseUrl}/get-repository/`, {
+    method: "POST",
     headers,
     body: JSON.stringify({
       limit: 1,
       posted: true,
-      sort_order: 'DESC',
-      sort_by: 'date_posted'
+      sort_by: "date_posted",
+      sort_order: "DESC",
     }),
   });
+
   return response.json();
 }
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
-  const response = await fetch(`${API_BASE_URL}/get-repository/`, {
-    method: 'POST',
+  const { baseUrl, headers } = getApiConfig();
+  const response = await fetch(`${baseUrl}/get-repository/`, {
+    method: "POST",
     headers,
     body: JSON.stringify({
       limit: 1,
       posted: false,
-      sort_order: 'DESC',
-      sort_by: 'date_added'
+      sort_by: "date_added",
+      sort_order: "ASC",
     }),
   });
+
   return response.json();
 }
 
