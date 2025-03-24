@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 3000;
 
 const API_BASE_URL = process.env.API_BASE_URL;
 
+app.use('/dashboard', express.static(path.join(__dirname, 'dist')));
+
 app.use('/api', createProxyMiddleware({
   target: `${API_BASE_URL}/api`,
   changeOrigin: true,
@@ -20,10 +22,14 @@ app.use('/api', createProxyMiddleware({
   }
 }));
 
-app.use(express.static(path.join(__dirname, 'dist')));
-
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  if (req.path === '/') {
+    return res.redirect('/dashboard/');
+  }
+  if (req.path.startsWith('/dashboard/')) {
+    return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  }
+  res.redirect('/dashboard/');
 });
 
 app.listen(PORT, () => {
