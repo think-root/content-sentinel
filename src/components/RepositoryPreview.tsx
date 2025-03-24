@@ -1,5 +1,5 @@
 import { Repository } from '../types';
-import { formatDate } from '../utils/date';
+import { formatDate } from '../utils/date-format';
 
 interface RepositoryPreviewProps {
   title: string;
