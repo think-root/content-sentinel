@@ -6,7 +6,7 @@ import { CronJobs } from './components/CronJobs';
 import { RepositoryPreview } from './components/RepositoryPreview';
 import { getRepositories, manualGenerate, autoGenerate, ManualGenerateResponse, getLatestPostedRepository, getNextRepository } from './api';
 import type { Repository } from './types';
-import { X } from 'lucide-react';
+import { X, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -128,8 +128,9 @@ function App() {
                     <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                       <div className="flex items-center justify-between py-6">
                         <div className="flex items-center">
-                          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                            Content Sentinel
+                          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <LayoutDashboard className="h-6 w-6" />
+                            Dashboard
                           </h1>
                         </div>
                         <div className="flex items-center space-x-4">
