@@ -119,20 +119,22 @@ function App() {
           element={
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
               <div className="py-6">
-                <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                  <div className="flex items-center justify-between py-6">
-                    <div className="flex items-center">
-                      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <LayoutDashboard className="h-6 w-6" />
-                        Dashboard
-                      </h1>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                  <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="flex items-center justify-between py-4 px-4">
+                      <div className="flex items-center">
+                        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+                          <LayoutDashboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                          Dashboard
+                        </h1>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <SettingsButton />
+                        <ThemeToggle />
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <SettingsButton />
-                      <ThemeToggle />
-                    </div>
-                  </div>
-                </header>
+                  </header>
+                </div>
                 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
                   {error && (
