@@ -70,11 +70,7 @@ This application allows you to monitor, generate, and manage GitHub repositories
 
 4. Update the `.env` file with your data
    ```bash
-   # Application Settings
-   PORT=3000                           # Port for the application to run on
-   VITE_AUTH0_DOMAIN=dev-example.us.auth0.com   # Your Auth0 application domain
-   VITE_AUTH0_CLIENT_ID=your_client_id      # Your Auth0 application client ID
-   VITE_APP_URL=your_domain                 # Your application URL
+   PORT=3000
    ```
 
 ### Configuration Settings
@@ -89,33 +85,6 @@ After logging into the application, you can configure the following settings thr
 
 All settings are automatically saved and persisted in your browser's local storage.
 
-### Auth0 Setup
-
-1. Create an Auth0 Account
-   - Go to [Auth0](https://auth0.com/) and sign up for an account if you don't have one
-   - Navigate to the Auth0 Dashboard
-
-2. Create a New Application
-   - In the Auth0 Dashboard, go to "Applications" → "Create Application"
-   - Choose "Single Page Web Application"
-   - Click "Create"
-
-3. Configure Application Settings
-   - In your Auth0 application settings, find the "Domain" and "Client ID"
-   - Add these values to your `.env` file:
-     ```
-     VITE_AUTH0_DOMAIN=your-domain.region.auth0.com
-     VITE_AUTH0_CLIENT_ID=your-client-id
-     ```
-
-4. Configure Allowed URLs
-   - In the "Application URIs" section, add the following:
-     - Allowed Callback URLs: `http://localhost:3000, https://your-production-domain.com`
-     - Allowed Logout URLs: `http://localhost:3000, https://your-production-domain.com`
-     - Allowed Web Origins: `http://localhost:3000, https://your-production-domain.com`
-
-5. Save all changes in the Auth0 Dashboard
-
 ### Development
 
 Start the development server:
@@ -126,12 +95,9 @@ npm run dev
 
 ## Docker
 
-1. Make sure you have a `.env` file with the necessary environment variables:
+1. Make sure you have a `.env` file with the necessary environment variable:
    ```bash
    PORT=3000
-   VITE_AUTH0_DOMAIN=dev-example.us.auth0.com
-   VITE_AUTH0_CLIENT_ID=your_client_id
-   VITE_APP_URL=your_domain
    ```
 
 2. Run the container:
@@ -140,8 +106,5 @@ npm run dev
      --name content-sentinel \
      -p 3000:3000 \
      -e PORT=3000 \
-     -e VITE_AUTH0_DOMAIN=dev-example.us.auth0.com \
-     -e VITE_AUTH0_CLIENT_ID=your_client_id \
-     -e VITE_APP_URL=your_domain \
      content-sentinel:latest
    ```
