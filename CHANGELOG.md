@@ -1,3 +1,13 @@
+# [1.6.0](https://github.com/think-root/content-sentinel/compare/v1.5.1...v1.6.0) (2025-03-25)
+
+
+### Features
+
+* **App:** enhance header styling and layout in the main application component ([23eeaa1](https://github.com/think-root/content-sentinel/commit/23eeaa110c288edaf6a6ec5bc87617ef7f7c1472))
+* **CronJobs:** add "Under construction" overlay to CronJobs component ([21c8e41](https://github.com/think-root/content-sentinel/commit/21c8e413f329f57a75de4389a28fd55ef9cdabc4))
+* remove Auth0 authentication and related components from the application ([eb51847](https://github.com/think-root/content-sentinel/commit/eb518470b944035c6e3fa1f362328fd77b35d147))
+* **SettingsModal:** add body overflow control on modal open/close ([a86f961](https://github.com/think-root/content-sentinel/commit/a86f96167491d03f27d60ce8871caa0176ac9b24))
+
 ## [1.5.1](https://github.com/think-root/content-sentinel/compare/v1.5.0...v1.5.1) (2025-03-24)
 
 
