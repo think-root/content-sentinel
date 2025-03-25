@@ -158,13 +158,13 @@ function App() {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <RepositoryPreview
-                      title="Latest post"
-                      repository={latestPost}
+                      title="Next post"
+                      repository={nextPost}
                       loading={previewsLoading}
                     />
                     <RepositoryPreview
-                      title="Next post"
-                      repository={nextPost}
+                      title="Latest post"
+                      repository={latestPost}
                       loading={previewsLoading}
                     />
                   </div>
