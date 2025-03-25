@@ -36,7 +36,12 @@ export function CronJobs() {
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8 relative">
+      <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+        <div className="bg-gray-200 dark:bg-gray-600 px-5 py-3 rounded-md shadow-lg border border-gray-300 dark:border-gray-500">
+          <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">Under construction</span>
+        </div>
+      </div>
       <div className="flex items-center mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-gray-500 dark:text-gray-400 mr-2">
           <path d="M4 12h16M12 4v16M6.5 6.5l11 11M17.5 6.5l-11 11" />
