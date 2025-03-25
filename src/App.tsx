@@ -120,7 +120,7 @@ function App() {
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
               <div className="py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                  <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
                     <div className="flex items-center justify-between py-4 px-4">
                       <div className="flex items-center">
                         <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3">
