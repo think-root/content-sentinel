@@ -14,16 +14,15 @@
 
 ## Description
 
-This application allows you to monitor, generate, and manage GitHub repositories from [content-alchemist](https://github.com/think-root/content-alchemist) app.
+In fact, this is a dashboard that allows you to monitor and manage the records of the [content-alchemist](https://github.com/think-root/content-alchemist) database
 
 ## Features
 
-- **Repository Management**: View, search, and filter GitHub repositories
-- **Manual Generation**: Add repositories manually by URL
-- **Auto Generation**: Automatically fetch trending GitHub repositories
-- **Status Tracking**: Monitor which repositories have been posted to social media
-- **Cron Jobs**: Schedule automatic repository generation and posting
-- **Dark/Light Mode**: Toggle between dark and light themes
+- **Posts Management**: View, search, and filter posts
+- **Manual Generation**: Manually generate posts by repository URL
+- **Auto Generation**: Automatically generate posts from trending GitHub repositories
+- **Status Tracking**: Monitor which repositories have been or will be posted to social media next
+- **Dark/Light Mode**: Toggle the interface between dark and light themes
 
 ## Technology Stack
 
