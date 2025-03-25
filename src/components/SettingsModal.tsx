@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '../utils/api-settings';
 import { Toast } from './Toast';
 
@@ -10,6 +10,17 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const handleSave = () => {
     if (!settings.apiBaseUrl || !settings.apiBearerToken) {
@@ -40,11 +51,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           onClose={() => setToast(null)}
         />
       )}
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all" onClick={onClose} />
-          
-          <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+      <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all" onClick={onClose} />
+        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg">
+          <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl">
             <div className="border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between p-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
