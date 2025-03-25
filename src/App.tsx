@@ -10,9 +10,6 @@ import { X, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider, ProtectedRoute } from './auth';
-import { Login } from './pages/Login';
-import { UserMenu } from './components/UserMenu';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -115,92 +112,86 @@ function App() {
   };
 
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/dashboard/login" element={<Login />} />
-          <Route
-            path="/dashboard/*"
-            element={
-              <ProtectedRoute>
-                <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
-                  <div className="py-6">
-                    <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                      <div className="flex items-center justify-between py-6">
-                        <div className="flex items-center">
-                          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <LayoutDashboard className="h-6 w-6" />
-                            Dashboard
-                          </h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <SettingsButton />
-                          <ThemeToggle />
-                          <UserMenu />
-                        </div>
-                      </div>
-                    </header>
-                    
-                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                      {error && (
-                        <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
-                          <span>{error}</span>
-                          <button 
-                            onClick={() => setError(null)} 
-                            className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-100 focus:outline-none"
-                            aria-label="Close error message"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        </div>
-                      )}
-
-                      <Stats
-                        total={stats.all}
-                        posted={stats.posted}
-                        unposted={stats.unposted}
-                      />
-
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <RepositoryPreview
-                          title="Latest post"
-                          repository={latestPost}
-                          loading={previewsLoading}
-                        />
-                        <RepositoryPreview
-                          title="Next post"
-                          repository={nextPost}
-                          loading={previewsLoading}
-                        />
-                      </div>
-
-                      <GenerateForm
-                        onManualGenerate={handleManualGenerate}
-                        onAutoGenerate={handleAutoGenerate}
-                      />
-
-                      {loading ? (
-                        <div className="text-center py-12">
-                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
-                          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading repositories...</p>
-                        </div>
-                      ) : (
-                        <RepositoryList
-                          repositories={repositories}
-                          fetchRepositories={fetchRepositories}
-                        />
-                      )}
-
-                      <CronJobs />
-                    </main>
+    <Router>
+      <Routes>
+        <Route
+          path="/dashboard/*"
+          element={
+            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+              <div className="py-6">
+                <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                  <div className="flex items-center justify-between py-6">
+                    <div className="flex items-center">
+                      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <LayoutDashboard className="h-6 w-6" />
+                        Dashboard
+                      </h1>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <SettingsButton />
+                      <ThemeToggle />
+                    </div>
                   </div>
-                </div>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Router>
-    </AuthProvider>
+                </header>
+                
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+                  {error && (
+                    <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
+                      <span>{error}</span>
+                      <button 
+                        onClick={() => setError(null)} 
+                        className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-100 focus:outline-none"
+                        aria-label="Close error message"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+
+                  <Stats
+                    total={stats.all}
+                    posted={stats.posted}
+                    unposted={stats.unposted}
+                  />
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <RepositoryPreview
+                      title="Latest post"
+                      repository={latestPost}
+                      loading={previewsLoading}
+                    />
+                    <RepositoryPreview
+                      title="Next post"
+                      repository={nextPost}
+                      loading={previewsLoading}
+                    />
+                  </div>
+
+                  <GenerateForm
+                    onManualGenerate={handleManualGenerate}
+                    onAutoGenerate={handleAutoGenerate}
+                  />
+
+                  {loading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+                      <p className="mt-4 text-gray-600 dark:text-gray-400">Loading repositories...</p>
+                    </div>
+                  ) : (
+                    <RepositoryList
+                      repositories={repositories}
+                      fetchRepositories={fetchRepositories}
+                    />
+                  )}
+
+                  <CronJobs />
+                </main>
+              </div>
+            </div>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
