@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Repository } from '../types';
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
 
 interface RepositoryListProps {
   repositories: Repository[];
-  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC') => Promise<void>;
+  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number) => Promise<void>;
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
 }
 
 function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: number }) {
@@ -41,7 +45,7 @@ function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: numb
   );
 }
 
-export function RepositoryList({ repositories, fetchRepositories }: RepositoryListProps) {
+export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize }: RepositoryListProps) {
   const [searchTerm, setSearchTerm] = useState(() => {
     const saved = localStorage.getItem('dashboardSearchTerm');
     return saved || '';
@@ -52,11 +56,11 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     return (saved as 'all' | 'posted' | 'unposted') || 'all';
   });
   
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = localStorage.getItem('dashboardItemsPerPage');
-    return saved ? parseInt(saved, 10) : 5;
+    return saved ? parseInt(saved, 10) : initialPageSize;
   });
   
   const [sortBy, setSortBy] = useState<'id' | 'date_added' | 'date_posted'>(() => {
@@ -70,38 +74,15 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
   });
   
   const [loading] = useState(false);
-  
-  const filterAndSortRepositories = () => {
-    const filtered = [...repositories];
-    
-    if (sortBy) {
-      filtered.sort((a, b) => {
-        let valA, valB;
-        
-        if (sortBy === 'id') {
-          valA = a.id;
-          valB = b.id;
-        } else if (sortBy === 'date_added') {
-          valA = a.date_added ? new Date(a.date_added).getTime() : 0;
-          valB = b.date_added ? new Date(b.date_added).getTime() : 0;
-        } else if (sortBy === 'date_posted') {
-          valA = a.date_posted ? new Date(a.date_posted).getTime() : 0;
-          valB = b.date_posted ? new Date(b.date_posted).getTime() : 0;
-        } else {
-          return 0;
-        }
-        
-        if (sortOrder === 'ASC') {
-          return valA > valB ? 1 : -1;
-        } else {
-          return valA < valB ? 1 : -1;
-        }
-      });
-    }
-    
-    return filtered;
-  };
-  
+
+  useEffect(() => {
+    setCurrentPage(initialPage);
+  }, [initialPage]);
+
+  useEffect(() => {
+    setItemsPerPage(initialPageSize);
+  }, [initialPageSize]);
+
   const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
     if (loading) return;
     
@@ -110,7 +91,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     setCurrentPage(1);
     
     const posted = value === 'all' ? undefined : value === 'posted';
-    fetchRepositories(posted, false, value === 'all' && itemsPerPage === 0, itemsPerPage, sortBy, sortOrder);
+    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, 1);
   };
 
   const handleItemsPerPageChange = (value: number) => {
@@ -121,7 +102,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, statusFilter === 'all' && value === 0, value, sortBy, sortOrder);
+    fetchRepositories(posted, false, value === 0, value, sortBy, sortOrder, 1);
   };
 
   const handleSortByChange = (value: 'id' | 'date_added' | 'date_posted') => {
@@ -132,7 +113,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder);
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder, 1);
   };
 
   const handleSortOrderChange = (value: 'ASC' | 'DESC') => {
@@ -143,14 +124,22 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value);
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1);
   };
 
   const toggleSortOrder = () => {
     handleSortOrderChange(sortOrder === 'ASC' ? 'DESC' : 'ASC');
   };
 
-  const filteredItems = filterAndSortRepositories().filter(repo => {
+  const handlePageChange = (page: number) => {
+    if (loading) return;
+    
+    setCurrentPage(page);
+    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page);
+  };
+
+  const filteredItems = repositories.filter(repo => {
     const matchesSearch = searchTerm === '' || 
       repo.url.toLowerCase().includes(searchTerm.toLowerCase()) || 
       (repo.text && repo.text.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -162,12 +151,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
     return matchesSearch && matchesStatus;
   });
 
-  const totalItems = filteredItems.length;
-  const totalRepositories = totalItems;
-  const totalPages = itemsPerPage === 0 ? 1 : Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const paginatedItems = itemsPerPage === 0 
-    ? filteredItems 
-    : filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedItems = filteredItems;
   
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
@@ -367,7 +351,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                     <span className="font-medium">
                       {Math.min(currentPage * itemsPerPage, totalItems)}
                     </span>{' '}
-                    of <span className="font-medium">{totalRepositories}</span> results
+                    of <span className="font-medium">{totalItems}</span> results
                   </p>
                 )}
               </div>
@@ -376,9 +360,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                 <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
                   <button
                     type="button"
-                    onClick={() => {
-                      setCurrentPage(prev => Math.max(1, prev - 1));
-                    }}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Previous page"
@@ -402,9 +384,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                       <button
                         key={pageNum}
                         type="button"
-                        onClick={() => {
-                          setCurrentPage(pageNum);
-                        }}
+                        onClick={() => handlePageChange(pageNum)}
                         className={`relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border ${currentPage === pageNum ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'} text-xs sm:text-sm font-medium rounded-md min-w-[30px] sm:min-w-[40px] text-center justify-center`}
                         title={`Go to page ${pageNum}`}
                       >
@@ -415,9 +395,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                   
                   <button
                     type="button"
-                    onClick={() => {
-                      setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                    }}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Next page"
@@ -442,7 +420,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                     <span className="font-medium">
                       {Math.min(currentPage * itemsPerPage, totalItems)}
                     </span>{' '}
-                    of <span className="font-medium">{totalRepositories}</span> results
+                    of <span className="font-medium">{totalItems}</span> results
                   </p>
                 )}
               </div>
@@ -451,9 +429,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => {
-                      setCurrentPage(prev => Math.max(1, prev - 1));
-                    }}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-1.5 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] justify-center"
                     title="Previous page"
@@ -477,9 +453,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                       <button
                         key={pageNum}
                         type="button"
-                        onClick={() => {
-                          setCurrentPage(pageNum);
-                        }}
+                        onClick={() => handlePageChange(pageNum)}
                         className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium rounded-md min-w-[28px] justify-center ${
                           currentPage === pageNum 
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' 
@@ -494,9 +468,7 @@ export function RepositoryList({ repositories, fetchRepositories }: RepositoryLi
                   
                   <button
                     type="button"
-                    onClick={() => {
-                      setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                    }}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-1.5 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] justify-center"
                     title="Next page"
