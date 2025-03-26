@@ -14,7 +14,7 @@
 
 ## Description
 
-In fact, this is a dashboard that allows you to monitor and manage the records of the [content-alchemist](https://github.com/think-root/content-alchemist) database
+In fact, this is a dashboard that allows you to monitor and manage the data of the [content-alchemist](https://github.com/think-root/content-alchemist) database. Therefore, for this app to work correctly, you need to run [content-alchemist](https://github.com/think-root/content-alchemist) first.
 
 ## Features
 
