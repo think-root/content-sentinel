@@ -19,20 +19,41 @@ function App() {
   const [latestPost, setLatestPost] = useState<Repository | undefined>();
   const [nextPost, setNextPost] = useState<Repository | undefined>();
   const [previewsLoading, setPreviewsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10),
+    totalPages: 1,
+    totalItems: 0
+  });
 
   const setErrorWithScroll = (errorMessage: string) => {
     setError(errorMessage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const fetchRepositories = async (statusFilter?: boolean, append: boolean = false, fetchAll: boolean = false, itemsPerPage: number = 10, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC') => {
+  const fetchRepositories = async (
+    statusFilter?: boolean,
+    append: boolean = false,
+    fetchAll: boolean = false,
+    itemsPerPage: number = pagination.pageSize,
+    sortBy?: 'id' | 'date_added' | 'date_posted',
+    sortOrder?: 'ASC' | 'DESC',
+    page?: number
+  ) => {
     try {
       if (!append) {
         setLoading(true);
       }
       
-      const limit = itemsPerPage || 10;
-      const response = await getRepositories(limit, statusFilter, fetchAll, sortBy, sortOrder);
+      const response = await getRepositories(
+        itemsPerPage,
+        statusFilter,
+        fetchAll,
+        sortBy,
+        sortOrder,
+        page,
+        itemsPerPage
+      );
       
       if (response && response.data && response.data.items) {
         const processedItems = response.data.items.map((item: Repository) => ({
@@ -45,6 +66,12 @@ function App() {
           all: response.data.all,
           posted: response.data.posted,
           unposted: response.data.unposted,
+        });
+        setPagination({
+          currentPage: response.data.page,
+          pageSize: response.data.page_size,
+          totalPages: response.data.total_pages,
+          totalItems: response.data.total_items
         });
       } else {
         throw new Error('Invalid response format');
@@ -74,9 +101,23 @@ function App() {
   };
 
   useEffect(() => {
-    fetchRepositories(undefined, false, true);
+    const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
+    const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' | null;
+    const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' | null;
+    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+
+    const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+    
+    fetchRepositories(
+      posted,
+      false,
+      savedItemsPerPage === 0,
+      savedItemsPerPage,
+      savedSortBy || 'date_added',
+      savedSortOrder || 'DESC',
+      1
+    );
     fetchPreviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleManualGenerate = async (url: string): Promise<ManualGenerateResponse> => {
@@ -183,6 +224,10 @@ function App() {
                     <RepositoryList
                       repositories={repositories}
                       fetchRepositories={fetchRepositories}
+                      currentPage={pagination.currentPage}
+                      pageSize={pagination.pageSize}
+                      totalPages={pagination.totalPages}
+                      totalItems={pagination.totalItems}
                     />
                   )}
 
