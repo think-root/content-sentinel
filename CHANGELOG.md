@@ -1,3 +1,13 @@
+# [1.7.0](https://github.com/think-root/content-sentinel/compare/v1.6.0...v1.7.0) (2025-03-26)
+
+
+### Features
+
+* **api:** enhance getRepositories function with pagination support ([111dfbd](https://github.com/think-root/content-sentinel/commit/111dfbddf2b32e3564ceb2bf6d75a809c46053e9))
+* **App:** implement pagination for repository fetching ([5e1b0c0](https://github.com/think-root/content-sentinel/commit/5e1b0c0df29303ddedb9ecc6135206840028c4ed))
+* **RepositoryList:** enhance pagination and repository fetching logic ([3952a49](https://github.com/think-root/content-sentinel/commit/3952a4908397f8486499e809763d261b94a55b17))
+* **types:** add pagination properties to RepositoriesResponse interface ([789fe39](https://github.com/think-root/content-sentinel/commit/789fe39724f686dea4bb72df2438102017606549))
+
 # [1.6.0](https://github.com/think-root/content-sentinel/compare/v1.5.1...v1.6.0) (2025-03-25)
 
 
