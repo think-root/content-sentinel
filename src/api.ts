@@ -12,6 +12,15 @@ function getApiConfig() {
   };
 }
 
+interface GetRepositoryRequest {
+  limit: number;
+  posted?: boolean;
+  sort_by?: "id" | "date_added" | "date_posted";
+  sort_order?: "ASC" | "DESC";
+  page?: number;
+  page_size?: number;
+}
+
 interface RepositoryResponse {
   status: string;
   data: {
@@ -19,70 +28,40 @@ interface RepositoryResponse {
     posted: number;
     unposted: number;
     items: Repository[];
+    page: number;
+    page_size: number;
+    total_pages: number;
+    total_items: number;
   };
 }
 
 export async function getRepositories(
-  limit: number,
+  limit: number = 0,
   posted?: boolean,
   fetchAll: boolean = false,
   sortBy?: "id" | "date_added" | "date_posted",
-  sortOrder?: "ASC" | "DESC"
+  sortOrder?: "ASC" | "DESC",
+  page?: number,
+  pageSize?: number
 ): Promise<RepositoryResponse> {
   const { baseUrl, headers } = getApiConfig();
 
-  if (posted === undefined) {
-    const actualLimit = fetchAll ? 5000 : limit;
-    const halfLimit = Math.ceil(actualLimit / 2);
+  const requestBody: GetRepositoryRequest = {
+    limit: fetchAll ? 0 : limit,
+    posted,
+    sort_by: sortBy,
+    sort_order: sortOrder,
+  };
 
-    const [postedResponse, unpostedResponse] = await Promise.all([
-      fetch(`${baseUrl}/get-repository/`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          limit: halfLimit,
-          posted: true,
-          sort_by: sortBy || "date_posted",
-          sort_order: sortOrder || "DESC",
-        }),
-      }),
-      fetch(`${baseUrl}/get-repository/`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          limit: halfLimit,
-          posted: false,
-          sort_by: sortBy || "date_added",
-          sort_order: sortOrder || "DESC",
-        }),
-      }),
-    ]);
-
-    const [postedData, unpostedData] = await Promise.all([
-      postedResponse.json(),
-      unpostedResponse.json(),
-    ]);
-
-    return {
-      status: "ok",
-      data: {
-        all: postedData.data.posted + unpostedData.data.unposted,
-        posted: postedData.data.posted,
-        unposted: unpostedData.data.unposted,
-        items: [...postedData.data.items, ...unpostedData.data.items],
-      },
-    };
+  if (!fetchAll && (page !== undefined || pageSize !== undefined)) {
+    requestBody.page = page;
+    requestBody.page_size = pageSize;
   }
 
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      limit,
-      posted,
-      sort_by: sortBy,
-      sort_order: sortOrder,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   return response.json();
