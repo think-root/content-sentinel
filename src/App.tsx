@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Stats } from './components/Stats';
 import { RepositoryList } from './components/RepositoryList';
 import { GenerateForm } from './components/GenerateForm';
@@ -9,7 +9,7 @@ import type { Repository } from './types';
 import { X, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -26,12 +26,12 @@ function App() {
     totalItems: 0
   });
 
-  const setErrorWithScroll = (errorMessage: string) => {
+  const setErrorWithScroll = useCallback((errorMessage: string) => {
     setError(errorMessage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const fetchRepositories = async (
+  const fetchRepositories = useCallback(async (
     statusFilter?: boolean,
     append: boolean = false,
     fetchAll: boolean = false,
@@ -81,9 +81,9 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.pageSize, setErrorWithScroll]);
 
-  const fetchPreviews = async () => {
+  const fetchPreviews = useCallback(async () => {
     try {
       setPreviewsLoading(true);
       const [latestResponse, nextResponse] = await Promise.all([
@@ -98,7 +98,7 @@ function App() {
     } finally {
       setPreviewsLoading(false);
     }
-  };
+  }, [setErrorWithScroll]);
 
   useEffect(() => {
     const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
@@ -118,7 +118,7 @@ function App() {
       1
     );
     fetchPreviews();
-  }, []);
+  }, [fetchRepositories, fetchPreviews]);
 
   const handleManualGenerate = async (url: string): Promise<ManualGenerateResponse> => {
     try {
@@ -164,10 +164,10 @@ function App() {
                   <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
                     <div className="flex items-center justify-between py-4 px-4">
                       <div className="flex items-center">
-                        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3">
+                        <Link to="/dashboard/" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
                           <LayoutDashboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                           Dashboard
-                        </h1>
+                        </Link>
                       </div>
                       <div className="flex items-center space-x-4">
                         <SettingsButton />
@@ -233,6 +233,11 @@ function App() {
 
                   <CronJobs />
                 </main>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+                  <footer className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm p-4 text-center text-gray-600 dark:text-gray-400">
+                    Developed by <a href="https://github.com/Sigmanor" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">sigmanor</a> with ❤️ and a bit of 🤖 Fully <a href="https://github.com/think-root/content-sentinel" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">open source</a>. License: <a href="https://github.com/think-root/content-sentinel/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">MIT</a>
+                  </footer>
+                </div>
               </div>
             </div>
           }
