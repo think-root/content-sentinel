@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Repository } from '../types';
-import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
 
 interface RepositoryListProps {
@@ -179,8 +179,20 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               setSearchTerm(value);
               localStorage.setItem('dashboardSearchTerm', value);
             }}
-            className="pl-10 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 py-2 px-3 text-sm md:text-base"
+            className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 py-2 px-3 text-sm md:text-base"
           />
+          {searchTerm && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                localStorage.removeItem('dashboardSearchTerm');
+              }}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 relative">

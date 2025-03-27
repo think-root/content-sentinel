@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, RefreshCw, GitPullRequest, Zap, Loader2 } from 'lucide-react';
+import { Plus, RefreshCw, GitPullRequest, Zap, Loader2, X } from 'lucide-react';
 import { ResultDialog } from './ResultDialog';
 
 interface GenerateFormProps {
@@ -105,7 +105,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
             <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Repository URLs (separate multiple URLs with spaces)
             </label>
-            <div className="mt-1 flex rounded-md shadow-sm">
+            <div className="mt-1 flex rounded-md shadow-sm relative">
               <textarea
                 name="url"
                 id="url"
@@ -120,7 +120,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   overflow: 'auto',
                   height: 'auto'
                 }}
-                className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 ${isManualLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'} text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                className={`flex-1 min-w-0 block w-full px-3 py-2 pr-8 rounded-md border border-gray-300 dark:border-gray-600 ${isManualLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'} text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                 placeholder="https://github.com/user/repo1"
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -134,6 +134,22 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   }
                 }}
               />
+              {url && (
+                <button
+                  onClick={() => {
+                    setUrl('');
+                    const textarea = document.getElementById('url') as HTMLTextAreaElement;
+                    if (textarea) {
+                      textarea.style.height = '38px';
+                    }
+                  }}
+                  className="absolute right-0 top-0 h-full px-2 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  title="Clear input"
+                  disabled={isManualLoading}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
           <div className="space-y-2">
