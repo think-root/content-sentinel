@@ -23,54 +23,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     };
   }, [isOpen]);
 
-  const validateSettings = (settings: ApiSettings): string | null => {
-    if (!settings.contentAlchemist) {
-      return 'Content Alchemist settings are missing';
-    }
-    if (!settings.contentMaestro) {
-      return 'Content Maestro settings are missing';
-    }
-    if (!settings.contentAlchemist.apiBaseUrl) {
-      return 'Content Alchemist API Base URL is required';
-    }
-    if (!settings.contentAlchemist.apiBearerToken) {
-      return 'Content Alchemist API Bearer Token is required';
-    }
-    if (!settings.contentMaestro.apiBaseUrl) {
-      return 'Content Maestro API Base URL is required';
-    }
-    if (!settings.contentMaestro.apiBearerToken) {
-      return 'Content Maestro API Bearer Token is required';
-    }
-    return null;
-  };
-
   const handleSave = () => {
     console.log('Current settings:', settings);
     try {
-      if (!settings.contentAlchemist || !settings.contentMaestro) {
-        console.error('Settings validation failed: Missing contentAlchemist or contentMaestro');
-        setToast({
-          message: 'Settings validation failed: Missing required sections',
-          type: 'error'
-        });
-        return;
-      }
-
-      // Log current state before validation
       console.log('Content Alchemist settings:', settings.contentAlchemist);
       console.log('Content Maestro settings:', settings.contentMaestro);
-
-      // Validate settings
-      const validationError = validateSettings(settings);
-      if (validationError) {
-        console.error('Settings validation failed:', validationError);
-        setToast({
-          message: validationError,
-          type: 'error'
-        });
-        return;
-      }
 
       // Create a complete settings object
       const settingsToSave = {
