@@ -14,7 +14,7 @@
 
 ## Description
 
-In fact, this is a dashboard that allows you to monitor and manage the data of the [content-alchemist](https://github.com/think-root/content-alchemist) database. Therefore, for this app to work correctly, you need to run [content-alchemist](https://github.com/think-root/content-alchemist) first.
+In fact, this is a dashboard that allows you to monitor and manage the data of the [content-alchemist](https://github.com/think-root/content-alchemist) database and cron tasks of [content-maestro](https://github.com/think-root/content-maestro) using their APIs. Therefore, for this app to work correctly, you need to run both [content-alchemist](https://github.com/think-root/content-alchemist) and [content-maestro](https://github.com/think-root/content-maestro) first.
 
 ## Features
 
@@ -39,6 +39,7 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 
 ![alt text](assets/screenshot2.png)
 
+![alt text](assets/screenshot3.png)
 
 ## Getting Started
 
