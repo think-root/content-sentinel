@@ -1,3 +1,11 @@
+# [1.9.0](https://github.com/think-root/content-sentinel/compare/v1.8.0...v1.9.0) (2025-03-27)
+
+
+### Features
+
+* add clear input functionality to GenerateForm and RepositoryList components ([71a93d7](https://github.com/think-root/content-sentinel/commit/71a93d7452bbf44115ed592942b86443792506a1))
+* add theme persistence and dynamic meta theme color ([13e654e](https://github.com/think-root/content-sentinel/commit/13e654e4d9ebb9536f938a19a7cb074dc02c30c1))
+
 # [1.8.0](https://github.com/think-root/content-sentinel/compare/v1.7.0...v1.8.0) (2025-03-27)
 
 
