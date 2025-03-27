@@ -164,7 +164,7 @@ function App() {
                   <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
                     <div className="flex items-center justify-between py-4 px-4">
                       <div className="flex items-center">
-                        <Link to="/dashboard/" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
+                        <Link to="/dashboard/" onClick={() => window.location.reload()} className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
                           <LayoutDashboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                           Dashboard
                         </Link>
