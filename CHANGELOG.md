@@ -1,3 +1,23 @@
+# [1.8.0](https://github.com/think-root/content-sentinel/compare/v1.7.0...v1.8.0) (2025-03-27)
+
+
+### Bug Fixes
+
+* remove redundant validation logic in SettingsModal ([fbdb685](https://github.com/think-root/content-sentinel/commit/fbdb685b2593bcef4106acc2790ec4382cbeff0f))
+
+
+### Features
+
+* add manifest.json for PWA ([7fcf73b](https://github.com/think-root/content-sentinel/commit/7fcf73b41499dec334be04b48605bacea7a56ebf))
+* add page reload on dashboard link click ([77c7e35](https://github.com/think-root/content-sentinel/commit/77c7e35f7afd05dd08e819c6a220b203f805f6b5))
+* add PWA support to dashboard ([4c4f21d](https://github.com/think-root/content-sentinel/commit/4c4f21db507931b56d62292c8b059e258588cc35))
+* add service worker for caching ([b44c7a4](https://github.com/think-root/content-sentinel/commit/b44c7a4f405637e3613400c678cb8df675a5b08b))
+* add service worker registration ([f8d685c](https://github.com/think-root/content-sentinel/commit/f8d685c6393606cad3e9466d604e229e34eb36d5))
+* add support for multiple API settings ([0587b63](https://github.com/think-root/content-sentinel/commit/0587b631f0733521370d9710cd4325da4ddc434f))
+* add tabbed settings interface and validation ([ebf2a4c](https://github.com/think-root/content-sentinel/commit/ebf2a4cf19bf51b7a3b505a7efa431fb1a929e2b))
+* **api:** add CRON job management endpoints ([7a138a7](https://github.com/think-root/content-sentinel/commit/7a138a7e2594ed23e418564145461844d15e1671))
+* implement dynamic cron job management ([42e4cdd](https://github.com/think-root/content-sentinel/commit/42e4cdd78ac0961adafc5d862c7e25e611dd1c9e))
+
 # [1.7.0](https://github.com/think-root/content-sentinel/compare/v1.6.0...v1.7.0) (2025-03-26)
 
 
