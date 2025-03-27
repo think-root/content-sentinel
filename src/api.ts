@@ -4,9 +4,9 @@ import { getApiSettings } from "./utils/api-settings";
 function getApiConfig() {
   const settings = getApiSettings();
   return {
-    baseUrl: `${settings.apiBaseUrl}/api`,
+    baseUrl: `${settings.contentAlchemist.apiBaseUrl}/api`,
     headers: {
-      Authorization: `Bearer ${settings.apiBearerToken}`,
+      Authorization: `Bearer ${settings.contentAlchemist.apiBearerToken}`,
       "Content-Type": "application/json",
     },
   };
