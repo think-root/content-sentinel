@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, RefreshCw, GitPullRequest, Zap, Loader2, X } from 'lucide-react';
+import { RefreshCw, Loader2, GitPullRequest, Zap, X } from 'lucide-react';
 import { ResultDialog } from './ResultDialog';
 
 interface GenerateFormProps {
@@ -161,7 +161,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
               {isManualLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <Plus className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2" />
               )}
               {isManualLoading ? 'Processing...' : 'Generate'}
             </button>
