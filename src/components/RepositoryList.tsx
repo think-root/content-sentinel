@@ -186,7 +186,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
       
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden px-6 ${
-          isExpanded ? 'max-h-[5000px] opacity-100 pb-6' : 'max-h-0 opacity-0'
+          isExpanded ? 'max-h-[2000px] opacity-100 pb-6' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
