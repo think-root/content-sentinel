@@ -1,3 +1,13 @@
+# [1.10.0](https://github.com/think-root/content-sentinel/compare/v1.9.0...v1.10.0) (2025-03-28)
+
+
+### Features
+
+* add expandable section to repository list ([bce82c6](https://github.com/think-root/content-sentinel/commit/bce82c66ebafdba48e5bbf0d39c5a62b70cfdefc))
+* add tooltip to toggle button in CronJobs component ([92e6761](https://github.com/think-root/content-sentinel/commit/92e6761d2ea1f37be33a096c670fab41ab8ff100))
+* enhance search functionality in RepositoryList to include date filters and update placeholder text ([74b851a](https://github.com/think-root/content-sentinel/commit/74b851a41cf87b623835e58666d7b2798fa5fbb1))
+* replace Plus icon with RefreshCw icon in GenerateForm component during loading state ([f6732af](https://github.com/think-root/content-sentinel/commit/f6732afd067f7313f1c41cb2cd3effdccfcda26b))
+
 # [1.9.0](https://github.com/think-root/content-sentinel/compare/v1.8.0...v1.9.0) (2025-03-27)
 
 
