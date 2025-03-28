@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/think-root/content-sentinel/compare/v1.10.0...v1.11.0) (2025-03-28)
+
+
+### Features
+
+* update application icons for improved visual consistency ([59d970a](https://github.com/think-root/content-sentinel/commit/59d970aea9371dc2125483f2aa60b6fe943c580c))
+
 # [1.10.0](https://github.com/think-root/content-sentinel/compare/v1.9.0...v1.10.0) (2025-03-28)
 
 
