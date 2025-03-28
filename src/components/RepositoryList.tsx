@@ -142,7 +142,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
   const filteredItems = repositories.filter(repo => {
     const matchesSearch = searchTerm === '' || 
       repo.url.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (repo.text && repo.text.toLowerCase().includes(searchTerm.toLowerCase()));
+      (repo.text && repo.text.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (repo.date_added && formatDate(repo.date_added).toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (repo.date_posted && formatDate(repo.date_posted).toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'posted' && repo.posted) || 
@@ -172,7 +174,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
           </div>
           <input
             type="text"
-            placeholder="Search repositories..."
+            placeholder="Search by URL, description, or dates..."
             value={searchTerm}
             onChange={(e) => {
               const value = e.target.value;
@@ -202,6 +204,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
               className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
               style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              title="Filter repositories by status"
             >
               <option value="all">All</option>
               <option value="posted">Posted</option>
@@ -213,6 +216,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
               className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-24 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
               style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              title="Number of items to display per page"
             >
               <option value={0}>All</option>
               <option value={5}>5</option>
@@ -226,6 +230,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
               className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
               style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              title="Sort repositories by field"
             >
               <option value="id">ID</option>
               <option value="date_added">Date Added</option>
