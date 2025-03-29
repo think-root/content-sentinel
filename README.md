@@ -51,57 +51,65 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 ### Installation
 
 1. Clone the repository
+
    ```bash
    git clone https://github.com/think-root/content-sentinel.git
    cd content-sentinel
    ```
 
 2. Install dependencies
+
    ```bash
    npm ci --production
    ```
 
 3. Create an environment file
+
    ```bash
    cp .env.example .env
    ```
 
 4. Update the `.env` file with your data
+
    ```bash
    PORT=3000
    ```
 
 5. Build project
-    ```bash
-    npm run build
-    ```
+
+   ```bash
+   npm run build
+   ```
 
 6. Start the preview server at http://localhost:4173/dashboard/
-    ```bash
-    npm run preview
-    ```
+
+   ```bash
+   npm run preview
+   ```
 
 7. Run production server at http://localhost:3000/dashboard/
-    ```bash
-    npm start
-    ```
+   ```bash
+   npm start
+   ```
 
 ### Docker
 
 Run via docker compose:
-   ```bash
-   docker compose up -d
-   ```
+
+```bash
+docker compose up -d
+```
 
 Or run the container directly:
-   ```bash
-    docker run --name content-sentinel \
-      -p ${PORT:-3000}:${PORT:-3000} \
-      --env-file .env \
-      --restart unless-stopped \
-      --network app-network \
-      content-sentinel:latest
-   ```
+
+```bash
+docker run -d \
+  --name content-sentinel \
+  -p ${PORT:-3000}:${PORT:-3000} \
+  --env-file .env \
+  --restart unless-stopped \
+  content-sentinel:latest
+```
 
 Access the application at http://localhost:3000/dashboard/
 
@@ -109,25 +117,25 @@ Access the application at http://localhost:3000/dashboard/
 
 For successful use, you must fill in some settings that can be found in the site header on the right, the “Settings” button
 
-| Setting | Description | Required |
-|---------|-------------|----------|
-| API Base URL | Enter the URL of your content-alchemist API | Yes |
-| API Bearer Token | Provide your authentication token for API access | Yes |
-| Date Format | Choose your preferred date format (default: DD.MM.YYYY HH:mm) | No |
-| Timezone | Select your timezone (default: Europe/Kyiv) | No |
+| Setting          | Description                                                   | Required |
+| ---------------- | ------------------------------------------------------------- | -------- |
+| API Base URL     | Enter the URL of your content-alchemist API                   | Yes      |
+| API Bearer Token | Provide your authentication token for API access              | Yes      |
+| Date Format      | Choose your preferred date format (default: DD.MM.YYYY HH:mm) | No       |
+| Timezone         | Select your timezone (default: Europe/Kyiv)                   | No       |
 
 All settings are automatically saved and persisted in your browser's local storage.
 
 ## Development
 
 1. Install the development dependencies and start the development server:
-    ```bash
-    npm install
-    npm run dev
-    ```
+
+   ```bash
+   npm install
+   npm run dev
+   ```
 
 2. Access the application at http://localhost:5173/dashboard/
-
 
 ## License
 
