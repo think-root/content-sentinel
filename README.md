@@ -30,16 +30,20 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
 - **Icons**: Lucide React
-
 ## Screenshots
 
-![alt text](assets/screenshot0.png)
-
-![alt text](assets/screenshot1.png)
-
-![alt text](assets/screenshot2.png)
-
-![alt text](assets/screenshot3.png)
+<details>
+  <summary>Show me what's hidden</summary>
+   
+  ![alt text](assets/screenshot0.png)  
+  
+  ![alt text](assets/screenshot1.png)  
+  
+  ![alt text](assets/screenshot2.png)  
+  
+  ![alt text](assets/screenshot3.png)
+  
+</details>
 
 ## Getting Started
 
