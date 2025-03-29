@@ -121,12 +121,14 @@ Access the application at http://localhost:3000/dashboard/
 
 For successful use, you must fill in some settings that can be found in the site header on the right, the “Settings” button
 
-| Setting          | Description                                                   | Required |
-| ---------------- | ------------------------------------------------------------- | -------- |
-| API Base URL     | Enter the URL of your content-alchemist API                   | Yes      |
-| API Bearer Token | Provide your authentication token for API access              | Yes      |
-| Date Format      | Choose your preferred date format (default: DD.MM.YYYY HH:mm) | No       |
-| Timezone         | Select your timezone (default: Europe/Kyiv)                   | No       |
+| Tab               | Setting          | Description                                                   |
+| ----------------- | ---------------- | ------------------------------------------------------------- |
+| **General**       | Date Format      | Choose your preferred date format (default: DD.MM.YYYY HH:mm) |
+|                  | Timezone         | Select your timezone (default: Europe/Kyiv)                   |
+| **Content Alchemist** | API Base URL     | Enter the URL of your Content Alchemist API                   |
+|                  | API Bearer Token | Provide your authentication token for API access              |
+| **Content Maestro** | API Base URL     | Enter the URL of your Content Maestro API                     |
+|                  | API Bearer Token | Provide your authentication token for API access              |
 
 All settings are automatically saved and persisted in your browser's local storage.
 
