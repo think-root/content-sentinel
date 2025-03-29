@@ -95,11 +95,12 @@ Run via docker compose:
 
 Or run the container directly:
    ```bash
-   docker run -d \
-     --name content-sentinel \
-     -p 3000:3000 \
-     -e PORT=3000 \
-     content-sentinel:latest
+    docker run --name content-sentinel \
+      -p ${PORT:-3000}:${PORT:-3000} \
+      --env-file .env \
+      --restart unless-stopped \
+      --network app-network \
+      content-sentinel:latest
    ```
 
 Access the application at http://localhost:3000/dashboard/
