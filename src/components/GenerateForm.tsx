@@ -260,10 +260,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       onClick={(e) => {
                         e.stopPropagation();
                         const select = document.getElementById('since') as HTMLSelectElement;
-                        try {
-                          select?.showPicker();
-                        } catch  {
-                          select?.click();
+                        if (select) {
+                          select.focus();
+                          select.click();
                         }
                       }}
                     >
@@ -306,10 +305,10 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       onClick={(e) => {
                         e.stopPropagation();
                         const select = document.getElementById('language') as HTMLSelectElement;
-                        try {
-                          select?.showPicker();
-                        } catch {
-                          select?.click();
+                        if (select) {
+                          // Direct click for iOS Safari
+                          select.focus();
+                          select.click();
                         }
                       }}
                     >
