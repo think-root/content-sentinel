@@ -306,7 +306,6 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                         e.stopPropagation();
                         const select = document.getElementById('language') as HTMLSelectElement;
                         if (select) {
-                          // Direct click for iOS Safari
                           select.focus();
                           select.click();
                         }

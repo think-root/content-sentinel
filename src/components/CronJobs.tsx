@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { updateCronStatus, updateCronSchedule, CronJob } from '../api/index';
 import { X, Pencil, Check, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
@@ -44,17 +44,41 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
+export function CronJobs({ jobs, loading }: CronJobsProps) {
+  const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setLocalJobs(jobs);
+  }, [jobs]);
+
   const toggleJobStatus = async (name: string, currentStatus: boolean) => {
     try {
+      setLocalJobs(prevJobs => 
+        prevJobs.map(job => 
+          job.name === name 
+            ? {
+                ...job,
+                is_active: !currentStatus,
+                updated_at: new Date().toISOString()
+              }
+            : job
+        )
+      );
+
       await updateCronStatus(name, !currentStatus);
       setError(null);
     } catch {
+      setLocalJobs(prevJobs => 
+        prevJobs.map(job => 
+          job.name === name 
+            ? { ...job, is_active: currentStatus }
+            : job
+        )
+      );
       setError('Failed to update cron status');
     }
   };
@@ -82,15 +106,33 @@ export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
       return;
     }
 
+    const previousSchedule = editingSchedule.schedule;
+
     try {
+      setLocalJobs(prevJobs => 
+        prevJobs.map(job => 
+          job.name === editingSchedule.name 
+            ? {
+                ...job,
+                schedule: scheduleInput,
+                updated_at: new Date().toISOString()
+              }
+            : job
+        )
+      );
+      
       await updateCronSchedule(editingSchedule.name, scheduleInput);
       setEditingSchedule(null);
       setScheduleError(null);
       setError(null);
-      if (onUpdate) {
-        onUpdate();
-      }
     } catch {
+      setLocalJobs(prevJobs => 
+        prevJobs.map(job => 
+          job.name === editingSchedule.name 
+            ? { ...job, schedule: previousSchedule }
+            : job
+        )
+      );
       setError('Failed to update cron schedule');
     }
   };
@@ -178,7 +220,7 @@ export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {jobs.map((job) => (
+                {localJobs.map((job) => (
                   <tr key={job.name} className="group">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{job.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
@@ -275,8 +317,8 @@ export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
           </div>
           
           <div className="md:hidden block">
-            {jobs.map((job, index) => (
-              <div key={job.name} className={`bg-white dark:bg-gray-800 ${index !== jobs.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''} p-4 group hover:bg-gray-50 dark:hover:bg-gray-750`}>
+            {localJobs.map((job, index) => (
+              <div key={job.name} className={`bg-white dark:bg-gray-800 ${index !== localJobs.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''} p-4 group hover:bg-gray-50 dark:hover:bg-gray-750`}>
                 <div className="space-y-3">
                   <div>
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</span>
