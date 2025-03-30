@@ -247,11 +247,7 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
                                   scheduleError 
                                     ? 'border-red-300 dark:border-red-600' 
                                     : 'border-gray-300 dark:border-gray-600'
-                                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 ${
-                                  scheduleError 
-                                    ? 'focus:ring-red-500' 
-                                    : 'focus:ring-blue-500'
-                                }`}
+                                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none`}
                                 placeholder="Cron schedule"
                               />
                               <div className="flex items-center space-x-1">
@@ -346,11 +342,7 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
                                 scheduleError 
                                   ? 'border-red-300 dark:border-red-600' 
                                   : 'border-gray-300 dark:border-gray-600'
-                              } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 ${
-                                scheduleError 
-                                  ? 'focus:ring-red-500' 
-                                  : 'focus:ring-blue-500'
-                              }`}
+                              } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none`}
                               placeholder="Cron schedule"
                             />
                             <button
