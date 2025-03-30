@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -36,13 +37,7 @@ select {
   display: flex;
   flex-direction: column;
   width: 2rem;
-  border-left: 1px solid #e2e8f0;
   cursor: pointer;
-}
-
-.dark .number-input-controls,
-.dark .select-arrow {
-  border-left-color: #4b5563;
 }
 
 .number-input-up,
@@ -53,27 +48,14 @@ select {
   align-items: center;
   justify-content: center;
   user-select: none;
-  transition: background-color 0.2s;
 }
 
-.number-input-up:hover,
-.number-input-down:hover,
 .select-arrow:hover .select-arrow-icon {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.dark .number-input-up:hover,
-.dark .number-input-down:hover,
 .dark .select-arrow:hover .select-arrow-icon {
   background-color: rgba(255, 255, 255, 0.1);
-}
-
-.number-input-up {
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.dark .number-input-up {
-  border-bottom-color: #4b5563;
 }
 
 .date-range-dropdown,
