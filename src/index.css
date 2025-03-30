@@ -20,7 +20,8 @@ select {
 }
 
 .select-wrapper label {
-  cursor: pointer;
+  cursor: default;
+  pointer-events: none;
 }
 
 .number-input-wrapper,
@@ -58,7 +59,27 @@ select {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.date-range-dropdown,
-.spoken-language-dropdown {
+.select-wrapper select {
+  pointer-events: auto;
   cursor: pointer;
+}
+
+label {
+  pointer-events: none !important;
+}
+
+.select-wrapper * {
+  pointer-events: none;
+}
+
+.select-wrapper select {
+  pointer-events: auto;
+}
+
+select:hover {
+  background-color: rgb(249 250 251) !important;
+}
+
+.dark select:hover {
+  background-color: rgb(75 85 99) !important;
 }
