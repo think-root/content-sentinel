@@ -10,6 +10,7 @@ interface RepositoryListProps {
   totalPages: number;
   currentPage: number;
   pageSize: number;
+  loading: boolean;
 }
 
 function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: number }) {
@@ -45,7 +46,7 @@ function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: numb
   );
 }
 
-export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize }: RepositoryListProps) {
+export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize, loading }: RepositoryListProps) {
   const [isExpanded, setIsExpanded] = useState(() => {
     const saved = localStorage.getItem('dashboardExpanded');
     return saved === null ? true : saved === 'true';
@@ -78,8 +79,6 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     return (saved as 'ASC' | 'DESC') || 'DESC';
   });
   
-  const [loading] = useState(false);
-
   const toggleExpanded = () => {
     const newValue = !isExpanded;
     setIsExpanded(newValue);
@@ -203,7 +202,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 setSearchTerm(value);
                 localStorage.setItem('dashboardSearchTerm', value);
               }}
-              className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 py-2 px-3 text-sm md:text-base"
+              disabled={loading}
+              className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 py-2 px-3 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {searchTerm && (
               <button
@@ -211,7 +211,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   setSearchTerm('');
                   localStorage.removeItem('dashboardSearchTerm');
                 }}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={loading}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -224,7 +225,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+                disabled={loading}
+                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 title="Filter repositories by status"
               >
@@ -236,7 +238,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               <select
                 value={itemsPerPage}
                 onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-24 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+                disabled={loading}
+                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-24 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 title="Number of items to display per page"
               >
@@ -250,7 +253,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               <select
                 value={sortBy}
                 onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+                disabled={loading}
+                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
                 title="Sort repositories by field"
               >
@@ -261,7 +265,8 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
 
               <button
                 onClick={toggleSortOrder}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 px-3 h-[42px] focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center w-full sm:w-auto"
+                disabled={loading}
+                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 px-3 h-[42px] focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 title={sortOrder === 'ASC' ? 'Ascending order' : 'Descending order'}
               >
                 {sortOrder === 'ASC'
@@ -285,9 +290,29 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {totalItems === 0 ? (
+                {loading ? (
+                  Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                      </td>
+                    </tr>
+                  ))
+                ) : totalItems === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                       No repositories found
                     </td>
                   </tr>
@@ -323,7 +348,24 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
             </table>
           </div>
           <div className="md:hidden block">
-            {totalItems === 0 ? (
+            {loading ? (
+              Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+                  <div className="mb-3">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-8 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                  </div>
+                  <div className="mb-3">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  </div>
+                  <div className="mb-3">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  </div>
+                </div>
+              ))
+            ) : totalItems === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 No repositories found
               </div>
