@@ -203,7 +203,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 localStorage.setItem('dashboardSearchTerm', value);
               }}
               disabled={loading}
-              className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 py-2 px-3 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm py-2 px-3 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
             />
             {searchTerm && (
               <button
