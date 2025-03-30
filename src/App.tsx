@@ -4,12 +4,22 @@ import { RepositoryList } from './components/RepositoryList';
 import { GenerateForm } from './components/GenerateForm';
 import { CronJobs } from './components/CronJobs';
 import { RepositoryPreview } from './components/RepositoryPreview';
-import { getRepositories, manualGenerate, autoGenerate, ManualGenerateResponse, getLatestPostedRepository, getNextRepository } from './api';
+import {
+  getRepositories,
+  manualGenerate,
+  autoGenerate,
+  ManualGenerateResponse,
+  getLatestPostedRepository,
+  getNextRepository
+} from './api';
+import { getCronJobs, type CronJob } from './api/index';
 import type { Repository } from './types';
 import { X, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+
+const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
 function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -25,6 +35,8 @@ function App() {
     totalPages: 1,
     totalItems: 0
   });
+  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
+  const [cronJobsError, setCronJobsError] = useState<string | null>(null);
 
   const setErrorWithScroll = useCallback((errorMessage: string) => {
     setError(errorMessage);
@@ -44,6 +56,7 @@ function App() {
       if (!append) {
         setLoading(true);
       }
+      await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       
       const response = await getRepositories(
         itemsPerPage,
@@ -86,15 +99,24 @@ function App() {
   const fetchPreviews = useCallback(async () => {
     try {
       setPreviewsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const [latestResponse, nextResponse] = await Promise.all([
         getLatestPostedRepository(),
-        getNextRepository()
+        getNextRepository(),
       ]);
       
       setLatestPost(latestResponse.data.items[0]);
       setNextPost(nextResponse.data.items[0]);
     } catch {
       setErrorWithScroll('Failed to fetch repository previews');
+    }
+
+    try {
+      const cronJobsResponse = await getCronJobs();
+      setCronJobs(cronJobsResponse);
+      setCronJobsError(null);
+    } catch {
+      setCronJobsError('Failed to fetch cron jobs');
     } finally {
       setPreviewsLoading(false);
     }
@@ -122,6 +144,7 @@ function App() {
 
   const handleManualGenerate = async (url: string): Promise<ManualGenerateResponse> => {
     try {
+      await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await manualGenerate(url);
       if (response.status === 'ok') {
         const added = response.added || [];
@@ -141,6 +164,7 @@ function App() {
 
   const handleAutoGenerate = async (maxRepos: number, since: string, spokenLanguageCode: string) => {
     try {
+      await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await autoGenerate(maxRepos, since, spokenLanguageCode);
       if (response.status === 'ok') {
         fetchRepositories();
@@ -215,23 +239,34 @@ function App() {
                     onAutoGenerate={handleAutoGenerate}
                   />
 
-                  {loading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
-                      <p className="mt-4 text-gray-600 dark:text-gray-400">Loading repositories...</p>
+                  <RepositoryList
+                    repositories={repositories}
+                    fetchRepositories={fetchRepositories}
+                    currentPage={pagination.currentPage}
+                    pageSize={pagination.pageSize}
+                    totalPages={pagination.totalPages}
+                    totalItems={pagination.totalItems}
+                    loading={loading}
+                  />
+
+                  {cronJobsError && (
+                    <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
+                      <span>{cronJobsError}</span>
+                      <button 
+                        onClick={() => setCronJobsError(null)} 
+                        className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-100 focus:outline-none"
+                        aria-label="Close error message"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
                     </div>
-                  ) : (
-                    <RepositoryList
-                      repositories={repositories}
-                      fetchRepositories={fetchRepositories}
-                      currentPage={pagination.currentPage}
-                      pageSize={pagination.pageSize}
-                      totalPages={pagination.totalPages}
-                      totalItems={pagination.totalItems}
-                    />
                   )}
 
-                  <CronJobs />
+                  <CronJobs
+                    jobs={cronJobs}
+                    loading={previewsLoading}
+                    onUpdate={fetchPreviews}
+                  />
                 </main>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
                   <footer className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm p-4 text-center text-gray-600 dark:text-gray-400">
