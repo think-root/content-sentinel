@@ -1,3 +1,12 @@
+# [1.12.0](https://github.com/think-root/content-sentinel/compare/v1.11.0...v1.12.0) (2025-03-30)
+
+
+### Features
+
+* add cron jobs fetching and error handling to App component ([aefda11](https://github.com/think-root/content-sentinel/commit/aefda11546bb63f5d35d4069e2edaee6c86c7c0f))
+* add loading state to RepositoryList component ([ce8f992](https://github.com/think-root/content-sentinel/commit/ce8f9925f1252508a75a9318c4295b302bd97269))
+* enhance CronJobs component with loading state and props for jobs ([0c0f487](https://github.com/think-root/content-sentinel/commit/0c0f4874ebe8b578d9a9b96c58b11ef94ba5fe07))
+
 # [1.11.0](https://github.com/think-root/content-sentinel/compare/v1.10.0...v1.11.0) (2025-03-28)
 
 
