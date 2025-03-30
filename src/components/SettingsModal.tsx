@@ -29,7 +29,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       console.log('Content Alchemist settings:', settings.contentAlchemist);
       console.log('Content Maestro settings:', settings.contentMaestro);
 
-      // Create a complete settings object
       const settingsToSave = {
         apiBaseUrl: settings.apiBaseUrl || "",
         apiBearerToken: settings.apiBearerToken || "",
@@ -47,7 +46,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
       console.log('Saving settings:', settingsToSave);
 
-      // Save to localStorage
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
 
       setToast({
@@ -55,7 +53,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         type: 'success'
       });
 
-      // Close modal and reload after a short delay to show success message
       setTimeout(() => {
         onClose();
         window.location.reload();
