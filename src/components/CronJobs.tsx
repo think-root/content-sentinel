@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
-import { getCronJobs, updateCronStatus, updateCronSchedule, CronJob } from '../api/index';
+import { useState } from 'react';
+import { updateCronStatus, updateCronSchedule, CronJob } from '../api/index';
 import { X, Pencil, Check, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
 import { getApiSettings } from '../utils/api-settings';
 import cronstrue from 'cronstrue';
+
+interface CronJobsProps {
+  jobs: CronJob[];
+  loading: boolean;
+  onUpdate?: () => void;
+}
 
 const validateCronExpression = (cron: string): boolean => {
   if (!cron.trim()) return false;
@@ -38,39 +44,15 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export function CronJobs() {
-  const [jobs, setJobs] = useState<CronJob[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
   const [scheduleError, setScheduleError] = useState<string | null>(null);
-
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const data = await getCronJobs();
-      setJobs(data);
-      setError(null);
-    } catch {
-      setError('Failed to fetch cron jobs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleJobStatus = async (name: string, currentStatus: boolean) => {
     try {
       await updateCronStatus(name, !currentStatus);
-      setJobs(jobs.map(job => 
-        job.name === name 
-          ? { ...job, is_active: !currentStatus, updated_at: new Date().toISOString() } 
-          : job
-      ));
       setError(null);
     } catch {
       setError('Failed to update cron status');
@@ -102,14 +84,12 @@ export function CronJobs() {
 
     try {
       await updateCronSchedule(editingSchedule.name, scheduleInput);
-      setJobs(jobs.map(job => 
-        job.name === editingSchedule.name 
-          ? { ...job, schedule: scheduleInput, updated_at: new Date().toISOString() } 
-          : job
-      ));
       setEditingSchedule(null);
       setScheduleError(null);
       setError(null);
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch {
       setError('Failed to update cron schedule');
     }
@@ -143,9 +123,47 @@ export function CronJobs() {
       </p>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading cron jobs...</p>
+        <div className="overflow-x-auto">
+          <div className="md:block hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Last Updated</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Schedule</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {[1, 2, 3].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="md:hidden">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-4 animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="overflow-x-auto">
