@@ -248,29 +248,19 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       localStorage.setItem('dashboardSince', value);
                     }}
                     disabled={isAutoLoading}
-                    className={`date-range-dropdown mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 ${isAutoLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'} text-gray-900 dark:text-white py-2 pr-10 pl-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`date-range-dropdown mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 ${
+                      isAutoLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
+                    } text-gray-900 dark:text-white py-2 pr-10 pl-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm appearance-none`}
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                   </select>
                   {!isAutoLoading && (
-                    <div 
-                      className="select-arrow"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const select = document.getElementById('since') as HTMLSelectElement;
-                        if (select) {
-                          select.focus();
-                          select.click();
-                        }
-                      }}
-                    >
-                      <div className="select-arrow-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-gray-500 dark:text-gray-400">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-gray-500 dark:text-gray-400">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   )}
                 </div>
@@ -292,7 +282,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       localStorage.setItem('dashboardSpokenLanguageCode', value);
                     }}
                     disabled={isAutoLoading}
-                    className={`spoken-language-dropdown mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 ${isAutoLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'} text-gray-900 dark:text-white py-2 pr-10 pl-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    className={`spoken-language-dropdown mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 ${
+                      isAutoLoading ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
+                    } text-gray-900 dark:text-white py-2 pr-10 pl-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm appearance-none`}
                   >
                     <option value="en">English</option>
                     <option value="zh">Chinese</option>
@@ -300,22 +292,10 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     <option value="fr">French</option>
                   </select>
                   {!isAutoLoading && (
-                    <div 
-                      className="select-arrow"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const select = document.getElementById('language') as HTMLSelectElement;
-                        if (select) {
-                          select.focus();
-                          select.click();
-                        }
-                      }}
-                    >
-                      <div className="select-arrow-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-gray-500 dark:text-gray-400">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-gray-500 dark:text-gray-400">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   )}
                 </div>
