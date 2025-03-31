@@ -200,10 +200,14 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           <GitPullRequest className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-white">Manual Generation</h2>
         </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>Generate a post from repository URLs. Separate multiple URLs with spaces</span>
+        </p>
         <form onSubmit={handleManualSubmit}>
           <div className="mb-4">
             <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Repository URLs (separate multiple URLs with spaces)
+              Repository URLs
             </label>
             <div className="mt-1 flex rounded-md shadow-sm relative">
               <textarea
