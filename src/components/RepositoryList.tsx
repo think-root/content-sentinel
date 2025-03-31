@@ -198,7 +198,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
             </div>
             <input
               type="text"
-              placeholder="Search by URL, description, or dates..."
+              placeholder="Search by URL, Text, or Dates..."
               value={searchTerm}
               onChange={(e) => {
                 const value = e.target.value;
@@ -287,7 +287,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">ID</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Repository</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Description</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Text</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Added</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Posted</th>
                 </tr>
@@ -397,7 +397,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   </div>
                 
                   <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Text</span>
                     <div className="mt-1 text-sm text-gray-900 dark:text-white">
                       <TruncatedText text={repo.text} maxChars={150} />
                     </div>
