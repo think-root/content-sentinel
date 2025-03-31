@@ -3,6 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: rgb(180, 203, 236) !important; /* gray-300 */
+  box-shadow: 0 0 0 1px rgb(209 213 219) !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: rgb(69, 112, 172) !important; /* gray-600 */
+  box-shadow: 0 0 0 1px rgb(75 85 99) !important;
+}
+
 input[type="number"] {
   appearance: textfield;
 }
