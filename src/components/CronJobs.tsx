@@ -161,7 +161,7 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
 
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center">
         <AlertCircle className="h-4 w-4 mr-2" />
-        Note: Schedule and Status columns are interactive and can be modified
+        Schedule and Status columns are interactive and can be modified
       </p>
 
       {loading ? (
