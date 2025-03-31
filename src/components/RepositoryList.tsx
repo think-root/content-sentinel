@@ -286,7 +286,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">ID</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Repository</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Url</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Text</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Added</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Posted</th>
@@ -383,7 +383,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   </div>
 
                   <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Repository</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Url</span>
                     <div className="mt-1">
                       <a
                         href={repo.url}
