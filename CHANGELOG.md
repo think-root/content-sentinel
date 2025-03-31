@@ -1,3 +1,12 @@
+# [1.13.0](https://github.com/think-root/content-sentinel/compare/v1.12.0...v1.13.0) (2025-03-31)
+
+
+### Features
+
+* add collect settings management and save functionality ([7247fcb](https://github.com/think-root/content-sentinel/commit/7247fcb81fe15fc3cb43384bf4d4e599e68eaaa4))
+* add instruction for separating multiple repository URLs in GenerateForm ([6ab3c10](https://github.com/think-root/content-sentinel/commit/6ab3c10e92c6cceb85f112098aae46ee96ec7fad))
+* **api:** add collect settings API functions ([17a33c3](https://github.com/think-root/content-sentinel/commit/17a33c3d46a8b6c5033eaceccacca2e4fc63961c))
+
 # [1.12.0](https://github.com/think-root/content-sentinel/compare/v1.11.0...v1.12.0) (2025-03-30)
 
 
