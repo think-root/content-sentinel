@@ -131,4 +131,45 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
   return response.json();
 }
 
+export interface CollectSettings {
+  max_repos: number;
+  since: string;
+  spoken_language_code: string;
+}
+
+export async function getCollectSettings(): Promise<CollectSettings> {
+  const settings = getApiSettings();
+  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/collect-settings`, {
+    headers: {
+      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch collect settings: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+export async function updateCollectSettings(settings: CollectSettings): Promise<{ status: string; message: string }> {
+  const apiSettings = getApiSettings();
+  const response = await fetch(`${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings/update`, {
+    method: 'PUT',
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
+    },
+    body: JSON.stringify(settings),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update collect settings: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 
