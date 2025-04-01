@@ -29,6 +29,7 @@ function App() {
   const [latestPost, setLatestPost] = useState<Repository | undefined>();
   const [nextPost, setNextPost] = useState<Repository | undefined>();
   const [previewsLoading, setPreviewsLoading] = useState(true);
+  const [cronJobsLoading, setCronJobsLoading] = useState(true);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     pageSize: parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10),
@@ -80,11 +81,24 @@ function App() {
           posted: response.data.posted,
           unposted: response.data.unposted,
         });
-        setPagination({
-          currentPage: response.data.page,
-          pageSize: response.data.page_size,
-          totalPages: response.data.total_pages,
-          totalItems: response.data.total_items
+
+        // Only update pagination if any values actually changed
+        setPagination(prev => {
+          const newPagination = {
+            currentPage: response.data.page,
+            pageSize: response.data.page_size,
+            totalPages: response.data.total_pages,
+            totalItems: response.data.total_items
+          };
+
+          if (prev.currentPage === newPagination.currentPage &&
+            prev.pageSize === newPagination.pageSize &&
+            prev.totalPages === newPagination.totalPages &&
+            prev.totalItems === newPagination.totalItems) {
+            return prev;
+          }
+
+          return newPagination;
         });
       } else {
         throw new Error('Invalid response format');
@@ -94,7 +108,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageSize, setErrorWithScroll]);
+  }, [setErrorWithScroll]);
 
   const fetchPreviews = useCallback(async () => {
     try {
@@ -109,16 +123,19 @@ function App() {
       setNextPost(nextResponse.data.items[0]);
     } catch {
       setErrorWithScroll('Failed to fetch repository previews');
+    } finally {
+      setPreviewsLoading(false);
     }
 
     try {
+      setCronJobsLoading(true);
       const cronJobsResponse = await getCronJobs();
       setCronJobs(cronJobsResponse);
       setCronJobsError(null);
     } catch {
       setCronJobsError('Failed to fetch cron jobs');
     } finally {
-      setPreviewsLoading(false);
+      setCronJobsLoading(false);
     }
   }, [setErrorWithScroll]);
 
@@ -254,7 +271,7 @@ function App() {
 
                   <CronJobs
                     jobs={cronJobs}
-                    loading={previewsLoading}
+                    loading={cronJobsLoading}
                     onUpdate={fetchPreviews}
                   />
 
