@@ -305,7 +305,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 ) : totalItems === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                      No repositories found
+                        No data available
                     </td>
                   </tr>
                 ) : (
@@ -359,7 +359,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               ))
             ) : totalItems === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                No repositories found
+                No data available
               </div>
             ) : (
               paginatedItems.map((repo) => (
