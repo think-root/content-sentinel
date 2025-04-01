@@ -47,16 +47,13 @@ export async function getRepositories(
   const { baseUrl, headers } = getApiConfig();
 
   const requestBody: GetRepositoryRequest = {
-    limit: fetchAll ? 0 : limit,
+    limit: fetchAll ? 0 : pageSize || limit,
     posted,
     sort_by: sortBy,
     sort_order: sortOrder,
+    page,
+    page_size: pageSize,
   };
-
-  if (!fetchAll && (page !== undefined || pageSize !== undefined)) {
-    requestBody.page = page;
-    requestBody.page_size = pageSize;
-  }
 
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
