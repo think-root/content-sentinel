@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/think-root/content-sentinel/compare/v1.14.0...v1.14.1) (2025-04-01)
+
+
+### Bug Fixes
+
+* remove response status text from error messages ([e70b654](https://github.com/think-root/content-sentinel/commit/e70b6545bc104b59d559dd5f1014c44c6143bd5f))
+
 # [1.14.0](https://github.com/think-root/content-sentinel/compare/v1.13.0...v1.14.0) (2025-04-01)
 
 
