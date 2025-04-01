@@ -163,8 +163,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     return matchesSearch && matchesStatus;
   });
 
-  const paginatedItems = filteredItems;
-  
+  const paginatedItems = itemsPerPage === 0 ? filteredItems :
+    filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
       <div
@@ -188,7 +189,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
       
       <div
         className={`transition-all duration-500 ease-in-out overflow-hidden px-6 ${
-          isExpanded ? 'max-h-[2000px] opacity-100 pb-6' : 'max-h-0 opacity-0'
+          isExpanded ? 'max-h-full opacity-100 pb-6' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
@@ -494,9 +495,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
               </div>
             </div>
 
-            <div className="mt-4 md:hidden block">
-              <div className="flex flex-col items-center justify-between gap-2 w-full">
-                <div className="text-xs text-gray-700 dark:text-gray-300">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 md:hidden block">
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <div className="text-xs text-gray-700 dark:text-gray-300 w-full text-center">
                   {itemsPerPage === 0 ? (
                     <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
                   ) : (
@@ -513,17 +514,16 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 </div>
 
                 {itemsPerPage > 0 && totalItems > itemsPerPage && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1 px-4 w-full justify-center">
                     <button
                       type="button"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-1.5 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] justify-center"
+                      className="relative inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px] justify-center flex-shrink-0"
                       title="Previous page"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       let pageNum;
                       if (totalPages <= 5) {
@@ -541,7 +541,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                           key={pageNum}
                           type="button"
                           onClick={() => handlePageChange(pageNum)}
-                          className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium rounded-md min-w-[28px] justify-center ${currentPage === pageNum
+                          className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium rounded-md min-w-[32px] justify-center flex-shrink-0 ${currentPage === pageNum
                               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300'
                               : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
                             }`}
@@ -556,7 +556,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                       type="button"
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-1.5 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] justify-center"
+                      className="relative inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px] justify-center flex-shrink-0"
                       title="Next page"
                     >
                       <ChevronRight className="h-4 w-4" />
