@@ -239,16 +239,6 @@ function App() {
                     onAutoGenerate={handleAutoGenerate}
                   />
 
-                  <RepositoryList
-                    repositories={repositories}
-                    fetchRepositories={fetchRepositories}
-                    currentPage={pagination.currentPage}
-                    pageSize={pagination.pageSize}
-                    totalPages={pagination.totalPages}
-                    totalItems={pagination.totalItems}
-                    loading={loading}
-                  />
-
                   {cronJobsError && (
                     <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
                       <span>{cronJobsError}</span>
@@ -266,6 +256,16 @@ function App() {
                     jobs={cronJobs}
                     loading={previewsLoading}
                     onUpdate={fetchPreviews}
+                  />
+
+                  <RepositoryList
+                    repositories={repositories}
+                    fetchRepositories={fetchRepositories}
+                    currentPage={pagination.currentPage}
+                    pageSize={pagination.pageSize}
+                    totalPages={pagination.totalPages}
+                    totalItems={pagination.totalItems}
+                    loading={loading}
                   />
                 </main>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
