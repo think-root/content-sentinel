@@ -93,6 +93,13 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     setItemsPerPage(initialPageSize);
   }, [initialPageSize]);
 
+  useEffect(() => {
+    if (searchTerm) {
+      const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+      fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, 1);
+    }
+  }, [searchTerm, fetchRepositories, statusFilter, itemsPerPage, sortBy, sortOrder]);
+
   const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
     if (loading) return;
     
@@ -149,22 +156,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page);
   };
 
-  const filteredItems = repositories.filter(repo => {
-    const matchesSearch = searchTerm === '' || 
-      repo.url.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (repo.text && repo.text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (repo.date_added && formatDate(repo.date_added).toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (repo.date_posted && formatDate(repo.date_posted).toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'posted' && repo.posted) || 
-      (statusFilter === 'unposted' && !repo.posted);
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const paginatedItems = itemsPerPage === 0 ? filteredItems :
-    filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedItems = repositories;
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
