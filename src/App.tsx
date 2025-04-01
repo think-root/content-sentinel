@@ -108,6 +108,7 @@ function App() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setErrorWithScroll]);
 
   const fetchPreviews = useCallback(async () => {
