@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/think-root/content-sentinel/compare/v1.15.0...v1.15.1) (2025-04-01)
+
+
+### Bug Fixes
+
+* remove onUpdate callback in CronJobs component ([6769dfa](https://github.com/think-root/content-sentinel/commit/6769dfa25dbcc984891c6393ce7a58ab9ddb88e6))
+
 # [1.15.0](https://github.com/think-root/content-sentinel/compare/v1.14.1...v1.15.0) (2025-04-01)
 
 
