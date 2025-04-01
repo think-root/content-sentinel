@@ -74,7 +74,10 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
       );
 
       await updateCronStatus(name, !currentStatus);
-      // Видаляємо виклик onUpdate
+      toast.success(`Job "${name}" ${!currentStatus ? 'activated' : 'deactivated'} successfully`, {
+        ...toastOptions,
+        id: `status-update-${name}`
+      });
     } catch {
       setLocalJobs(prevJobs => 
         prevJobs.map(job => 
@@ -131,7 +134,10 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
       await updateCronSchedule(editingSchedule.name, scheduleInput);
       setEditingSchedule(null);
       setScheduleError(null);
-      // Видаляємо виклик onUpdate
+      toast.success(`Schedule for "${editingSchedule.name}" updated successfully`, {
+        ...toastOptions,
+        id: `schedule-update-${editingSchedule.name}`
+      });
     } catch {
       setLocalJobs(prevJobs => 
         prevJobs.map(job => 
