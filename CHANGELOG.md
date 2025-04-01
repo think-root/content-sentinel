@@ -1,3 +1,17 @@
+# [1.15.0](https://github.com/think-root/content-sentinel/compare/v1.14.1...v1.15.0) (2025-04-01)
+
+
+### Bug Fixes
+
+* update no data message in RepositoryList component ([95fb223](https://github.com/think-root/content-sentinel/commit/95fb2236584e6df84e87f26b7d700eae70cc70d0))
+
+
+### Features
+
+* add toast notifications for error handling ([3aaaab1](https://github.com/think-root/content-sentinel/commit/3aaaab18395bc7a605cc033793ad9c8ac2221686))
+* **CronJobs:** add toast notifications for API errors ([43e8e32](https://github.com/think-root/content-sentinel/commit/43e8e32458da55419c16aa8a4933a61c03eafee4))
+* replace toast with react-hot-toast in Setting ([01b7ee1](https://github.com/think-root/content-sentinel/commit/01b7ee10e0420ba21f1a5866f891812ebe2c69a2))
+
 ## [1.14.1](https://github.com/think-root/content-sentinel/compare/v1.14.0...v1.14.1) (2025-04-01)
 
 
