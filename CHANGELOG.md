@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/think-root/content-sentinel/compare/v1.15.1...v1.16.0) (2025-04-01)
+
+
+### Features
+
+* add toast notifications for cron job status updates ([185ea35](https://github.com/think-root/content-sentinel/commit/185ea35569e10912dbc2e2441b83274207a62127))
+
 ## [1.15.1](https://github.com/think-root/content-sentinel/compare/v1.15.0...v1.15.1) (2025-04-01)
 
 
