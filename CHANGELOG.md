@@ -1,3 +1,17 @@
+# [1.14.0](https://github.com/think-root/content-sentinel/compare/v1.13.0...v1.14.0) (2025-04-01)
+
+
+### Bug Fixes
+
+* enhance pagination handling and improve button styles in RepositoryList component ([c1917be](https://github.com/think-root/content-sentinel/commit/c1917be2563b146c07d93a62afd94c6bf4b7c144))
+* implement search functionality in RepositoryList component ([929b9fb](https://github.com/think-root/content-sentinel/commit/929b9fbfbc9ed01ad5956e0860be61de9680023b))
+* update request body to include page and pageSize for repository fetching ([7caa070](https://github.com/think-root/content-sentinel/commit/7caa0705ffd980b671d62f5c533865dda50fd104))
+
+
+### Features
+
+* add loading state for cron jobs ([21b4562](https://github.com/think-root/content-sentinel/commit/21b45624cc637fca9b73773d503100f8ab5636df))
+
 # [1.13.0](https://github.com/think-root/content-sentinel/compare/v1.12.0...v1.13.0) (2025-03-31)
 
 
