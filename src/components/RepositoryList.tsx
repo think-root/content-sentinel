@@ -90,10 +90,6 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
   }, [initialPage]);
 
   useEffect(() => {
-    setItemsPerPage(initialPageSize);
-  }, [initialPageSize]);
-
-  useEffect(() => {
     if (searchTerm) {
       const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
       fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, 1);
