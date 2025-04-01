@@ -82,7 +82,6 @@ function App() {
           unposted: response.data.unposted,
         });
 
-        // Only update pagination if any values actually changed
         setPagination(prev => {
           const newPagination = {
             currentPage: response.data.page,
