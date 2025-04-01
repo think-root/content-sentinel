@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Loader2, GitPullRequest, Play, Save, X, AlertCircle, FolderDown } from 'lucide-react';
 import { ResultDialog } from './ResultDialog';
 import { getCollectSettings, updateCollectSettings } from '../api';
-import { Toast } from './Toast';
+import { toast } from 'react-hot-toast';
 
 const LANGUAGE_MAPPING = {
   'English': 'en',
@@ -39,49 +39,43 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [notAddedRepos, setNotAddedRepos] = useState<string[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const settings = await getCollectSettings();
+      setMaxRepos(settings.max_repos);
+      setSince(settings.since);
+      setSpokenLanguageCode(settings.spoken_language_code);
+
+      localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
+      localStorage.setItem('dashboardSince', settings.since);
+      localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
+    } catch {
+      console.error('Failed to load collect settings');
+
+      const savedMaxRepos = localStorage.getItem('dashboardMaxRepos') || '5';
+      const savedSince = localStorage.getItem('dashboardSince') || 'daily';
+      const savedLanguage = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
+
+      setMaxRepos(parseInt(savedMaxRepos, 10));
+      setSince(savedSince);
+      setSpokenLanguageCode(savedLanguage);
+
+      if (!localStorage.getItem('dashboardMaxRepos')) {
+        localStorage.setItem('dashboardMaxRepos', '5');
+      }
+      if (!localStorage.getItem('dashboardSince')) {
+        localStorage.setItem('dashboardSince', 'daily');
+      }
+      if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
+        localStorage.setItem('dashboardSpokenLanguageCode', 'en');
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await getCollectSettings();
-        setMaxRepos(settings.max_repos);
-        setSince(settings.since);
-        setSpokenLanguageCode(settings.spoken_language_code);
-
-        localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
-        localStorage.setItem('dashboardSince', settings.since);
-        localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
-      } catch (error) {
-        console.error('Failed to load collect settings:', error);
-
-        const savedMaxRepos = localStorage.getItem('dashboardMaxRepos') || '5';
-        const savedSince = localStorage.getItem('dashboardSince') || 'daily';
-        const savedLanguage = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
-
-        setMaxRepos(parseInt(savedMaxRepos, 10));
-        setSince(savedSince);
-        setSpokenLanguageCode(savedLanguage);
-
-        if (!localStorage.getItem('dashboardMaxRepos')) {
-          localStorage.setItem('dashboardMaxRepos', '5');
-        }
-        if (!localStorage.getItem('dashboardSince')) {
-          localStorage.setItem('dashboardSince', 'daily');
-        }
-        if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
-          localStorage.setItem('dashboardSpokenLanguageCode', 'en');
-        }
-
-        setToast({
-          message: 'Using local settings (server unavailable)',
-          type: 'error'
-        });
-      }
-    };
-
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   const handleSaveSettings = async () => {
     try {
@@ -94,10 +88,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       });
 
       if (response.status === 'success') {
-        setToast({
-          message: response.message || 'Settings saved successfully',
-          type: 'success'
-        });
+        toast.success(response.message || 'Settings saved successfully');
 
         localStorage.setItem('dashboardMaxRepos', maxRepos.toString());
         localStorage.setItem('dashboardSince', since);
@@ -107,12 +98,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       }
     } catch (error) {
       console.error('Save settings error:', error);
-      setToast({
-        message: error instanceof Error
-          ? `Failed to save settings: ${error.message}`
-          : 'Failed to save settings',
-        type: 'error'
-      });
+      toast.error(error instanceof Error ? `Failed to save settings: ${error.message}` : 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -144,6 +130,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         }
       } catch (error) {
         console.error(error);
+        toast.error('Failed to process manual generation');
       } finally {
         setTimeout(() => {
           setIsManualLoading(false);
@@ -172,6 +159,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         }
       } catch (error) {
         console.error(error);
+        toast.error('Failed to process auto generation');
       } finally {
         setTimeout(() => {
           setIsAutoLoading(false);
@@ -182,13 +170,6 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
       <ResultDialog 
         isOpen={isResultDialogOpen} 
         onClose={() => setIsResultDialogOpen(false)} 
