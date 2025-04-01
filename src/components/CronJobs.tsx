@@ -49,7 +49,7 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
+export function CronJobs({ jobs, loading }: CronJobsProps) {
   const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -74,7 +74,7 @@ export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
       );
 
       await updateCronStatus(name, !currentStatus);
-      if (onUpdate) onUpdate();
+      // Видаляємо виклик onUpdate
     } catch {
       setLocalJobs(prevJobs => 
         prevJobs.map(job => 
@@ -131,7 +131,7 @@ export function CronJobs({ jobs, loading, onUpdate }: CronJobsProps) {
       await updateCronSchedule(editingSchedule.name, scheduleInput);
       setEditingSchedule(null);
       setScheduleError(null);
-      if (onUpdate) onUpdate();
+      // Видаляємо виклик onUpdate
     } catch {
       setLocalJobs(prevJobs => 
         prevJobs.map(job => 
