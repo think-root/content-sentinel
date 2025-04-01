@@ -144,7 +144,7 @@ export async function getCollectSettings(): Promise<CollectSettings> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch collect settings: ${response.statusText}`);
+    throw new Error(`Failed to fetch collect settings`);
   }
 
   const data = await response.json();
@@ -163,7 +163,7 @@ export async function updateCollectSettings(settings: CollectSettings): Promise<
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to update collect settings: ${response.statusText}`);
+    throw new Error(`Failed to update collect settings`);
   }
 
   return response.json();
