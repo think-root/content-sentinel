@@ -4,6 +4,7 @@ import { RepositoryList } from './components/RepositoryList';
 import { GenerateForm } from './components/GenerateForm';
 import { CronJobs } from './components/CronJobs';
 import { RepositoryPreview } from './components/RepositoryPreview';
+import { Toaster, toast } from 'react-hot-toast';
 import {
   getRepositories,
   manualGenerate,
@@ -14,7 +15,7 @@ import {
 } from './api';
 import { getCronJobs, type CronJob } from './api/index';
 import type { Repository } from './types';
-import { X, LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
@@ -25,7 +26,6 @@ function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [stats, setStats] = useState({ all: 0, posted: 0, unposted: 0 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [latestPost, setLatestPost] = useState<Repository | undefined>();
   const [nextPost, setNextPost] = useState<Repository | undefined>();
   const [previewsLoading, setPreviewsLoading] = useState(true);
@@ -37,10 +37,12 @@ function App() {
     totalItems: 0
   });
   const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
-  const [cronJobsError, setCronJobsError] = useState<string | null>(null);
 
-  const setErrorWithScroll = useCallback((errorMessage: string) => {
-    setError(errorMessage);
+  const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
+    toast.error(errorMessage, {
+      id: toastId || `toast-${Date.now()}`, // Унікальний ID для кожного toast
+      duration: 4000,
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -103,7 +105,7 @@ function App() {
         throw new Error('Invalid response format');
       }
     } catch {
-      setErrorWithScroll('Failed to fetch repositories');
+      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,7 @@ function App() {
       setLatestPost(latestResponse.data.items[0]);
       setNextPost(nextResponse.data.items[0]);
     } catch {
-      setErrorWithScroll('Failed to fetch repository previews');
+      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
     } finally {
       setPreviewsLoading(false);
     }
@@ -131,9 +133,8 @@ function App() {
       setCronJobsLoading(true);
       const cronJobsResponse = await getCronJobs();
       setCronJobs(cronJobsResponse);
-      setCronJobsError(null);
     } catch {
-      setCronJobsError('Failed to fetch cron jobs');
+      setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
     } finally {
       setCronJobsLoading(false);
     }
@@ -174,7 +175,7 @@ function App() {
       }
       return response;
     } catch {
-      setErrorWithScroll('Failed to generate repository');
+      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
       return { status: 'error' };
     }
   };
@@ -188,7 +189,7 @@ function App() {
       }
       return response;
     } catch {
-      setErrorWithScroll('Failed to auto-generate repositories');
+      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
       return { status: 'error', added: [], dont_added: [] };
     }
   };
@@ -200,6 +201,18 @@ function App() {
           path="/dashboard/*"
           element={
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: 'var(--toast-bg)',
+                    color: 'var(--toast-color)',
+                    boxShadow: 'var(--toast-shadow)',
+                    animation: 'var(--toast-animation)',
+                  },
+                }}
+              />
               <div className="py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                   <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
@@ -219,19 +232,6 @@ function App() {
                 </div>
                 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                  {error && (
-                    <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
-                      <span>{error}</span>
-                      <button 
-                        onClick={() => setError(null)} 
-                        className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-100 focus:outline-none"
-                        aria-label="Close error message"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                  )}
-
                   <Stats
                     total={stats.all}
                     posted={stats.posted}
@@ -255,19 +255,6 @@ function App() {
                     onManualGenerate={handleManualGenerate}
                     onAutoGenerate={handleAutoGenerate}
                   />
-
-                  {cronJobsError && (
-                    <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-4 flex justify-between items-center">
-                      <span>{cronJobsError}</span>
-                      <button 
-                        onClick={() => setCronJobsError(null)} 
-                        className="text-red-500 dark:text-red-300 hover:text-red-700 dark:hover:text-red-100 focus:outline-none"
-                        aria-label="Close error message"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                  )}
 
                   <CronJobs
                     jobs={cronJobs}
