@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/think-root/content-sentinel/compare/v1.17.1...v1.17.2) (2025-04-02)
+
+
+### Bug Fixes
+
+* ensure all items are fetched when 'All' is selected ([1059c1d](https://github.com/think-root/content-sentinel/commit/1059c1d411825a424ee8a138bc236296a53ada16))
+
 ## [1.17.1](https://github.com/think-root/content-sentinel/compare/v1.17.0...v1.17.1) (2025-04-02)
 
 
