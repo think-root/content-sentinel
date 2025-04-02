@@ -141,7 +141,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     />
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                      Available formats: DD, MM, YYYY, HH, mm, ss
+                      DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
                     </p>
                   </div>
                   <div>
@@ -158,7 +158,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     />
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                      Format example: Europe/Kyiv, Europe/London, America/New_York
+                      Europe/Kyiv, Europe/London, America/New_York
                     </p>
                   </div>
                 </>
