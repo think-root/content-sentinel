@@ -47,7 +47,7 @@ export async function getRepositories(
   const { baseUrl, headers } = getApiConfig();
 
   const requestBody: GetRepositoryRequest = {
-    limit: fetchAll ? 0 : pageSize || limit,
+    limit: fetchAll || pageSize === 0 ? 0 : pageSize || limit,
     posted,
     sort_by: sortBy,
     sort_order: sortOrder,
