@@ -30,6 +30,7 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
 - **Icons**: Lucide React
+
 ## Screenshots
 
 <details>
@@ -121,14 +122,24 @@ Access the application at http://localhost:3000/dashboard/
 
 For successful use, you must fill in some settings that can be found in the site header on the right, the “Settings” button
 
-| Tab               | Setting          | Description                                                   |
-| ----------------- | ---------------- | ------------------------------------------------------------- |
-| **General**       | Date Format      | Choose your preferred date format (default: DD.MM.YYYY HH:mm) |
-|                  | Timezone         | Select your timezone (default: Europe/Kyiv)                   |
-| **Content Alchemist** | API Base URL     | Enter the URL of your Content Alchemist API                   |
-|                  | API Bearer Token | Provide your authentication token for API access              |
-| **Content Maestro** | API Base URL     | Enter the URL of your Content Maestro API                     |
-|                  | API Bearer Token | Provide your authentication token for API access              |
+| Tab                       | Setting          | Description                                           |
+| ------------------------- | ---------------- | ----------------------------------------------------- |
+| **General**               | Date Format      | Choose your preferred date format. Available formats: |
+|                           |                  | - DD: Day of month (01-31)                            |
+|                           |                  | - MM: Month (01-12)                                   |
+|                           |                  | - YYYY: Full year                                     |
+|                           |                  | - HH: Hours in 24h format (00-23)                     |
+|                           |                  | - hh: Hours in 12h format (01-12)                     |
+|                           |                  | - mm: Minutes (00-59)                                 |
+|                           |                  | - ss: Seconds (00-59)                                 |
+|                           |                  | - A: AM/PM indicator in uppercase                     |
+|                           |                  | - a: am/pm indicator in lowercase                     |
+|                           |                  | Default format: DD.MM.YYYY HH:mm                      |
+| **General**               | Timezone         | Select your timezone (default: Europe/Kyiv)           |
+| **Content Alchemist API** | API Base URL     | Enter the URL of your Content Alchemist API           |
+|                           | API Bearer Token | Provide your authentication token for API access      |
+| **Content Maestro API**   | API Base URL     | Enter the URL of your Content Maestro API             |
+|                           | API Bearer Token | Provide your authentication token for API access      |
 
 All settings are automatically saved and persisted in your browser's local storage.
 
