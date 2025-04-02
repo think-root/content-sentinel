@@ -1,3 +1,11 @@
+# [1.17.0](https://github.com/think-root/content-sentinel/compare/v1.16.0...v1.17.0) (2025-04-02)
+
+
+### Features
+
+* add support for 12-hour time format in date formatting ([8916b51](https://github.com/think-root/content-sentinel/commit/8916b51eebcec8fd5a8f94eb77a5b0c58ab6c5a6))
+* **SettingsModal:** update UI with icons and improved styling ([13f8fef](https://github.com/think-root/content-sentinel/commit/13f8fef69f4ccb01b39adcd0d7f01f5a0b5849d5))
+
 # [1.16.0](https://github.com/think-root/content-sentinel/compare/v1.15.1...v1.16.0) (2025-04-01)
 
 
