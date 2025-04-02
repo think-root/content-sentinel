@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '../utils/api-settings';
 import { toast, ToastOptions } from 'react-hot-toast';
+import { AlertCircle, Settings } from 'lucide-react';
+
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -103,7 +105,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between p-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Settings className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                Settings
+              </h3>
               <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400">
                 <span className="sr-only">Close</span>
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -113,8 +118,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
             <div className="flex border-b border-gray-200 dark:border-gray-700">
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('general')}>General</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist API</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro API</button>
             </div>
           </div>
 
@@ -134,7 +139,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       value={settings.dateFormat}
                       onChange={(e) => updateSettings({ dateFormat: e.target.value })}
                     />
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       Available formats: DD, MM, YYYY, HH, mm, ss
                     </p>
                   </div>
@@ -150,7 +156,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       value={settings.timezone}
                       onChange={(e) => updateSettings({ timezone: e.target.value })}
                     />
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       Format example: Europe/Kyiv, Europe/London, America/New_York
                     </p>
                   </div>
@@ -225,14 +232,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <button
               type="button"
               onClick={handleSave}
-              className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto"
+              className="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:ml-3 sm:w-auto"
             >
               Save
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 sm:mt-0 sm:w-auto"
+              className="mt-3 inline-flex w-full justify-center rounded-md bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto"
             >
               Cancel
             </button>
