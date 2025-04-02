@@ -122,24 +122,14 @@ Access the application at http://localhost:3000/dashboard/
 
 For successful use, you must fill in some settings that can be found in the site header on the right, the “Settings” button.
 
-| Tab                       | Setting          | Description                                           |
-| ------------------------- | ---------------- | ----------------------------------------------------- |
-| **General**               | Date Format      | Choose your preferred date format. Available formats: |
-|                           |                  | &nbsp;• `DD` – Day of month (01-31)                   |
-|                           |                  | &nbsp;• `MM` – Month (01-12)                          |
-|                           |                  | &nbsp;• `YYYY` – Full year                            |
-|                           |                  | &nbsp;• `HH` – Hours in 24h format (00-23)            |
-|                           |                  | &nbsp;• `hh` – Hours in 12h format (01-12)            |
-|                           |                  | &nbsp;• `mm` – Minutes (00-59)                        |
-|                           |                  | &nbsp;• `ss` – Seconds (00-59)                        |
-|                           |                  | &nbsp;• `A` – AM/PM indicator (uppercase)             |
-|                           |                  | &nbsp;• `a` – am/pm indicator (lowercase)             |
-|                           |                  | **Default format:** `DD.MM.YYYY HH:mm`                |
-|                           | Timezone         | Select your timezone (**default:** `Europe/Kyiv`)     |
-| **Content Alchemist API** | API Base URL     | Enter the URL of your Content Alchemist API           |
-|                           | API Bearer Token | Provide your authentication token for API access      |
-| **Content Maestro API**   | API Base URL     | Enter the URL of your Content Maestro API             |
-|                           | API Bearer Token | Provide your authentication token for API access      |
+| Tab                       | Setting          | Description                                                                                                                                                                                                                          |
+| ------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **General**               | Date Format      | Choose your preferred date format. Available formats: `DD` (day), `MM` (month), `YYYY` (year), `HH` (24h), `hh` (12h), `mm` (minutes), `ss` (seconds), `A` (AM/PM uppercase), `a` (am/pm lowercase). **Default:** `DD.MM.YYYY HH:mm` |
+|                           | Timezone         | Select your timezone (**default:** `Europe/Kyiv`)                                                                                                                                                                                    |
+| **Content Alchemist API** | API Base URL     | Enter the URL of your Content Alchemist API                                                                                                                                                                                          |
+|                           | API Bearer Token | Provide your authentication token for API access                                                                                                                                                                                     |
+| **Content Maestro API**   | API Base URL     | Enter the URL of your Content Maestro API                                                                                                                                                                                            |
+|                           | API Bearer Token | Provide your authentication token for API access                                                                                                                                                                                     |
 
 All settings are automatically saved and persisted in your browser's local storage.
 
