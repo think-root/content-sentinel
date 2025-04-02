@@ -1,3 +1,11 @@
+## [1.17.1](https://github.com/think-root/content-sentinel/compare/v1.17.0...v1.17.1) (2025-04-02)
+
+
+### Bug Fixes
+
+* fix pagination logic for fetchAll ([b1a6b58](https://github.com/think-root/content-sentinel/commit/b1a6b58916bace00d54e54c52017c996a64b0c6b))
+* handle edge case for fetchAll in getRepositories ([ff39384](https://github.com/think-root/content-sentinel/commit/ff39384699a81ad2665421f3edad75d9abe90065))
+
 # [1.17.0](https://github.com/think-root/content-sentinel/compare/v1.16.0...v1.17.0) (2025-04-02)
 
 
