@@ -67,8 +67,8 @@ function App() {
         fetchAll,
         sortBy,
         sortOrder,
-        page,
-        itemsPerPage
+        fetchAll ? undefined : page, // Не передаємо page якщо fetchAll
+        fetchAll ? 0 : itemsPerPage  // При fetchAll встановлюємо page_size в 0
       );
       
       if (response && response.data && response.data.items) {
@@ -86,8 +86,8 @@ function App() {
 
         setPagination(prev => {
           const newPagination = {
-            currentPage: response.data.page,
-            pageSize: response.data.page_size,
+            currentPage: fetchAll ? 1 : response.data.page,
+            pageSize: fetchAll ? 0 : response.data.page_size,
             totalPages: response.data.total_pages,
             totalItems: response.data.total_items
           };
