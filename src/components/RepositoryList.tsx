@@ -220,13 +220,26 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 disabled={loading}
                 className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                title="Filter repositories by status"
+                title="Filter posts by status"
               >
                 <option value="all">All</option>
                 <option value="posted">Posted</option>
                 <option value="unposted">Unposted</option>
               </select>
             
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
+                disabled={loading}
+                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                title="Sort posts by field"
+              >
+                <option value="id">ID</option>
+                <option value="date_added">Date Added</option>
+                <option value="date_posted">Date Posted</option>
+              </select>
+
               <select
                 value={itemsPerPage}
                 onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
@@ -240,19 +253,6 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
-              </select>
-
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
-                disabled={loading}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                title="Sort repositories by field"
-              >
-                <option value="id">ID</option>
-                <option value="date_added">Date Added</option>
-                <option value="date_posted">Date Posted</option>
               </select>
 
               <button
