@@ -396,7 +396,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
               </div>
             </div>
           </div>
-          <div className="mt-4 flex space-x-4">
+          <div className="mt-4 flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0">
             <button
               type="submit"
               disabled={isAutoLoading}
