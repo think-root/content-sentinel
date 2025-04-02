@@ -104,7 +104,16 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     setCurrentPage(1);
     
     const posted = value === 'all' ? undefined : value === 'posted';
-    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, 1);
+    // Add itemsPerPage === 0 check to ensure we fetch all items when "All" is selected
+    fetchRepositories(
+      posted,
+      false,
+      itemsPerPage === 0,  // Pass true if "All" is selected
+      itemsPerPage,
+      sortBy,
+      sortOrder,
+      1
+    );
   };
 
   const handleItemsPerPageChange = (value: number) => {
@@ -115,7 +124,15 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, value === 0, value, sortBy, sortOrder, 1);
+    fetchRepositories(
+      posted,
+      false,
+      value === 0,  // Pass true if "All" is selected
+      value,
+      sortBy,
+      sortOrder,
+      1
+    );
   };
 
   const handleSortByChange = (value: 'id' | 'date_added' | 'date_posted') => {
