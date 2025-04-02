@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/think-root/content-sentinel/compare/v1.17.2...v1.18.0) (2025-04-02)
+
+
+### Features
+
+* update button layout in GenerateForm ([b59b6ab](https://github.com/think-root/content-sentinel/commit/b59b6ab5cfa931b0b9926f33860572427a35be68))
+
 ## [1.17.2](https://github.com/think-root/content-sentinel/compare/v1.17.1...v1.17.2) (2025-04-02)
 
 
