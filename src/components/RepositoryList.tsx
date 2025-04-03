@@ -104,11 +104,11 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     setCurrentPage(1);
     
     const posted = value === 'all' ? undefined : value === 'posted';
-    // Add itemsPerPage === 0 check to ensure we fetch all items when "All" is selected
+
     fetchRepositories(
       posted,
       false,
-      itemsPerPage === 0,  // Pass true if "All" is selected
+      itemsPerPage === 0,
       itemsPerPage,
       sortBy,
       sortOrder,
@@ -127,7 +127,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     fetchRepositories(
       posted,
       false,
-      value === 0,  // Pass true if "All" is selected
+      value === 0,
       value,
       sortBy,
       sortOrder,

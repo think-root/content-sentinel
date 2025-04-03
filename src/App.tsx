@@ -40,7 +40,7 @@ function App() {
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
     toast.error(errorMessage, {
-      id: toastId || `toast-${Date.now()}`, // Унікальний ID для кожного toast
+      id: toastId || `toast-${Date.now()}`,
       duration: 4000,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -67,8 +67,8 @@ function App() {
         fetchAll,
         sortBy,
         sortOrder,
-        fetchAll ? undefined : page, // Не передаємо page якщо fetchAll
-        fetchAll ? 0 : itemsPerPage  // При fetchAll встановлюємо page_size в 0
+        fetchAll ? undefined : page,
+        fetchAll ? 0 : itemsPerPage
       );
       
       if (response && response.data && response.data.items) {
