@@ -1,3 +1,12 @@
+# [1.19.0](https://github.com/think-root/content-sentinel/compare/v1.18.0...v1.19.0) (2025-04-03)
+
+
+### Features
+
+* add responsive toast positioning in App component ([04aa958](https://github.com/think-root/content-sentinel/commit/04aa958f6c2c411f2f76a2440285725205fb1bc7))
+* auto change toast position based on the window width ([ca65ee0](https://github.com/think-root/content-sentinel/commit/ca65ee0a6173a163b80fb1c13e403e0cab78fc60))
+* update toast shadow and remove unused animation ([94bee70](https://github.com/think-root/content-sentinel/commit/94bee70ada8d2d9d344b3f46676827a833399deb))
+
 # [1.18.0](https://github.com/think-root/content-sentinel/compare/v1.17.2...v1.18.0) (2025-04-02)
 
 
