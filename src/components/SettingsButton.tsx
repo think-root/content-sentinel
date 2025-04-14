@@ -1,10 +1,13 @@
 import { Settings } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
-import { useDisclosure } from '../hooks/useDisclosure';
 
-export const SettingsButton: React.FC = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+interface SettingsButtonProps {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}
 
+export const SettingsButton: React.FC<SettingsButtonProps> = ({ isOpen, onOpen, onClose }) => {
   return (
     <>
       <button
