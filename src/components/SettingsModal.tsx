@@ -182,7 +182,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           <div
             {...handlers}
-            className="p-4 overflow-hidden"
+            className="p-4 overflow-hidden transition-[height] duration-300 ease-in-out"
           >
             <div
               className="flex transition-transform duration-300 ease-in-out"
