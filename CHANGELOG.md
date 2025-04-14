@@ -1,3 +1,11 @@
+# [1.23.0](https://github.com/think-root/content-sentinel/compare/v1.22.1...v1.23.0) (2025-04-14)
+
+
+### Features
+
+* add mobile device detection for pull-to-refresh functionality ([09509a6](https://github.com/think-root/content-sentinel/commit/09509a6b79d17cacb9616e4a274e7ab6043000fc))
+* enhance swipe navigation in SettingsModal for mobile devices ([c19dad3](https://github.com/think-root/content-sentinel/commit/c19dad3a285551ed42eadbdd9763c9f5e8e0be26))
+
 ## [1.22.1](https://github.com/think-root/content-sentinel/compare/v1.22.0...v1.22.1) (2025-04-14)
 
 
