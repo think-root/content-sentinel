@@ -36,6 +36,10 @@ import { compareRepositories, comparePreviews, compareCronJobs } from './utils/d
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const isCacheBust = urlParams.has('cache_bust');
@@ -744,7 +748,7 @@ function App() {
               ) : (
                 <PullToRefresh
                   onRefresh={handlePullToRefresh}
-                  isPullable={!loading && !previewsLoading}
+                  isPullable={!loading && !previewsLoading && isMobileDevice()}
                   pullingContent={
                     <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
                       <div className="flex items-center justify-center gap-3">
