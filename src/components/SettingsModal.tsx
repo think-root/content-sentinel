@@ -301,7 +301,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Cache Management</h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data.
+                        The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data. You can also clear the cache if you encounter errors when loading data.
                       </p>
                       <button
                         type="button"
