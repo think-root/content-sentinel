@@ -613,6 +613,7 @@ function App() {
                         </svg>
                       </div>
                     ),
+                    duration: 5000,
                   },
                   error: {
                     icon: (
@@ -622,6 +623,7 @@ function App() {
                         </svg>
                       </div>
                     ),
+                    duration: 5000,
                   },
                   loading: {
                     icon: (
@@ -629,11 +631,26 @@ function App() {
                         <RefreshCw className="h-3.5 w-3.5 text-white animate-spin" />
                       </div>
                     ),
+                    duration: 3000,
                   },
                 }}
               >
                 {(t) => (
-                  <div onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer' }}>
+                  <div 
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      if (t.style) {
+                        t.style.animation = 'custom-exit 0.3s ease forwards';
+                      }
+                    }}
+                    onTouchStart={() => {
+                      toast.dismiss(t.id);
+                      if (t.style) {
+                        t.style.animation = 'custom-exit 0.3s ease forwards';
+                      }
+                    }}
+                    style={{ cursor: 'pointer', touchAction: 'manipulation' }}
+                  >
                     <ToastBar
                       toast={t}
                       style={{
@@ -641,8 +658,8 @@ function App() {
                         color: 'var(--toast-color)',
                         boxShadow: 'var(--toast-shadow)',
                         animation: t.visible
-                          ? 'custom-enter 1s ease'
-                          : 'custom-exit 1s ease forwards',
+                          ? 'custom-enter 0.3s ease'
+                          : 'custom-exit 0.3s ease forwards',
                       }}
                     />
                   </div>
