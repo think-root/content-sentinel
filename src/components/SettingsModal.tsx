@@ -12,7 +12,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
-  const [activeTab, setActiveTab] = useState<'general' | 'content-alchemist' | 'content-maestro' | 'cache'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'api' | 'cache'>('general');
   const [clearingCache, setClearingCache] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
 
@@ -20,7 +20,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     id: 'unique-toast-settings'
   };
 
-  const tabs: Array<'general' | 'content-alchemist' | 'content-maestro' | 'cache'> = ['general', 'content-alchemist', 'content-maestro', 'cache'];
+  const tabs: Array<'general' | 'api' | 'cache'> = ['general', 'api', 'cache'];
 
   const handlers = useSwipeable({
     onSwipeStart: () => setIsSwiping(true),
@@ -175,15 +175,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
             <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('general')}>General</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'api' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('api')}>API</button>
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'cache' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('cache')}>Cache</button>
             </div>
           </div>
 
           <div
             {...handlers}
-            className="p-4 overflow-hidden h-[300px]"
+            className="p-4 overflow-hidden"
           >
             <div
               className="flex transition-transform duration-300 ease-in-out"
@@ -231,66 +230,66 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
 
               <div className="w-full flex-shrink-0 px-1">
-                {activeTab === 'content-alchemist' && (
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="alchemistApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        API Base URL
-                      </label>
-                      <input
-                        type="text"
-                        id="alchemistApiBaseUrl"
-                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Enter API base URL"
-                        value={settings.contentAlchemist?.apiBaseUrl}
-                        onChange={(e) => updateContentAlchemist('apiBaseUrl', e.target.value)}
-                      />
+                {activeTab === 'api' && (
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Content Alchemist API</h3>
+                      <div>
+                        <label htmlFor="alchemistApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          API Base URL
+                        </label>
+                        <input
+                          type="text"
+                          id="alchemistApiBaseUrl"
+                          className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Enter API base URL"
+                          value={settings.contentAlchemist?.apiBaseUrl}
+                          onChange={(e) => updateContentAlchemist('apiBaseUrl', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="alchemistApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          API Bearer Token
+                        </label>
+                        <input
+                          type="password"
+                          id="alchemistApiBearerToken"
+                          className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Enter API bearer token"
+                          value={settings.contentAlchemist?.apiBearerToken}
+                          onChange={(e) => updateContentAlchemist('apiBearerToken', e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label htmlFor="alchemistApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        API Bearer Token
-                      </label>
-                      <input
-                        type="password"
-                        id="alchemistApiBearerToken"
-                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Enter API bearer token"
-                        value={settings.contentAlchemist?.apiBearerToken}
-                        onChange={(e) => updateContentAlchemist('apiBearerToken', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full flex-shrink-0 px-1">
-                {activeTab === 'content-maestro' && (
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="maestroApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        API Base URL
-                      </label>
-                      <input
-                        type="text"
-                        id="maestroApiBaseUrl"
-                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Enter API base URL"
-                        value={settings.contentMaestro?.apiBaseUrl}
-                        onChange={(e) => updateContentMaestro('apiBaseUrl', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="maestroApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        API Bearer Token
-                      </label>
-                      <input
-                        type="password"
-                        id="maestroApiBearerToken"
-                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Enter API bearer token"
-                        value={settings.contentMaestro?.apiBearerToken}
-                        onChange={(e) => updateContentMaestro('apiBearerToken', e.target.value)}
-                      />
+                    
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Content Maestro API</h3>
+                      <div>
+                        <label htmlFor="maestroApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          API Base URL
+                        </label>
+                        <input
+                          type="text"
+                          id="maestroApiBaseUrl"
+                          className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Enter API base URL"
+                          value={settings.contentMaestro?.apiBaseUrl}
+                          onChange={(e) => updateContentMaestro('apiBaseUrl', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="maestroApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          API Bearer Token
+                        </label>
+                        <input
+                          type="password"
+                          id="maestroApiBearerToken"
+                          className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Enter API bearer token"
+                          value={settings.contentMaestro?.apiBearerToken}
+                          onChange={(e) => updateContentMaestro('apiBearerToken', e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
