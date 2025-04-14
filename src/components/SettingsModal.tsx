@@ -125,7 +125,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
           </div>
 
-          <div className="p-4 h-[250px] overflow-y-auto">
+          <div className={`p-4 ${activeTab !== 'general' ? 'h-[250px] overflow-y-auto' : ''}`}>
             <div className="space-y-3">
               {activeTab === 'general' && (
                 <>
