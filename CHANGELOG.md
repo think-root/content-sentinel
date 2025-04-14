@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/think-root/content-sentinel/compare/v1.20.0...v1.21.0) (2025-04-14)
+
+
+### Features
+
+* implement pull-to-refresh and enhance data caching mechanism ([3df2d8d](https://github.com/think-root/content-sentinel/commit/3df2d8d51f18276995f7877a4cca6d6029369c7b))
+
 # [1.20.0](https://github.com/think-root/content-sentinel/compare/v1.19.0...v1.20.0) (2025-04-14)
 
 
