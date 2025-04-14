@@ -657,18 +657,18 @@ function App() {
                 <PullToRefresh
                   onRefresh={handleManualRefresh}
                   pullingContent={
-                    <div className="text-center py-4 px-6 bg-white dark:bg-gray-800 rounded-lg shadow-md w-full max-w-xs mx-auto border border-gray-200 dark:border-gray-700">
+                    <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
                       <div className="flex items-center justify-center gap-3">
-                        <RotateCw className="h-6 w-6 text-blue-500" />
-                        <span className="text-gray-700 dark:text-gray-300 font-medium text-base">Pull down to refresh</span>
+                        <RotateCw className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        <span className="text-gray-800 dark:text-gray-100 font-medium text-base">Pull down to refresh</span>
                       </div>
                     </div>
                   }
                   refreshingContent={
-                    <div className="text-center py-4 px-6 bg-white dark:bg-gray-800 rounded-lg shadow-md w-full max-w-xs mx-auto border border-gray-200 dark:border-gray-700">
+                    <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
                       <div className="flex items-center justify-center gap-3">
-                        <RefreshCw className="h-6 w-6 text-blue-500 animate-spin" />
-                        <span className="text-gray-700 dark:text-gray-300 font-medium text-base">Refreshing...</span>
+                        <RefreshCw className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                        <span className="text-gray-800 dark:text-gray-100 font-medium text-base">Refreshing...</span>
                       </div>
                     </div>
                   }
