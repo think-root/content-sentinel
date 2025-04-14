@@ -1,3 +1,16 @@
+# [1.22.0](https://github.com/think-root/content-sentinel/compare/v1.21.0...v1.22.0) (2025-04-14)
+
+
+### Bug Fixes
+
+* update cache management description in SettingsModal ([3b7de94](https://github.com/think-root/content-sentinel/commit/3b7de946928c4aa9b83622fe74e5ccf26409c282))
+
+
+### Features
+
+* enhance pull-to-refresh functionality and settings modal integration ([f465537](https://github.com/think-root/content-sentinel/commit/f465537363c09d79abd2fa20eec33480abe266f9))
+* enhance SettingsModal with swipe navigation and touch event handling ([131dd04](https://github.com/think-root/content-sentinel/commit/131dd04c98eafc5a54a54be686f9fa38641641d4))
+
 # [1.21.0](https://github.com/think-root/content-sentinel/compare/v1.20.0...v1.21.0) (2025-04-14)
 
 
