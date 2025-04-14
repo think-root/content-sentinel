@@ -22,22 +22,27 @@ export const useDataRefresh = ({
   fetchRepositories,
   fetchPreviews,
   fetchCronJobs,
-  setLoading,
   setErrorWithScroll
 }: UseDataRefreshProps) => {
   const handleManualRefresh = useCallback(async (): Promise<boolean> => {
     try {
-      const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
-      const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' | null;
-      const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' | null;
-      const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
-      const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+      const savedStatusFilter = localStorage.getItem("dashboardStatusFilter") as
+        | "all"
+        | "posted"
+        | "unposted"
+        | null;
+      const savedSortBy = localStorage.getItem("dashboardSortBy") as
+        | "id"
+        | "date_added"
+        | "date_posted"
+        | null;
+      const savedSortOrder = localStorage.getItem("dashboardSortOrder") as "ASC" | "DESC" | null;
+      const savedItemsPerPage = parseInt(localStorage.getItem("dashboardItemsPerPage") || "10", 10);
+      const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
 
-      setLoading(true);
-
-      toast.loading('Refreshing data', {
-        id: 'manual-refresh-notification',
-        duration: 3000
+      toast.loading("Refreshing data", {
+        id: "manual-refresh-notification",
+        duration: 3000,
       });
 
       const fetchPromises = [
@@ -46,36 +51,32 @@ export const useDataRefresh = ({
           false,
           savedItemsPerPage === 0,
           savedItemsPerPage,
-          savedSortBy || 'date_added',
-          savedSortOrder || 'DESC',
+          savedSortBy || "date_added",
+          savedSortOrder || "DESC",
           1,
           true
         ),
-        fetchPreviews(true)
+        fetchPreviews(true),
       ];
-      
+
       if (fetchCronJobs) {
         fetchPromises.push(fetchCronJobs(true));
       }
-      
+
       await Promise.all(fetchPromises);
 
-      setLoading(false);
-
-      toast.dismiss('manual-refresh-notification');
-      toast.success('New data received from server', {
-        id: 'new-data-notification',
-        duration: 5000
+      toast.dismiss("manual-refresh-notification");
+      toast.success("New data received from server", {
+        id: "new-data-notification",
+        duration: 5000,
       });
 
       return true;
     } catch {
-      setLoading(false);
-      setErrorWithScroll('Failed to refresh data', 'refresh-error');
+      setErrorWithScroll("Failed to refresh data", "refresh-error");
       return false;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchRepositories, fetchPreviews, setLoading, setErrorWithScroll]);
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, setErrorWithScroll]);
 
   const handlePullToRefresh = useCallback(async () => {
     console.log('[PullToRefresh] Refresh triggered');
