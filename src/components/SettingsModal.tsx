@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '../utils/api-settings';
 import { toast, ToastOptions } from 'react-hot-toast';
-import { AlertCircle, Settings } from 'lucide-react';
+import { AlertCircle, Settings, RefreshCw } from 'lucide-react';
 
 
 interface SettingsModalProps {
@@ -11,7 +11,8 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
-  const [activeTab, setActiveTab] = useState<'general' | 'content-alchemist' | 'content-maestro'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'content-alchemist' | 'content-maestro' | 'cache'>('general');
+  const [clearingCache, setClearingCache] = useState(false);
 
   const toastOptions: ToastOptions = {
     id: 'unique-toast-settings'
@@ -116,10 +117,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </svg>
               </button>
             </div>
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('general')}>General</button>
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist API</button>
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro API</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'cache' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('cache')}>Cache</button>
             </div>
           </div>
 
@@ -222,6 +224,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       value={settings.contentMaestro?.apiBearerToken}
                       onChange={(e) => updateContentMaestro('apiBearerToken', e.target.value)}
                     />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'cache' && (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Cache Management</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setClearingCache(true);
+                        try {
+                          if (window.clearAllCaches) {
+                            window.clearAllCaches();
+                          }
+
+                          if (window.clearApiCache) {
+                            await window.clearApiCache();
+                          }
+
+                          toast.success('Cache cleared successfully', toastOptions);
+
+                          setTimeout(() => {
+                            const currentUrl = window.location.href;
+                            const separator = currentUrl.includes('?') ? '&' : '?';
+                            const timestamp = Date.now();
+                            window.location.href = `${currentUrl}${separator}cache_bust=${timestamp}`;
+                          }, 1000);
+                        } catch {
+                          toast.error('Failed to clear cache', toastOptions);
+                        } finally {
+                          setClearingCache(false);
+                        }
+                      }}
+                      disabled={clearingCache}
+                      className={`inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${clearingCache ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800`}
+                    >
+                      {clearingCache ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Clearing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Clear API Cache
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
