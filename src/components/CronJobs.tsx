@@ -13,7 +13,6 @@ const toastOptions: ToastOptions = {
 interface CronJobsProps {
   jobs: CronJob[];
   loading: boolean;
-  onUpdate?: () => void;
 }
 
 const validateCronExpression = (cron: string): boolean => {

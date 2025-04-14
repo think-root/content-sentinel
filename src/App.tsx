@@ -102,7 +102,8 @@ function App() {
       isCacheBust
     );
     fetchPreviews(isCacheBust);
-  }, [fetchRepositories, fetchPreviews, isCacheBust]);
+    fetchCronJobs(isCacheBust);
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, isCacheBust]);
 
   useEffect(() => {
     if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable) {

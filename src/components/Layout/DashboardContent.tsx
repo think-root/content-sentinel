@@ -52,7 +52,6 @@ export const DashboardContent = ({
   cronJobsLoading,
   pagination,
   fetchRepositories,
-  fetchPreviews,
   handleManualGenerate,
   handleAutoGenerate
 }: DashboardContentProps) => {
@@ -85,7 +84,6 @@ export const DashboardContent = ({
       <CronJobs
         jobs={cronJobs}
         loading={cronJobsLoading}
-        onUpdate={fetchPreviews}
       />
 
       <RepositoryList
