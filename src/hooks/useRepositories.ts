@@ -185,17 +185,33 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     forceFetch: boolean = false
   ) => {
     try {
-      const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page });
-      const currentCacheKey = localStorage.getItem('cache_repositories_key');
+      const cacheKey = JSON.stringify({
+        statusFilter,
+        fetchAll,
+        itemsPerPage,
+        sortBy,
+        sortOrder,
+        page,
+      });
+      const currentCacheKey = localStorage.getItem("cache_repositories_key");
+      const hasCache = getRepositoriesFromCache() !== null;
 
-      if (currentCacheKey !== cacheKey || forceFetch) {
+      if ((!hasCache || currentCacheKey !== cacheKey) && !forceFetch) {
         if (!append) {
-          setState(prev => ({ ...prev, loading: true }));
+          setState((prev) => ({ ...prev, loading: true }));
         }
       }
 
-      const isBackgroundFetch = currentCacheKey === cacheKey && !forceFetch;
-      await fetchRepositoriesFromAPI(statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page, isBackgroundFetch);
+      const isBackgroundFetch = hasCache && currentCacheKey === cacheKey && !forceFetch;
+      await fetchRepositoriesFromAPI(
+        statusFilter,
+        fetchAll,
+        itemsPerPage,
+        sortBy,
+        sortOrder,
+        page,
+        isBackgroundFetch
+      );
     } catch {
       setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
       setState(prev => ({ ...prev, loading: false }));
