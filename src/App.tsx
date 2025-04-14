@@ -526,11 +526,6 @@ function App() {
         duration: 5000
       });
 
-      // Add event listener to dismiss toast on tap/click
-      const toastElement = document.querySelector('[data-id="new-data-notification"]');
-      if (toastElement) {
-        toastElement.addEventListener('click', () => toast.dismiss('new-data-notification'));
-      }
       return true;
     } catch {
       setLoading(false);
@@ -586,12 +581,6 @@ function App() {
           id: 'new-data-notification',
           duration: 5000
         });
-
-        // Add event listener to dismiss toast on tap/click
-        const toastElement = document.querySelector('[data-id="new-data-notification"]');
-        if (toastElement) {
-          toastElement.addEventListener('click', () => toast.dismiss('new-data-notification'));
-        }
       }
     }
   }, [newDataAvailable, newDataDetails, applyNewData]);
@@ -644,17 +633,19 @@ function App() {
                 }}
               >
                 {(t) => (
-                  <ToastBar
-                    toast={t}
-                    style={{
-                      background: 'var(--toast-bg)',
-                      color: 'var(--toast-color)',
-                      boxShadow: 'var(--toast-shadow)',
-                      animation: t.visible
-                        ? 'custom-enter 1s ease'
-                        : 'custom-exit 1s ease forwards',
-                    }}
-                  />
+                  <div onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer' }}>
+                    <ToastBar
+                      toast={t}
+                      style={{
+                        background: 'var(--toast-bg)',
+                        color: 'var(--toast-color)',
+                        boxShadow: 'var(--toast-shadow)',
+                        animation: t.visible
+                          ? 'custom-enter 1s ease'
+                          : 'custom-exit 1s ease forwards',
+                      }}
+                    />
+                  </div>
                 )}
               </Toaster>
               {isSettingsOpen ? (
