@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '../utils/api-settings';
 import { toast, ToastOptions } from 'react-hot-toast';
 import { AlertCircle, Settings, RefreshCw } from 'lucide-react';
@@ -13,20 +14,69 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
   const [activeTab, setActiveTab] = useState<'general' | 'content-alchemist' | 'content-maestro' | 'cache'>('general');
   const [clearingCache, setClearingCache] = useState(false);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   const toastOptions: ToastOptions = {
     id: 'unique-toast-settings'
   };
 
+  const tabs: Array<'general' | 'content-alchemist' | 'content-maestro' | 'cache'> = ['general', 'content-alchemist', 'content-maestro', 'cache'];
+
+  const handlers = useSwipeable({
+    onSwipeStart: () => setIsSwiping(true),
+    onSwiped: () => setTimeout(() => setIsSwiping(false), 50),
+    onSwipedLeft: () => {
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1]);
+      }
+    },
+    onSwipedRight: () => {
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: true
+  });
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      
+      // Capture and prevent all touch/pointer events on document level
+      const preventTouchMove = (e: TouchEvent | MouseEvent) => {
+        // Find modal content element by class
+        const modalContent = document.querySelector('.settings-modal-content');
+        
+        // Skip prevention if the event target is inside the modal
+        if (modalContent && (e.target instanceof Node) && modalContent.contains(e.target)) {
+          return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+      };
+      
+      // Add these event listeners with capture=true to intercept before they reach other handlers
+      document.addEventListener('touchmove', preventTouchMove, { passive: false, capture: true });
+      document.addEventListener('touchstart', preventTouchMove, { passive: false, capture: true });
+      document.addEventListener('touchend', preventTouchMove, { passive: false, capture: true });
+      
+      return () => {
+        document.body.style.overflow = '';
+        // Remove event listeners on cleanup
+        document.removeEventListener('touchmove', preventTouchMove, { capture: true });
+        document.removeEventListener('touchstart', preventTouchMove, { capture: true });
+        document.removeEventListener('touchend', preventTouchMove, { capture: true });
+      };
     } else {
       document.body.style.overflow = '';
+      return () => {
+        document.body.style.overflow = '';
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   const handleSave = () => {
@@ -100,9 +150,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg">
+    <div 
+      className="fixed inset-0 z-50"
+      onTouchStart={(e) => e.stopPropagation()} 
+      onMouseDown={(e) => e.stopPropagation()} 
+    >
+      <div 
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all" 
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !isSwiping) {
+            onClose();
+          }
+        }}
+      />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg settings-modal-content" style={{ zIndex: 9999 }}>
         <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between p-3">
@@ -125,161 +186,175 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
           </div>
 
-          <div className={`p-4 ${activeTab !== 'general' ? 'h-[250px] overflow-y-auto' : ''}`}>
-            <div className="space-y-3">
-              {activeTab === 'general' && (
-                <>
-                  <div>
-                    <label htmlFor="dateFormat" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Date Format
-                    </label>
-                    <input
-                      type="text"
-                      id="dateFormat"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="example: DD.MM.YYYY HH:mm:ss"
-                      value={settings.dateFormat}
-                      onChange={(e) => updateSettings({ dateFormat: e.target.value })}
-                    />
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                      DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
-                    </p>
+          <div
+            {...handlers}
+            className="p-4 overflow-hidden h-[300px]"
+          >
+            <div
+              className="flex transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${tabs.indexOf(activeTab) * 100}%)` }}
+            >
+              <div className="w-full flex-shrink-0 px-1">
+                {activeTab === 'general' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="dateFormat" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Date Format
+                      </label>
+                      <input
+                        type="text"
+                        id="dateFormat"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="example: DD.MM.YYYY HH:mm:ss"
+                        value={settings.dateFormat}
+                        onChange={(e) => updateSettings({ dateFormat: e.target.value })}
+                      />
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
+                      </p>
+                    </div>
+                    <div>
+                      <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Timezone
+                      </label>
+                      <input
+                        type="text"
+                        id="timezone"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter timezone (e.g. Europe/Kyiv)"
+                        value={settings.timezone}
+                        onChange={(e) => updateSettings({ timezone: e.target.value })}
+                      />
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        Europe/Kyiv, Europe/London, America/New_York
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Timezone
-                    </label>
-                    <input
-                      type="text"
-                      id="timezone"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter timezone (e.g. Europe/Kyiv)"
-                      value={settings.timezone}
-                      onChange={(e) => updateSettings({ timezone: e.target.value })}
-                    />
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                      Europe/Kyiv, Europe/London, America/New_York
-                    </p>
-                  </div>
-                </>
-              )}
+                )}
+              </div>
 
-              {activeTab === 'content-alchemist' && (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="alchemistApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Base URL
-                    </label>
-                    <input
-                      type="text"
-                      id="alchemistApiBaseUrl"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter API base URL"
-                      value={settings.contentAlchemist?.apiBaseUrl}
-                      onChange={(e) => updateContentAlchemist('apiBaseUrl', e.target.value)}
-                    />
+              <div className="w-full flex-shrink-0 px-1">
+                {activeTab === 'content-alchemist' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="alchemistApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        API Base URL
+                      </label>
+                      <input
+                        type="text"
+                        id="alchemistApiBaseUrl"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter API base URL"
+                        value={settings.contentAlchemist?.apiBaseUrl}
+                        onChange={(e) => updateContentAlchemist('apiBaseUrl', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="alchemistApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        API Bearer Token
+                      </label>
+                      <input
+                        type="password"
+                        id="alchemistApiBearerToken"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter API bearer token"
+                        value={settings.contentAlchemist?.apiBearerToken}
+                        onChange={(e) => updateContentAlchemist('apiBearerToken', e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="alchemistApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Bearer Token
-                    </label>
-                    <input
-                      type="password"
-                      id="alchemistApiBearerToken"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter API bearer token"
-                      value={settings.contentAlchemist?.apiBearerToken}
-                      onChange={(e) => updateContentAlchemist('apiBearerToken', e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {activeTab === 'content-maestro' && (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="maestroApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Base URL
-                    </label>
-                    <input
-                      type="text"
-                      id="maestroApiBaseUrl"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter API base URL"
-                      value={settings.contentMaestro?.apiBaseUrl}
-                      onChange={(e) => updateContentMaestro('apiBaseUrl', e.target.value)}
-                    />
+              <div className="w-full flex-shrink-0 px-1">
+                {activeTab === 'content-maestro' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="maestroApiBaseUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        API Base URL
+                      </label>
+                      <input
+                        type="text"
+                        id="maestroApiBaseUrl"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter API base URL"
+                        value={settings.contentMaestro?.apiBaseUrl}
+                        onChange={(e) => updateContentMaestro('apiBaseUrl', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="maestroApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        API Bearer Token
+                      </label>
+                      <input
+                        type="password"
+                        id="maestroApiBearerToken"
+                        className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter API bearer token"
+                        value={settings.contentMaestro?.apiBearerToken}
+                        onChange={(e) => updateContentMaestro('apiBearerToken', e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label htmlFor="maestroApiBearerToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Bearer Token
-                    </label>
-                    <input
-                      type="password"
-                      id="maestroApiBearerToken"
-                      className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter API bearer token"
-                      value={settings.contentMaestro?.apiBearerToken}
-                      onChange={(e) => updateContentMaestro('apiBearerToken', e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {activeTab === 'cache' && (
-                <div className="space-y-4">
-                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Cache Management</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setClearingCache(true);
-                        try {
-                          if (window.clearAllCaches) {
-                            window.clearAllCaches();
+              <div className="w-full flex-shrink-0 px-1">
+                {activeTab === 'cache' && (
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Cache Management</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setClearingCache(true);
+                          try {
+                            if (window.clearAllCaches) {
+                              window.clearAllCaches();
+                            }
+
+                            if (window.clearApiCache) {
+                              await window.clearApiCache();
+                            }
+
+                            toast.success('Cache cleared successfully', toastOptions);
+
+                            setTimeout(() => {
+                              const currentUrl = window.location.href;
+                              const separator = currentUrl.includes('?') ? '&' : '?';
+                              const timestamp = Date.now();
+                              window.location.href = `${currentUrl}${separator}cache_bust=${timestamp}`;
+                            }, 1000);
+                          } catch {
+                            toast.error('Failed to clear cache', toastOptions);
+                          } finally {
+                            setClearingCache(false);
                           }
-
-                          if (window.clearApiCache) {
-                            await window.clearApiCache();
-                          }
-
-                          toast.success('Cache cleared successfully', toastOptions);
-
-                          setTimeout(() => {
-                            const currentUrl = window.location.href;
-                            const separator = currentUrl.includes('?') ? '&' : '?';
-                            const timestamp = Date.now();
-                            window.location.href = `${currentUrl}${separator}cache_bust=${timestamp}`;
-                          }, 1000);
-                        } catch {
-                          toast.error('Failed to clear cache', toastOptions);
-                        } finally {
-                          setClearingCache(false);
-                        }
-                      }}
-                      disabled={clearingCache}
-                      className={`inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${clearingCache ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800`}
-                    >
-                      {clearingCache ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Clearing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Clear API Cache
-                        </>
-                      )}
-                    </button>
+                        }}
+                        disabled={clearingCache}
+                        className={`inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${clearingCache ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800`}
+                      >
+                        {clearingCache ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Clearing...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Clear API Cache
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
