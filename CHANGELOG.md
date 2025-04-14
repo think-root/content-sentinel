@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/think-root/content-sentinel/compare/v1.22.0...v1.22.1) (2025-04-14)
+
+
+### Bug Fixes
+
+* update button width in SettingsModal for better responsiveness ([2a728ef](https://github.com/think-root/content-sentinel/commit/2a728ef481763b1714052bdee3d36408f6ba7089))
+
 # [1.22.0](https://github.com/think-root/content-sentinel/compare/v1.21.0...v1.22.0) (2025-04-14)
 
 
