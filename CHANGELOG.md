@@ -1,3 +1,14 @@
+# [1.20.0](https://github.com/think-root/content-sentinel/compare/v1.19.0...v1.20.0) (2025-04-14)
+
+
+### Features
+
+* add cache management tab to settings modal ([e0a0b82](https://github.com/think-root/content-sentinel/commit/e0a0b824fa06def710b72b486dc99b0c79e39cb7))
+* add caching utilities for repositories, previews, and cron jobs ([3653c75](https://github.com/think-root/content-sentinel/commit/3653c75c16b37ab10c84032f02ab2bdaa6b10948))
+* add function to clear API cache ([700d3d3](https://github.com/think-root/content-sentinel/commit/700d3d3fad7dbcd080220d656b9578bf1bae2b9c))
+* **global:** add clearApiCache and clearAllCaches methods to Window interface ([fa7e48d](https://github.com/think-root/content-sentinel/commit/fa7e48da5c860ec2924690b424889b11adf99a67))
+* implement caching for repositories, previews, and cron jobs ([dd361c5](https://github.com/think-root/content-sentinel/commit/dd361c5d94b6b75d3c6c5329416d22b3c2dfa1dc))
+
 # [1.19.0](https://github.com/think-root/content-sentinel/compare/v1.18.0...v1.19.0) (2025-04-03)
 
 
