@@ -175,8 +175,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
             <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('general')}>General</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist API</button>
-              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro API</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-alchemist' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-alchemist')}>Content Alchemist</button>
+              <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'content-maestro' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('content-maestro')}>Content Maestro</button>
               <button className={`px-4 py-1.5 text-sm font-medium ${activeTab === 'cache' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`} onClick={() => setActiveTab('cache')}>Cache</button>
             </div>
           </div>
