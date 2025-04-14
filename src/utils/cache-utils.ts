@@ -94,11 +94,9 @@ export const getCronJobsFromCache = (): CronJobsCache | null => {
 };
 
 export const clearAllCaches = () => {
-  // Видаляємо всі кеші даних
   localStorage.removeItem('cache_repositories');
   localStorage.removeItem('cache_previews');
   localStorage.removeItem('cache_cron_jobs');
 
-  // Видаляємо також ключ перевірки параметрів запиту
   localStorage.removeItem('cache_repositories_key');
 };
