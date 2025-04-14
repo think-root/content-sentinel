@@ -20,25 +20,60 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { SettingsButton } from './components/SettingsButton';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { useResponsiveToast } from './hooks/useResponsiveToast';
+import {
+  saveRepositoriesToCache,
+  getRepositoriesFromCache,
+  savePreviewsToCache,
+  getPreviewsFromCache,
+  saveCronJobsToCache,
+  getCronJobsFromCache,
+  clearAllCaches
+} from './utils/cache-utils';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
 function App() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isCacheBust = urlParams.has('cache_bust');
+
+  const cachedRepositories = isCacheBust ? null : getRepositoriesFromCache();
+  const cachedPreviews = isCacheBust ? null : getPreviewsFromCache();
+  const cachedCronJobs = isCacheBust ? null : getCronJobsFromCache();
+
+  if (isCacheBust) {
+    urlParams.delete('cache_bust');
+    const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
+    window.history.replaceState({}, document.title, newUrl);
+  }
+
   const toastPosition = useResponsiveToast();
-  const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [stats, setStats] = useState({ all: 0, posted: 0, unposted: 0 });
-  const [loading, setLoading] = useState(true);
-  const [latestPost, setLatestPost] = useState<Repository | undefined>();
-  const [nextPost, setNextPost] = useState<Repository | undefined>();
-  const [previewsLoading, setPreviewsLoading] = useState(true);
-  const [cronJobsLoading, setCronJobsLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    pageSize: parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10),
-    totalPages: 1,
-    totalItems: 0
-  });
-  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
+
+  const [repositories, setRepositories] = useState<Repository[]>(
+    cachedRepositories?.repositories || []
+  );
+  const [stats, setStats] = useState(
+    cachedRepositories?.stats || { all: 0, posted: 0, unposted: 0 }
+  );
+  const [loading, setLoading] = useState(!cachedRepositories);
+  const [latestPost, setLatestPost] = useState<Repository | undefined>(
+    cachedPreviews?.latestPost
+  );
+  const [nextPost, setNextPost] = useState<Repository | undefined>(
+    cachedPreviews?.nextPost
+  );
+  const [previewsLoading, setPreviewsLoading] = useState(!cachedPreviews);
+  const [cronJobsLoading, setCronJobsLoading] = useState(!cachedCronJobs);
+  const [pagination, setPagination] = useState(
+    cachedRepositories?.pagination || {
+      currentPage: 1,
+      pageSize: parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10),
+      totalPages: 1,
+      totalItems: 0
+    }
+  );
+  const [cronJobs, setCronJobs] = useState<CronJob[]>(
+    cachedCronJobs?.cronJobs || []
+  );
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
     toast.error(errorMessage, {
@@ -55,12 +90,38 @@ function App() {
     itemsPerPage: number = pagination.pageSize,
     sortBy?: 'id' | 'date_added' | 'date_posted',
     sortOrder?: 'ASC' | 'DESC',
-    page?: number
+    page?: number,
+    forceFetch: boolean = false
   ) => {
     try {
-      if (!append) {
-        setLoading(true);
+      const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page });
+      const currentCacheKey = localStorage.getItem('cache_repositories_key');
+
+      if (currentCacheKey !== cacheKey || forceFetch) {
+        if (!append) {
+          setLoading(true);
+        }
       }
+
+      const isBackgroundFetch = currentCacheKey === cacheKey && !forceFetch;
+      await fetchRepositoriesFromAPI(statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page, isBackgroundFetch);
+    } catch {
+      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setErrorWithScroll]);
+
+  const fetchRepositoriesFromAPI = async (
+    statusFilter?: boolean,
+    fetchAll: boolean = false,
+    itemsPerPage: number = pagination.pageSize,
+    sortBy?: 'id' | 'date_added' | 'date_posted',
+    sortOrder?: 'ASC' | 'DESC',
+    page?: number,
+    isBackgroundFetch: boolean = false
+  ) => {
+    try {
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
 
       const response = await getRepositories(
@@ -79,68 +140,198 @@ function App() {
           posted: Boolean(item.posted)
         }));
 
-        setRepositories(processedItems);
-        setStats({
-          all: response.data.all,
-          posted: response.data.posted,
-          unposted: response.data.unposted,
-        });
+        const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page });
+        localStorage.setItem('cache_repositories_key', cacheKey);
 
-        setPagination(prev => {
-          const newPagination = {
+        if (!isBackgroundFetch || isCacheBust) {
+          setRepositories(processedItems);
+          setStats({
+            all: response.data.all,
+            posted: response.data.posted,
+            unposted: response.data.unposted,
+          });
+
+          setPagination(prev => {
+            const newPagination = {
+              currentPage: fetchAll ? 1 : response.data.page,
+              pageSize: fetchAll ? 0 : response.data.page_size,
+              totalPages: response.data.total_pages,
+              totalItems: response.data.total_items
+            };
+
+            if (prev.currentPage === newPagination.currentPage &&
+              prev.pageSize === newPagination.pageSize &&
+              prev.totalPages === newPagination.totalPages &&
+              prev.totalItems === newPagination.totalItems) {
+              return prev;
+            }
+
+            return newPagination;
+          });
+        }
+        saveRepositoriesToCache({
+          repositories: processedItems,
+          stats: {
+            all: response.data.all,
+            posted: response.data.posted,
+            unposted: response.data.unposted,
+          },
+          pagination: {
             currentPage: fetchAll ? 1 : response.data.page,
             pageSize: fetchAll ? 0 : response.data.page_size,
             totalPages: response.data.total_pages,
             totalItems: response.data.total_items
-          };
-
-          if (prev.currentPage === newPagination.currentPage &&
-            prev.pageSize === newPagination.pageSize &&
-            prev.totalPages === newPagination.totalPages &&
-            prev.totalItems === newPagination.totalItems) {
-            return prev;
-          }
-
-          return newPagination;
+          },
+          timestamp: Date.now()
         });
       } else {
         throw new Error('Invalid response format');
       }
+    } catch (error) {
+      if (!isBackgroundFetch) {
+        throw error;
+      }
+    } finally {
+      if (!isBackgroundFetch) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const fetchPreviews = useCallback(async (forceFetch: boolean = false) => {
+    try {
+      await fetchPreviewsFromAPI(!previewsLoading || forceFetch);
     } catch {
       setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
-    } finally {
-      setLoading(false);
+      setPreviewsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setErrorWithScroll]);
 
-  const fetchPreviews = useCallback(async () => {
     try {
-      setPreviewsLoading(true);
+      await fetchCronJobsFromAPI(!cronJobsLoading);
+    } catch {
+      setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
+      setCronJobsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setErrorWithScroll, previewsLoading, cronJobsLoading]);
+
+  const fetchPreviewsFromAPI = async (isBackgroundFetch: boolean = false) => {
+    try {
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const [latestResponse, nextResponse] = await Promise.all([
         getLatestPostedRepository(),
         getNextRepository(),
       ]);
 
-      setLatestPost(latestResponse.data.items[0]);
-      setNextPost(nextResponse.data.items[0]);
-    } catch {
-      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
-    } finally {
-      setPreviewsLoading(false);
-    }
+      const latestPostData = latestResponse.data.items[0];
+      const nextPostData = nextResponse.data.items[0];
 
-    try {
-      setCronJobsLoading(true);
-      const cronJobsResponse = await getCronJobs();
-      setCronJobs(cronJobsResponse);
-    } catch {
-      setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
+      if (!isBackgroundFetch || isCacheBust) {
+        setLatestPost(latestPostData);
+        setNextPost(nextPostData);
+      }
+      savePreviewsToCache({
+        latestPost: latestPostData,
+        nextPost: nextPostData,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      if (!isBackgroundFetch || isCacheBust) {
+        throw error;
+      }
     } finally {
-      setCronJobsLoading(false);
+      if (!isBackgroundFetch || isCacheBust) {
+        setPreviewsLoading(false);
+      }
     }
-  }, [setErrorWithScroll]);
+  };
+
+  const fetchCronJobsFromAPI = async (isBackgroundFetch: boolean = false) => {
+    try {
+      const cronJobsResponse = await getCronJobs();
+
+      if (!isBackgroundFetch || isCacheBust) {
+        setCronJobs(cronJobsResponse);
+      }
+      saveCronJobsToCache({
+        cronJobs: cronJobsResponse,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      if (!isBackgroundFetch || isCacheBust) {
+        throw error;
+      }
+    } finally {
+      if (!isBackgroundFetch || isCacheBust) {
+        setCronJobsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.clearAllCaches = () => {
+      clearAllCaches();
+      return 'All caches cleared successfully';
+    };
+
+    return () => {
+      delete window.clearAllCaches;
+    };
+  }, []);
+
+
+  useEffect(() => {
+    const checkCacheValidity = () => {
+
+      const repoCache = getRepositoriesFromCache();
+      const previewsCache = getPreviewsFromCache();
+      const cronJobsCache = getCronJobsFromCache();
+
+
+      if (!repoCache || !previewsCache || !cronJobsCache) {
+        console.log('Cache expired, refreshing data...');
+
+
+        const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
+        const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' | null;
+        const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' | null;
+        const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+
+        const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+
+
+        fetchRepositories(
+          posted,
+          false,
+          savedItemsPerPage === 0,
+          savedItemsPerPage,
+          savedSortBy || 'date_added',
+          savedSortOrder || 'DESC',
+          1,
+          true
+        );
+        fetchPreviews(true);
+      }
+    };
+
+
+    const intervalId = setInterval(checkCacheValidity, 60000);
+
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkCacheValidity();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchRepositories, fetchPreviews]);
 
   useEffect(() => {
     const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
@@ -157,10 +348,11 @@ function App() {
       savedItemsPerPage,
       savedSortBy || 'date_added',
       savedSortOrder || 'DESC',
-      1
+      1,
+      isCacheBust
     );
-    fetchPreviews();
-  }, [fetchRepositories, fetchPreviews]);
+    fetchPreviews(isCacheBust);
+  }, [fetchRepositories, fetchPreviews, isCacheBust]);
 
   const handleManualGenerate = async (url: string): Promise<ManualGenerateResponse> => {
     try {
