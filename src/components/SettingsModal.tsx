@@ -45,12 +45,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       
-      // Capture and prevent all touch/pointer events on document level
       const preventTouchMove = (e: TouchEvent | MouseEvent) => {
-        // Find modal content element by class
         const modalContent = document.querySelector('.settings-modal-content');
         
-        // Skip prevention if the event target is inside the modal
         if (modalContent && (e.target instanceof Node) && modalContent.contains(e.target)) {
           return;
         }
@@ -59,14 +56,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         e.stopPropagation();
       };
       
-      // Add these event listeners with capture=true to intercept before they reach other handlers
       document.addEventListener('touchmove', preventTouchMove, { passive: false, capture: true });
       document.addEventListener('touchstart', preventTouchMove, { passive: false, capture: true });
       document.addEventListener('touchend', preventTouchMove, { passive: false, capture: true });
       
       return () => {
         document.body.style.overflow = '';
-        // Remove event listeners on cleanup
         document.removeEventListener('touchmove', preventTouchMove, { capture: true });
         document.removeEventListener('touchstart', preventTouchMove, { capture: true });
         document.removeEventListener('touchend', preventTouchMove, { capture: true });
