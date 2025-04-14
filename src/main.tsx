@@ -19,3 +19,9 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>
 );
+
+window.clearApiCache = function (): Promise<string> {
+  // Видаляємо ключ перевірки параметрів запиту
+  localStorage.removeItem('cache_repositories_key');
+  return Promise.resolve('Cache cleared successfully');
+};
