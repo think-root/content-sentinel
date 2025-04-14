@@ -22,6 +22,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import './styles/pull-to-refresh.css';
 import { useResponsiveToast } from './hooks/useResponsiveToast';
+import { useDisclosure } from './hooks/useDisclosure';
 import {
   saveRepositoriesToCache,
   getRepositoriesFromCache,
@@ -89,16 +90,7 @@ function App() {
     updatedCount: 0
   });
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
     toast.error(errorMessage, {
@@ -588,19 +580,31 @@ function App() {
 
       applyNewData();
 
-      toast.dismiss('new-data-notification');
-      toast.success(message, {
-        id: 'new-data-notification',
-        duration: 5000
-      });
+      // Only show toast if not already showing one from manual refresh
+      if (!document.querySelector('[data-id="new-data-notification"]')) {
+        toast.success(message, {
+          id: 'new-data-notification',
+          duration: 5000
+        });
 
-      // Add event listener to dismiss toast on tap/click
-      const toastElement = document.querySelector('[data-id="new-data-notification"]');
-      if (toastElement) {
-        toastElement.addEventListener('click', () => toast.dismiss('new-data-notification'));
+        // Add event listener to dismiss toast on tap/click
+        const toastElement = document.querySelector('[data-id="new-data-notification"]');
+        if (toastElement) {
+          toastElement.addEventListener('click', () => toast.dismiss('new-data-notification'));
+        }
       }
     }
   }, [newDataAvailable, newDataDetails, applyNewData]);
+
+  const handlePullToRefresh = async () => {
+    console.log('[PullToRefresh] Refresh triggered');
+    try {
+      await handleManualRefresh();
+    } catch (error) {
+      console.error('Pull to refresh error:', error);
+      toast.error('Failed to refresh data', { id: 'manual-refresh-notification' });
+    }
+  };
 
   return (
     <Router>
@@ -653,9 +657,86 @@ function App() {
                   />
                 )}
               </Toaster>
-              <div className="min-h-screen">
+              {isSettingsOpen ? (
+                <div className="w-full h-full">
+                  <div className="py-6">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                      <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
+                        <div className="flex items-center justify-between py-4 px-4">
+                          <div className="flex items-center">
+                            <Link to="/dashboard/" onClick={() => window.location.reload()} className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
+                              <LayoutDashboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                              Dashboard
+                            </Link>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <button
+                              onClick={handleManualRefresh}
+                              className={`p-2 rounded-md ${loading ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 cursor-pointer'} text-gray-700 dark:text-gray-200 transition-colors`}
+                              title="Refresh data"
+                              disabled={loading}
+                            >
+                              <RotateCw className="h-5 w-5" />
+                            </button>
+                            <SettingsButton isOpen={isSettingsOpen} onOpen={onSettingsOpen} onClose={onSettingsClose} />
+                            <ThemeToggle />
+                          </div>
+                        </div>
+                      </header>
+                    </div>
+
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+                      <Stats
+                        total={stats.all}
+                        posted={stats.posted}
+                        unposted={stats.unposted}
+                      />
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <RepositoryPreview
+                          title="Next post"
+                          repository={nextPost}
+                          loading={previewsLoading}
+                        />
+                        <RepositoryPreview
+                          title="Latest post"
+                          repository={latestPost}
+                          loading={previewsLoading}
+                        />
+                      </div>
+
+                      <GenerateForm
+                        onManualGenerate={handleManualGenerate}
+                        onAutoGenerate={handleAutoGenerate}
+                      />
+
+                      <CronJobs
+                        jobs={cronJobs}
+                        loading={cronJobsLoading}
+                        onUpdate={fetchPreviews}
+                      />
+
+                      <RepositoryList
+                        repositories={repositories}
+                        fetchRepositories={fetchRepositories}
+                        currentPage={pagination.currentPage}
+                        pageSize={pagination.pageSize}
+                        totalPages={pagination.totalPages}
+                        totalItems={pagination.totalItems}
+                        loading={loading}
+                      />
+                    </main>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+                      <footer className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm p-4 text-center text-gray-600 dark:text-gray-400">
+                        Developed by <a href="https://github.com/Sigmanor" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">sigmanor</a> with ❤️ and a bit of 🤖 Fully <a href="https://github.com/think-root/content-sentinel" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">open source</a> License: <a href="https://github.com/think-root/content-sentinel/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">MIT</a>
+                      </footer>
+                    </div>
+                  </div>
+                </div>
+              ) : (
                 <PullToRefresh
-                  onRefresh={handleManualRefresh}
+                  onRefresh={handlePullToRefresh}
+                  isPullable={!loading && !previewsLoading}
                   pullingContent={
                     <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
                       <div className="flex items-center justify-center gap-3">
@@ -676,7 +757,6 @@ function App() {
                   maxPullDownDistance={150}
                   resistance={2}
                   backgroundColor="transparent"
-                  isPullable={isMobile}
                   className="w-full h-full"
                 >
                   <div className="py-6">
@@ -698,7 +778,7 @@ function App() {
                             >
                               <RotateCw className="h-5 w-5" />
                             </button>
-                            <SettingsButton />
+                            <SettingsButton isOpen={isSettingsOpen} onOpen={onSettingsOpen} onClose={onSettingsClose} />
                             <ThemeToggle />
                           </div>
                         </div>
@@ -706,45 +786,45 @@ function App() {
                     </div>
 
                     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                  <Stats
-                    total={stats.all}
-                    posted={stats.posted}
-                    unposted={stats.unposted}
-                  />
+                      <Stats
+                        total={stats.all}
+                        posted={stats.posted}
+                        unposted={stats.unposted}
+                      />
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <RepositoryPreview
-                      title="Next post"
-                      repository={nextPost}
-                      loading={previewsLoading}
-                    />
-                    <RepositoryPreview
-                      title="Latest post"
-                      repository={latestPost}
-                      loading={previewsLoading}
-                    />
-                  </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <RepositoryPreview
+                          title="Next post"
+                          repository={nextPost}
+                          loading={previewsLoading}
+                        />
+                        <RepositoryPreview
+                          title="Latest post"
+                          repository={latestPost}
+                          loading={previewsLoading}
+                        />
+                      </div>
 
-                  <GenerateForm
-                    onManualGenerate={handleManualGenerate}
-                    onAutoGenerate={handleAutoGenerate}
-                  />
+                      <GenerateForm
+                        onManualGenerate={handleManualGenerate}
+                        onAutoGenerate={handleAutoGenerate}
+                      />
 
-                  <CronJobs
-                    jobs={cronJobs}
-                    loading={cronJobsLoading}
-                    onUpdate={fetchPreviews}
-                  />
+                      <CronJobs
+                        jobs={cronJobs}
+                        loading={cronJobsLoading}
+                        onUpdate={fetchPreviews}
+                      />
 
-                  <RepositoryList
-                    repositories={repositories}
-                    fetchRepositories={fetchRepositories}
-                    currentPage={pagination.currentPage}
-                    pageSize={pagination.pageSize}
-                    totalPages={pagination.totalPages}
-                    totalItems={pagination.totalItems}
-                    loading={loading}
-                  />
+                      <RepositoryList
+                        repositories={repositories}
+                        fetchRepositories={fetchRepositories}
+                        currentPage={pagination.currentPage}
+                        pageSize={pagination.pageSize}
+                        totalPages={pagination.totalPages}
+                        totalItems={pagination.totalItems}
+                        loading={loading}
+                      />
                     </main>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
                       <footer className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm p-4 text-center text-gray-600 dark:text-gray-400">
@@ -753,7 +833,7 @@ function App() {
                     </div>
                   </div>
                 </PullToRefresh>
-              </div>
+              )}
             </div>
           }
         />
