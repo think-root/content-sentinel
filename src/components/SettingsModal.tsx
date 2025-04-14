@@ -4,6 +4,9 @@ import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '../utils/api-set
 import { toast, ToastOptions } from 'react-hot-toast';
 import { AlertCircle, Settings, RefreshCw } from 'lucide-react';
 
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,22 +26,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const tabs: Array<'general' | 'api' | 'cache'> = ['general', 'api', 'cache'];
 
   const handlers = useSwipeable({
-    onSwipeStart: () => setIsSwiping(true),
-    onSwiped: () => setTimeout(() => setIsSwiping(false), 50),
+    onSwipeStart: () => {
+      if (isMobileDevice()) {
+        setIsSwiping(true);
+      }
+    },
+    onSwiped: () => {
+      if (isMobileDevice()) {
+        setTimeout(() => setIsSwiping(false), 50);
+      }
+    },
     onSwipedLeft: () => {
-      const currentIndex = tabs.indexOf(activeTab);
-      if (currentIndex < tabs.length - 1) {
-        setActiveTab(tabs[currentIndex + 1]);
+      if (isMobileDevice()) {
+        const currentIndex = tabs.indexOf(activeTab);
+        if (currentIndex < tabs.length - 1) {
+          setActiveTab(tabs[currentIndex + 1]);
+        }
       }
     },
     onSwipedRight: () => {
-      const currentIndex = tabs.indexOf(activeTab);
-      if (currentIndex > 0) {
-        setActiveTab(tabs[currentIndex - 1]);
+      if (isMobileDevice()) {
+        const currentIndex = tabs.indexOf(activeTab);
+        if (currentIndex > 0) {
+          setActiveTab(tabs[currentIndex - 1]);
+        }
       }
     },
     preventScrollOnSwipe: true,
-    trackMouse: true
+    trackMouse: false
   });
 
   useEffect(() => {
@@ -46,6 +61,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       document.body.style.overflow = 'hidden';
       
       const preventTouchMove = (e: TouchEvent | MouseEvent) => {
+        if (!isMobileDevice()) return;
+        
         const modalContent = document.querySelector('.settings-modal-content');
         
         if (modalContent && (e.target instanceof Node) && modalContent.contains(e.target)) {
