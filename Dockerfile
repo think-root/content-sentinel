@@ -5,7 +5,6 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN npm ci
-RUN npm install express http-proxy-middleware
 
 COPY . .
 
