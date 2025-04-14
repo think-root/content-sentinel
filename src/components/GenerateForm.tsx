@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Loader2, GitPullRequest, Play, Save, X, AlertCircle, FolderDown } from 'lucide-react';
+import { Loader2, GitPullRequest, Play, Save, X, AlertCircle, FolderDown, Zap } from 'lucide-react';
 import { ResultDialog } from './ResultDialog';
 import { getCollectSettings, updateCollectSettings } from '../api';
 import { toast } from 'react-hot-toast';
@@ -246,7 +246,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
               {isManualLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <Zap className="h-4 w-4 mr-2" />
               )}
               {isManualLoading ? 'Processing...' : 'Generate'}
             </button>
