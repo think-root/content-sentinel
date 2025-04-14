@@ -68,7 +68,14 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
 
   const fetchCronJobs = useCallback(async (forceFetch: boolean = false) => {
     try {
-      await fetchCronJobsFromAPI(!state.loading || forceFetch);
+      const hasCache = getCronJobsFromCache() !== null;
+
+      const isBackgroundFetch = hasCache && !forceFetch && !state.loading;
+      if (!hasCache && !forceFetch) {
+        setState((prev) => ({ ...prev, loading: true }));
+      }
+
+      await fetchCronJobsFromAPI(isBackgroundFetch);
     } catch {
       setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
       setState(prev => ({ ...prev, loading: false }));
