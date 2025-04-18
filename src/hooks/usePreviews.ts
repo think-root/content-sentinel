@@ -99,7 +99,6 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
       await fetchPreviewsFromAPI(isBackgroundFetch);
     } catch {
       if (!isApiConfigured()) {
-        // Don't show error if API is not configured
         setState(prev => ({ ...prev, loading: false }));
       } else {
         setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');

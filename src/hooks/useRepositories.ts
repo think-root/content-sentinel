@@ -215,7 +215,6 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       );
     } catch {
       if (!isApiConfigured()) {
-        // Don't show error if API is not configured
         setState(prev => ({ ...prev, loading: false }));
       } else {
         setErrorWithScroll("Failed to connect to Content Alchemist API", "content-alchemist-error");

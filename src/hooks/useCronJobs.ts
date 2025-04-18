@@ -79,7 +79,6 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
       await fetchCronJobsFromAPI(isBackgroundFetch);
     } catch {
       if (!isApiConfigured()) {
-        // Don't show error if API is not configured
   
      setState(prev => ({ ...prev, loading: false }));
       } else {

@@ -19,7 +19,6 @@ interface UseCacheProps {
 
 export const useCache = ({ fetchRepositories, fetchPreviews, fetchCronJobs }: UseCacheProps) => {
   const checkCacheValidity = useCallback(() => {
-    // Check if API is configured before checking cache validity
     if (!isApiConfigured()) {
       return;
     }

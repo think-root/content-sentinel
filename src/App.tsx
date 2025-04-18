@@ -86,9 +86,7 @@ function App() {
   });
 
   useEffect(() => {
-    // Check if API is configured
     if (!isApiReady) {
-      // If API is not configured, don't make API requests
       return;
     }
 
