@@ -13,6 +13,7 @@ import { useGenerateHandlers } from './hooks/useGenerateHandlers';
 import { ToasterConfig } from './components/Toast/ToasterConfig';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardContent } from './components/Layout/DashboardContent';
+import { isApiConfigured } from './utils/api-settings';
 
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -30,6 +31,7 @@ function App() {
 
   const toastPosition = useResponsiveToast();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
+  const isApiReady = isApiConfigured();
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
     toast.error(errorMessage, {
@@ -84,6 +86,12 @@ function App() {
   });
 
   useEffect(() => {
+    // Check if API is configured
+    if (!isApiReady) {
+      // If API is not configured, don't make API requests
+      return;
+    }
+
     const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
     const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' | null;
     const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' | null;
@@ -103,7 +111,7 @@ function App() {
     );
     fetchPreviews(isCacheBust);
     fetchCronJobs(isCacheBust);
-  }, [fetchRepositories, fetchPreviews, fetchCronJobs, isCacheBust]);
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, isCacheBust, isApiReady]);
 
   useEffect(() => {
     if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable) {
@@ -143,6 +151,7 @@ function App() {
                 loading={loading}
                 previewsLoading={previewsLoading}
                 isMobileDevice={isMobileDevice()}
+                isApiReady={isApiReady}
               >
                 <DashboardContent
                   stats={stats}
@@ -158,6 +167,7 @@ function App() {
                   fetchPreviews={fetchPreviews}
                   handleManualGenerate={handleManualGenerate}
                   handleAutoGenerate={handleAutoGenerate}
+                  isApiReady={isApiReady}
                 />
               </DashboardLayout>
             </div>
