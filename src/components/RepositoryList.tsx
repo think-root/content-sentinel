@@ -11,6 +11,7 @@ interface RepositoryListProps {
   currentPage: number;
   pageSize: number;
   loading: boolean;
+  isApiReady?: boolean;
 }
 
 function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: number }) {
@@ -46,7 +47,7 @@ function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: numb
   );
 }
 
-export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize, loading }: RepositoryListProps) {
+export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize, loading, isApiReady = true }: RepositoryListProps) {
   const [isExpanded, setIsExpanded] = useState(() => {
     const saved = localStorage.getItem('dashboardExpanded');
     return saved === null ? true : saved === 'true';
@@ -90,11 +91,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
   }, [initialPage]);
 
   useEffect(() => {
-    if (searchTerm) {
-      const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-      fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, 1);
-    }
-  }, [searchTerm, fetchRepositories, statusFilter, itemsPerPage, sortBy, sortOrder]);
+  }, [searchTerm]);
 
   const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
     if (loading) return;
@@ -169,7 +166,19 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page);
   };
 
-  const paginatedItems = repositories;
+  const filteredItems = searchTerm
+    ? repositories.filter(repo => {
+      const searchTermLower = searchTerm.toLowerCase();
+      return (
+        (repo.text && repo.text.toLowerCase().includes(searchTermLower)) ||
+        (repo.url && repo.url.toLowerCase().includes(searchTermLower)) ||
+        (repo.date_added && formatDate(repo.date_added).toLowerCase().includes(searchTermLower)) ||
+        (repo.date_posted && formatDate(repo.date_posted).toLowerCase().includes(searchTermLower))
+      );
+    })
+    : repositories;
+
+  const paginatedItems = filteredItems;
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
@@ -299,7 +308,15 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {loading ? (
+                {!isApiReady ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4">
+                      <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                        Data could not be loaded because API keys are not configured
+                      </div>
+                    </td>
+                  </tr>
+                ) : loading ? (
                   Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -319,10 +336,10 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                       </td>
                     </tr>
                   ))
-                ) : totalItems === 0 ? (
+                ) : totalItems === 0 || filteredItems.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No data available
+                        {searchTerm && filteredItems.length === 0 ? 'No matching results found' : 'No data available'}
                     </td>
                   </tr>
                 ) : (
@@ -357,7 +374,13 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
             </table>
           </div>
           <div className="md:hidden block">
-            {loading ? (
+            {!isApiReady ? (
+              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+                <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                  Data could not be loaded because API keys are not configured
+                </div>
+              </div>
+            ) : loading ? (
               Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
                 <div key={index} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
                   <div className="mb-3">
@@ -374,9 +397,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   </div>
                 </div>
               ))
-            ) : totalItems === 0 ? (
+            ) : totalItems === 0 || filteredItems.length === 0 ? (
               <div className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                No data available
+                  {searchTerm && filteredItems.length === 0 ? 'No matching results found' : 'No data available'}
               </div>
             ) : (
               paginatedItems.map((repo) => (
@@ -429,12 +452,14 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
         </div>
       
 
-        {totalItems > 0 && (
+        {(totalItems > 0 && (!searchTerm || filteredItems.length > 0)) && (
           <>
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 md:block hidden">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  {itemsPerPage === 0 ? (
+                  {searchTerm ? (
+                    <p>Found <span className="font-medium">{filteredItems.length}</span> matching results</p>
+                  ) : itemsPerPage === 0 ? (
                     <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
                   ) : (
                     <p>
@@ -449,7 +474,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   )}
                 </div>
 
-                {itemsPerPage > 0 && totalItems > itemsPerPage && (
+                {!searchTerm && itemsPerPage > 0 && totalItems > itemsPerPage && (
                   <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
                     <button
                       type="button"
@@ -503,7 +528,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 md:hidden block">
               <div className="flex flex-col items-center space-y-4 w-full">
                 <div className="text-xs text-gray-700 dark:text-gray-300 w-full text-center">
-                  {itemsPerPage === 0 ? (
+                  {searchTerm ? (
+                    <p>Found <span className="font-medium">{filteredItems.length}</span> matching results</p>
+                  ) : itemsPerPage === 0 ? (
                     <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
                   ) : (
                     <p>
@@ -518,7 +545,7 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
                   )}
                 </div>
 
-                {itemsPerPage > 0 && totalItems > itemsPerPage && (
+                {!searchTerm && itemsPerPage > 0 && totalItems > itemsPerPage && (
                   <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1 px-4 w-full justify-center">
                     <button
                       type="button"
