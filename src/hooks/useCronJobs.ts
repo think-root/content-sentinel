@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { getCronJobs, type CronJob } from '../api/index';
 import { saveCronJobsToCache, getCronJobsFromCache } from '../utils/cache-utils';
 import { compareCronJobs } from '../utils/data-comparison';
+import { isApiConfigured } from '../utils/api-settings';
 
 interface CronJobsState {
   cronJobs: CronJob[];
@@ -77,8 +78,14 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
 
       await fetchCronJobsFromAPI(isBackgroundFetch);
     } catch {
-      setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
-      setState(prev => ({ ...prev, loading: false }));
+      if (!isApiConfigured()) {
+        // Don't show error if API is not configured
+  
+     setState(prev => ({ ...prev, loading: false }));
+      } else {
+        setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
+        setState(prev => ({ ...prev, loading: false }));
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.loading, setErrorWithScroll, isCacheBust]);
