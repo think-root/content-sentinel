@@ -1,5 +1,5 @@
 import { Repository } from './types';
-import { getApiSettings } from "./utils/api-settings";
+import { getApiSettings, isApiConfigured } from "./utils/api-settings";
 
 function getApiConfig() {
   const settings = getApiSettings();
@@ -9,6 +9,7 @@ function getApiConfig() {
       Authorization: `Bearer ${settings.contentAlchemist.apiBearerToken}`,
       "Content-Type": "application/json",
     },
+    isConfigured: isApiConfigured()
   };
 }
 
@@ -44,7 +45,23 @@ export async function getRepositories(
   page?: number,
   pageSize?: number
 ): Promise<RepositoryResponse> {
-  const { baseUrl, headers } = getApiConfig();
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return {
+      status: "error",
+      data: {
+        all: 0,
+        posted: 0,
+        unposted: 0,
+        items: [],
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        total_items: 0
+      }
+    };
+  }
 
   const requestBody: GetRepositoryRequest = {
     limit: fetchAll || pageSize === 0 ? 0 : pageSize || limit,
@@ -71,7 +88,16 @@ export interface ManualGenerateResponse {
 }
 
 export async function manualGenerate(url: string): Promise<ManualGenerateResponse> {
-  const { baseUrl, headers } = getApiConfig();
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return {
+      status: "error",
+      added: [],
+      dont_added: []
+    };
+  }
+  
   const response = await fetch(`${baseUrl}/manual-generate/`, {
     method: "POST",
     headers,
@@ -82,7 +108,14 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
 }
 
 export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
-  const { baseUrl, headers } = getApiConfig();
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return {
+      status: "error"
+    };
+  }
+  
   const response = await fetch(`${baseUrl}/auto-generate/`, {
     method: "POST",
     headers,
@@ -97,7 +130,24 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
 }
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
-  const { baseUrl, headers } = getApiConfig();
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return {
+      status: "error",
+      data: {
+        all: 0,
+        posted: 0,
+        unposted: 0,
+        items: [],
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        total_items: 0
+      }
+    };
+  }
+  
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
@@ -113,7 +163,24 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
 }
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
-  const { baseUrl, headers } = getApiConfig();
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return {
+      status: "error",
+      data: {
+        all: 0,
+        posted: 0,
+        unposted: 0,
+        items: [],
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        total_items: 0
+      }
+    };
+  }
+  
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
@@ -136,6 +203,16 @@ export interface CollectSettings {
 
 export async function getCollectSettings(): Promise<CollectSettings> {
   const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+  
+  if (!isConfigured) {
+    return {
+      max_repos: 10,
+      since: "daily",
+      spoken_language_code: "en"
+    };
+  }
+  
   const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/collect-settings`, {
     headers: {
       Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
@@ -153,6 +230,15 @@ export async function getCollectSettings(): Promise<CollectSettings> {
 
 export async function updateCollectSettings(settings: CollectSettings): Promise<{ status: string; message: string }> {
   const apiSettings = getApiSettings();
+  const isConfigured = isApiConfigured();
+  
+  if (!isConfigured) {
+    return {
+      status: "error",
+      message: "API not configured"
+    };
+  }
+  
   const response = await fetch(`${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings/update`, {
     method: 'PUT',
     headers: {
