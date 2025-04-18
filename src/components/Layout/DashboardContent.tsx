@@ -39,6 +39,7 @@ interface DashboardContentProps {
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   handleManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
   handleAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<{ status: string; added?: string[]; dont_added?: string[] }>;
+  isApiReady: boolean;
 }
 
 export const DashboardContent = ({
@@ -53,7 +54,8 @@ export const DashboardContent = ({
   pagination,
   fetchRepositories,
   handleManualGenerate,
-  handleAutoGenerate
+  handleAutoGenerate,
+  isApiReady
 }: DashboardContentProps) => {
   return (
     <>
@@ -68,11 +70,13 @@ export const DashboardContent = ({
           title="Next post"
           repository={nextPost}
           loading={previewsLoading}
+          isApiReady={isApiReady}
         />
         <RepositoryPreview
           title="Latest post"
           repository={latestPost}
           loading={previewsLoading}
+          isApiReady={isApiReady}
         />
       </div>
 
@@ -84,6 +88,7 @@ export const DashboardContent = ({
       <CronJobs
         jobs={cronJobs}
         loading={cronJobsLoading}
+        isApiReady={isApiReady}
       />
 
       <RepositoryList
@@ -94,6 +99,7 @@ export const DashboardContent = ({
         totalPages={pagination.totalPages}
         totalItems={pagination.totalItems}
         loading={loading}
+        isApiReady={isApiReady}
       />
     </>
   );
