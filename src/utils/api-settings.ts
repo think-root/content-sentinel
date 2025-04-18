@@ -50,3 +50,13 @@ export const getApiSettings = (): ApiSettings => {
     },
   };
 };
+
+export const isApiConfigured = (): boolean => {
+  const settings = getApiSettings();
+  return !!(
+    settings.contentAlchemist?.apiBaseUrl && 
+    settings.contentAlchemist?.apiBearerToken && 
+    settings.contentMaestro?.apiBaseUrl && 
+    settings.contentMaestro?.apiBearerToken
+  );
+};
