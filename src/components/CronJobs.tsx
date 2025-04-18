@@ -13,6 +13,7 @@ const toastOptions: ToastOptions = {
 interface CronJobsProps {
   jobs: CronJob[];
   loading: boolean;
+  isApiReady?: boolean;
 }
 
 const validateCronExpression = (cron: string): boolean => {
@@ -48,7 +49,7 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export function CronJobs({ jobs, loading }: CronJobsProps) {
+export function CronJobs({ jobs, loading, isApiReady = true }: CronJobsProps) {
   const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -166,7 +167,38 @@ export function CronJobs({ jobs, loading }: CronJobsProps) {
         Schedule and Status columns are interactive and can be modified
       </p>
 
-      {loading ? (
+      {!isApiReady ? (
+        <div className="overflow-x-auto">
+          <div className="md:block hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Last Updated</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Schedule</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="px-6 py-4">
+                    <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                      Data could not be loaded because API keys are not configured
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="md:hidden">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-4">
+              <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                Data could not be loaded because API keys are not configured
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : loading ? (
         <div className="overflow-x-auto">
           <div className="md:block hidden">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
