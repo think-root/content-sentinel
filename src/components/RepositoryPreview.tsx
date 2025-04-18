@@ -5,9 +5,10 @@ interface RepositoryPreviewProps {
   title: string;
   repository?: Repository;
   loading: boolean;
+  isApiReady?: boolean;
 }
 
-export function RepositoryPreview({ title, repository, loading }: RepositoryPreviewProps) {
+export function RepositoryPreview({ title, repository, loading, isApiReady = true }: RepositoryPreviewProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -46,7 +47,11 @@ export function RepositoryPreview({ title, repository, loading }: RepositoryPrev
         )}
       </div>
 
-      {loading ? (
+      {!isApiReady ? (
+        <div className="text-gray-500 dark:text-gray-400 text-sm">
+          Data could not be loaded because API keys are not configured
+        </div>
+      ) : loading ? (
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
           <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
