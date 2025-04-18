@@ -1,4 +1,4 @@
-import { getApiSettings } from "../utils/api-settings";
+import { getApiSettings, isApiConfigured } from "../utils/api-settings";
 
 export interface CronJob {
   name: string;
@@ -9,6 +9,12 @@ export interface CronJob {
 
 export const getCronJobs = async (): Promise<CronJob[]> => {
   const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return [];
+  }
+
   const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons`, {
     headers: {
       Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
@@ -24,6 +30,12 @@ export const getCronJobs = async (): Promise<CronJob[]> => {
 
 export const updateCronSchedule = async (name: string, schedule: string): Promise<void> => {
   const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return;
+  }
+
   const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons/${name}/schedule`, {
     method: "PUT",
     headers: {
@@ -40,6 +52,12 @@ export const updateCronSchedule = async (name: string, schedule: string): Promis
 
 export const updateCronStatus = async (name: string, is_active: boolean): Promise<void> => {
   const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return;
+  }
+
   const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons/${name}/status`, {
     method: "PUT",
     headers: {
