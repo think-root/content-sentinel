@@ -1,3 +1,20 @@
+# [1.24.0](https://github.com/think-root/content-sentinel/compare/v1.23.0...v1.24.0) (2025-04-18)
+
+
+### Features
+
+* add API readiness check to RepositoryList component ([7a058ea](https://github.com/think-root/content-sentinel/commit/7a058ea4fcc2483f20eae872a942ebb919f294f8))
+* **api:** add API configuration check before handling requests in multiple functions ([ac7c0b7](https://github.com/think-root/content-sentinel/commit/ac7c0b76fedbff5584a461a654ba66b911ce5bb9))
+* **api:** add isApiConfigured function to validate API settings ([49c4696](https://github.com/think-root/content-sentinel/commit/49c4696501ddce6d4e184475b4378990d58a4c80))
+* **App:** integrate API configuration check to prevent requests if not configured ([3205636](https://github.com/think-root/content-sentinel/commit/32056368ccf419d6295e85d3c5daf3bdc78e7533))
+* **CronJobs:** add isApiReady prop to handle API readiness state in component ([9044c29](https://github.com/think-root/content-sentinel/commit/9044c295ee1044ca393941814b9bfa5d610a7fa8))
+* **DashboardLayout:** add isApiReady prop to control pull-to-refresh ([974279e](https://github.com/think-root/content-sentinel/commit/974279e52ea25ccb8b80695af5a79b5f335a6e9e))
+* **RepositoryPreview:** add isApiReady prop to handle API readiness state ([dde1b20](https://github.com/think-root/content-sentinel/commit/dde1b20ef378a1715edd5042e22960fbc428d70f))
+* **useCache:** add API configuration check before cache validity verification ([7c5dc4a](https://github.com/think-root/content-sentinel/commit/7c5dc4ad29e22f7ef1dbfcc807261388f126a390))
+* **useCronJobs:** add API configuration check before error handling in fetchCronJobs ([7192c77](https://github.com/think-root/content-sentinel/commit/7192c77d4e0c53d6ba60da96129ff1a78ca9bcb8))
+* **usePreviews:** add API configuration check before error handling in fetchPreviews ([974014c](https://github.com/think-root/content-sentinel/commit/974014c3d773084aab9125c8601f627bcfaea712))
+* **useRepositories:** add API configuration check before error handling in fetchRepositories ([ab4ddc3](https://github.com/think-root/content-sentinel/commit/ab4ddc3cdcfc802ddbacc709a51289eb73326ec3))
+
 # [1.23.0](https://github.com/think-root/content-sentinel/compare/v1.22.1...v1.23.0) (2025-04-14)
 
 
