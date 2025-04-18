@@ -16,6 +16,7 @@ interface DashboardLayoutProps {
   loading: boolean;
   previewsLoading: boolean;
   isMobileDevice: boolean;
+  isApiReady: boolean;
 }
 
 export const DashboardLayout = ({
@@ -27,7 +28,8 @@ export const DashboardLayout = ({
   handlePullToRefresh,
   loading,
   previewsLoading,
-  isMobileDevice
+  isMobileDevice,
+  isApiReady
 }: DashboardLayoutProps) => {
   const renderHeader = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -81,7 +83,7 @@ export const DashboardLayout = ({
   return (
     <PullToRefresh
       onRefresh={handlePullToRefresh}
-      isPullable={!loading && !previewsLoading && isMobileDevice}
+      isPullable={!loading && !previewsLoading && isMobileDevice && isApiReady}
       pullingContent={
         <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
           <div className="flex items-center justify-center gap-3">
