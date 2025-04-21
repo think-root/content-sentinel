@@ -170,7 +170,7 @@ export const DashboardLayout = ({
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-y-auto touch-none ">
+    <div ref={containerRef} className="w-full h-full overflow-y-auto">
       <div
         ref={contentRef}
         className="transition-transform duration-200 ease-out"
