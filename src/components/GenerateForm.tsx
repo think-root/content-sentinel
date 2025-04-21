@@ -399,7 +399,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           <div className="mt-4 flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0">
             <button
               type="submit"
-              disabled={isAutoLoading}
+              disabled={isAutoLoading || isSaving}
               title="Generate posts out of collect schedule"
               className={`inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isAutoLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[150px]`}
             >
@@ -414,9 +414,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
             <button
               type="button"
               onClick={handleSaveSettings}
-              disabled={isSaving}
+              disabled={isSaving || isAutoLoading}
               title="Save settings to server"
-              className={`inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[150px]`}
+              className={`inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${isSaving || isAutoLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[150px]`}
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

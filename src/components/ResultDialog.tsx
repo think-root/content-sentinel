@@ -1,4 +1,6 @@
 import { X } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ResultDialogProps {
   isOpen: boolean;
@@ -8,14 +10,25 @@ interface ResultDialogProps {
 }
 
 export function ResultDialog({ isOpen, onClose, added, notAdded }: ResultDialogProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  const modal = (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Repository Generation Results
+            Collect posts
           </h3>
           <button
             onClick={onClose}
@@ -97,4 +110,6 @@ export function ResultDialog({ isOpen, onClose, added, notAdded }: ResultDialogP
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
