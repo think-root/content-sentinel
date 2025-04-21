@@ -153,8 +153,8 @@ export const DashboardLayout = ({
   }, [isRefreshing, handlePullToRefresh, maxPull]);
 
   const renderHeader = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-      <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+      <header className="relative z-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
         <div className="flex items-center justify-between py-4 px-4">
           <div className="flex items-center">
             <Link to="/dashboard/" onClick={() => window.location.reload()} className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
@@ -195,7 +195,7 @@ export const DashboardLayout = ({
     const strokeDashoffset = circumference - progress * circumference;
 
     return (
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
+      <div className="absolute top-1 left-1/2 -translate-x-1/2">
         <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
           <circle
             stroke="#d1d5db"
@@ -224,13 +224,16 @@ export const DashboardLayout = ({
     <div ref={containerRef} className="w-full h-full overflow-y-auto ptr">
       <div
         ref={contentRef}
-        className={`transition-transform duration-200 ease-out will-change-transform ptr__children ${isResetting ? 'ptr--reset' : ''}`}
+        className={`will-change-transform ptr__children ${isResetting ? 'ptr--reset' : ''}`}
         style={{ transform: `translateY(${translateY}px)` }}
       >
         {(pullingProgress > 0 || isRefreshing) && (
           <div
-            className="flex items-center justify-center h-12"
-            style={{ opacity: pullingProgress * pullingProgress, transition: 'opacity 0.2s ease-out' }}
+            className="relative -z-10 flex items-center justify-center"
+            style={{
+              height: isRefreshing ? '48px' : `${translateY}px`,
+              opacity: Math.sqrt(pullingProgress),
+            }}
           >
             {isRefreshing ? (
               <RefreshCw className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />

@@ -363,7 +363,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
               <label htmlFor="language" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Spoken Language
               </label>
-              <div className="mt-1"> {/* Додаємо додатковий div-контейнер */}
+              <div className="mt-1"> {}
                 <div className="select-wrapper">
                   <div className="relative">
                     <select
