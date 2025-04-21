@@ -60,7 +60,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     if (isOpen) {
       document.body.style.overflow = 'hidden';
 
-      // Блокуємо touchmove лише поза модалкою (overlay)
       const preventTouchMove = (e: TouchEvent) => {
         if (!isMobileDevice()) return;
         const modalContent = document.querySelector('.settings-modal-content');
@@ -71,7 +70,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       };
 
       document.addEventListener('touchmove', preventTouchMove, { passive: false });
-      // touchstart не потрібен
 
       return () => {
         document.body.style.overflow = '';
