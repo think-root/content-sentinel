@@ -13,6 +13,7 @@ import { useGenerateHandlers } from './hooks/useGenerateHandlers';
 import { ToasterConfig } from './components/Toast/ToasterConfig';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardContent } from './components/Layout/DashboardContent';
+import { SettingsModal } from './components/SettingsModal';
 import { isApiConfigured } from './utils/api-settings';
 
 const isMobileDevice = () => {
@@ -168,6 +169,7 @@ function App() {
                   isApiReady={isApiReady}
                 />
               </DashboardLayout>
+              <SettingsModal isOpen={isSettingsOpen} onClose={onSettingsClose} />
             </div>
           }
         />

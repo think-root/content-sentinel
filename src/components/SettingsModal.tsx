@@ -33,7 +33,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     },
     onSwiped: () => {
       if (isMobileDevice()) {
-        setTimeout(() => setIsSwiping(false), 50);
+        // Ensure isSwiping is reset immediately after swipe is complete
+        setIsSwiping(false);
       }
     },
     onSwipedLeft: () => {
@@ -65,7 +66,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         
         const modalContent = document.querySelector('.settings-modal-content');
         
-        if (modalContent && (e.target instanceof Node) && modalContent.contains(e.target)) {
+        // Allow events on buttons and interactive elements
+        const target = e.target as Node;
+        const isButton = target instanceof HTMLButtonElement;
+        const isInput = target instanceof HTMLInputElement;
+        const isCloseButton = target instanceof Element && (
+          target.closest('button[aria-label="Close"]') || 
+          target.closest('button.rounded-md') ||
+          target.tagName === 'svg' || 
+          target.tagName === 'path'
+        );
+        
+        if ((modalContent && modalContent.contains(target)) || isButton || isInput || isCloseButton) {
           return;
         }
         
@@ -75,13 +87,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       
       document.addEventListener('touchmove', preventTouchMove, { passive: false, capture: true });
       document.addEventListener('touchstart', preventTouchMove, { passive: false, capture: true });
-      document.addEventListener('touchend', preventTouchMove, { passive: false, capture: true });
+      
+      // Don't prevent touchend events as they're needed for button clicks
+      const preventTouchEndOutsideModal = (e: TouchEvent | MouseEvent) => {
+        if (!isMobileDevice()) return;
+        
+        const modalContent = document.querySelector('.settings-modal-content');
+        
+        // Allow events on buttons and interactive elements
+        const target = e.target as Node;
+        const isButton = target instanceof HTMLButtonElement;
+        const isInput = target instanceof HTMLInputElement;
+        const isCloseButton = target instanceof Element && (
+          target.closest('button[aria-label="Close"]') || 
+          target.closest('button.rounded-md') ||
+          target.tagName === 'svg' || 
+          target.tagName === 'path'
+        );
+        
+        if (isButton || isInput || isCloseButton) {
+          return;
+        }
+        
+        if (modalContent && (target instanceof Node) && !modalContent.contains(target)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      
+      document.addEventListener('touchend', preventTouchEndOutsideModal, { passive: false, capture: true });
       
       return () => {
         document.body.style.overflow = '';
         document.removeEventListener('touchmove', preventTouchMove, { capture: true });
         document.removeEventListener('touchstart', preventTouchMove, { capture: true });
-        document.removeEventListener('touchend', preventTouchMove, { capture: true });
+        document.removeEventListener('touchend', preventTouchEndOutsideModal, { capture: true });
       };
     } else {
       document.body.style.overflow = '';
@@ -162,11 +202,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50"
-      onTouchStart={(e) => e.stopPropagation()} 
-      onMouseDown={(e) => e.stopPropagation()} 
-    >
+    <div className="fixed inset-0 z-50">
       <div 
         className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all" 
         onClick={(e) => {

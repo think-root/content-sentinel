@@ -22,9 +22,11 @@ export const useDataRefresh = ({
   fetchRepositories,
   fetchPreviews,
   fetchCronJobs,
+  setLoading,
   setErrorWithScroll
 }: UseDataRefreshProps) => {
   const handleManualRefresh = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
     try {
       const savedStatusFilter = localStorage.getItem("dashboardStatusFilter") as
         | "all"
@@ -60,12 +62,19 @@ export const useDataRefresh = ({
 
       await Promise.all(fetchPromises);
 
+      toast.success("New data received from server", {
+        id: "new-data-notification",
+        duration: 5000,
+      });
+
       return true;
     } catch {
       setErrorWithScroll("Failed to refresh data", "refresh-error");
       return false;
+    } finally {
+      setLoading(false);
     }
-  }, [fetchRepositories, fetchPreviews, fetchCronJobs, setErrorWithScroll]);
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, setErrorWithScroll, setLoading]);
 
   const handlePullToRefresh = useCallback(async () => {
     console.log('[PullToRefresh] Refresh triggered');
