@@ -35,7 +35,7 @@ export const DashboardLayout = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const maxPull = 100;
+  const maxPull = 70;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -228,7 +228,10 @@ export const DashboardLayout = ({
         style={{ transform: `translateY(${translateY}px)` }}
       >
         {(pullingProgress > 0 || isRefreshing) && (
-          <div className="flex items-center justify-center h-12">
+          <div
+            className="flex items-center justify-center h-12"
+            style={{ opacity: pullingProgress * pullingProgress, transition: 'opacity 0.2s ease-out' }}
+          >
             {isRefreshing ? (
               <RefreshCw className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
             ) : (
