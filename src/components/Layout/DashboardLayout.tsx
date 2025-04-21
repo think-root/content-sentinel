@@ -1,10 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, RotateCw } from 'lucide-react';
+import { LayoutDashboard, RotateCw, RefreshCw } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { SettingsButton } from '../SettingsButton';
-import PullToRefresh from 'react-simple-pull-to-refresh';
-import { RefreshCw } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -27,10 +26,81 @@ export const DashboardLayout = ({
   handleManualRefresh,
   handlePullToRefresh,
   loading,
-  previewsLoading,
-  isMobileDevice,
-  isApiReady
 }: DashboardLayoutProps) => {
+  const [pullingProgress, setPullingProgress] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [translateY, setTranslateY] = useState(0);
+  const startY = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const maxPull = 150;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startY.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (startY.current !== null && !isRefreshing) {
+        const distance = e.touches[0].clientY - startY.current;
+        if (distance > 0) {
+          const clampedDistance = Math.min(distance, maxPull);
+          const progress = clampedDistance / maxPull;
+          setPullingProgress(progress);
+          setTranslateY(clampedDistance);
+
+          if (progress >= 1) {
+            startY.current = null;
+            setIsRefreshing(true);
+            setTranslateY(60);
+
+            void (async () => {
+              const delay = new Promise((res) => setTimeout(res, 1000));
+              await Promise.all([
+                handlePullToRefresh(),
+                delay,
+              ]);
+
+              setIsRefreshing(false);
+              setTranslateY(0);
+              setPullingProgress(0);
+
+              toast.success("New data received from server", {
+                id: "new-data-notification",
+                duration: 5000,
+              });
+            })();
+          }
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isRefreshing) return;
+
+      setPullingProgress(0);
+      setTranslateY(0);
+      startY.current = null;
+    };
+
+
+    container.addEventListener('touchstart', handleTouchStart);
+    container.addEventListener('touchmove', handleTouchMove);
+    container.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [pullingProgress, isRefreshing, handlePullToRefresh]);
+
   const renderHeader = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
       <header className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200/20 dark:border-gray-700/20 shadow-sm">
@@ -66,9 +136,55 @@ export const DashboardLayout = ({
     </div>
   );
 
-  if (isSettingsOpen) {
+  const CircularProgress = ({ progress }: { progress: number }) => {
+    const radius = 24;
+    const stroke = 4;
+    const normalizedRadius = radius - stroke * 0.5;
+    const circumference = normalizedRadius * 2 * Math.PI;
+    const strokeDashoffset = circumference - progress * circumference;
+
     return (
-      <div className="w-full h-full">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
+        <svg height={radius * 2} width={radius * 2} className="transform -rotate-90">
+          <circle
+            stroke="#d1d5db"
+            fill="transparent"
+            strokeWidth={stroke}
+            r={normalizedRadius}
+            cx={radius}
+            cy={radius}
+          />
+          <circle
+            stroke="#3b82f6"
+            fill="transparent"
+            strokeWidth={stroke}
+            strokeDasharray={circumference + ' ' + circumference}
+            style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.2s ease-out' }}
+            r={normalizedRadius}
+            cx={radius}
+            cy={radius}
+          />
+        </svg>
+      </div>
+    );
+  };
+
+  return (
+    <div ref={containerRef} className="w-full h-full overflow-y-auto touch-none ">
+      <div
+        ref={contentRef}
+        className="transition-transform duration-200 ease-out"
+        style={{ transform: `translateY(${translateY}px)` }}
+      >
+        {(pullingProgress > 0 || isRefreshing) && (
+          <div className="flex items-center justify-center h-12">
+            {isRefreshing ? (
+              <RefreshCw className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+            ) : (
+              <CircularProgress progress={pullingProgress} />
+            )}
+          </div>
+        )}
         <div className="py-6">
           {renderHeader()}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -77,42 +193,6 @@ export const DashboardLayout = ({
           {renderFooter()}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <PullToRefresh
-      onRefresh={handlePullToRefresh}
-      isPullable={!loading && !previewsLoading && isMobileDevice && isApiReady}
-      pullingContent={
-        <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
-          <div className="flex items-center justify-center gap-3">
-            <RotateCw className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <span className="text-gray-800 dark:text-gray-100 font-medium text-base">Pull down to refresh</span>
-          </div>
-        </div>
-      }
-      refreshingContent={
-        <div className="text-center py-4 px-6 w-full max-w-xs mx-auto">
-          <div className="flex items-center justify-center gap-3">
-            <RefreshCw className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
-            <span className="text-gray-800 dark:text-gray-100 font-medium text-base">Refreshing...</span>
-          </div>
-        </div>
-      }
-      pullDownThreshold={70}
-      maxPullDownDistance={150}
-      resistance={2}
-      backgroundColor="transparent"
-      className="w-full h-full"
-    >
-      <div className="py-6">
-        {renderHeader()}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          {children}
-        </main>
-        {renderFooter()}
-      </div>
-    </PullToRefresh>
+    </div>
   );
 };
