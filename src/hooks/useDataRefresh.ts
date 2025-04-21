@@ -40,11 +40,6 @@ export const useDataRefresh = ({
       const savedItemsPerPage = parseInt(localStorage.getItem("dashboardItemsPerPage") || "10", 10);
       const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
 
-      toast.loading("Refreshing data", {
-        id: "manual-refresh-notification",
-        duration: 3000,
-      });
-
       const fetchPromises = [
         fetchRepositories(
           posted,
@@ -64,12 +59,6 @@ export const useDataRefresh = ({
       }
 
       await Promise.all(fetchPromises);
-
-      toast.dismiss("manual-refresh-notification");
-      toast.success("New data received from server", {
-        id: "new-data-notification",
-        duration: 5000,
-      });
 
       return true;
     } catch {
