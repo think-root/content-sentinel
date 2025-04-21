@@ -30,52 +30,92 @@ export const DashboardLayout = ({
   const [pullingProgress, setPullingProgress] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [translateY, setTranslateY] = useState(0);
+  const [isResetting, setIsResetting] = useState(false);
   const startY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const maxPull = 150;
+  const maxPull = 100;
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    let isPulling = false;
+    
     const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
+      if (window.scrollY === 0 && !isRefreshing) {
         startY.current = e.touches[0].clientY;
+        isPulling = false;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (startY.current !== null && !isRefreshing) {
         const distance = e.touches[0].clientY - startY.current;
+        
         if (distance > 0) {
-          const clampedDistance = Math.min(distance, maxPull);
-          const progress = clampedDistance / maxPull;
-          setPullingProgress(progress);
-          setTranslateY(clampedDistance);
+          if (!isPulling && distance > 10) {
+            isPulling = true;
+          }
+          
+          if (isPulling) {
+            e.preventDefault();
+            
+            const resistedDistance = Math.min(distance * 0.5, maxPull);
+            const progress = resistedDistance / maxPull;
+            
+            setPullingProgress(progress);
+            setTranslateY(resistedDistance);
 
-          if (progress >= 1) {
-            startY.current = null;
-            setIsRefreshing(true);
-            setTranslateY(60);
+            if (progress >= 1) {
+              startY.current = null;
+              setIsRefreshing(true);
+              setTranslateY(60);
+              isPulling = false;
 
-            void (async () => {
-              const delay = new Promise((res) => setTimeout(res, 1000));
-              await Promise.all([
-                handlePullToRefresh(),
-                delay,
-              ]);
+              void (async () => {
+                try {
+                  if (containerRef.current) {
+                    containerRef.current.classList.add('ptr--refreshing');
+                  }
+                  
+                  const delay = new Promise((res) => setTimeout(res, 1000));
+                  await Promise.all([
+                    handlePullToRefresh(),
+                    delay,
+                  ]);
 
-              setIsRefreshing(false);
-              setTranslateY(0);
-              setPullingProgress(0);
-
-              toast.success("New data received from server", {
-                id: "new-data-notification",
-                duration: 5000,
-              });
-            })();
+                  toast.success("New data received from server", {
+                    id: "new-data-notification",
+                    duration: 5000,
+                  });
+                } catch (error) {
+                  console.error("Pull to refresh failed:", error);
+                  toast.error("Failed to refresh data", {
+                    id: "refresh-error",
+                    duration: 5000,
+                  });
+                } finally {
+                  setIsResetting(true);
+                  
+                  setIsRefreshing(false);
+                  setTranslateY(0);
+                  setPullingProgress(0);
+                  
+                  setTimeout(() => {
+                    if (containerRef.current) {
+                      containerRef.current.classList.remove('ptr--refreshing');
+                    }
+                    
+                    setTimeout(() => {
+                      startY.current = null;
+                      setIsResetting(false);
+                    }, 300);
+                  }, 300);
+                }
+              })();
+            }
           }
         }
       }
@@ -84,22 +124,33 @@ export const DashboardLayout = ({
     const handleTouchEnd = () => {
       if (isRefreshing) return;
 
+      isPulling = false;
       setPullingProgress(0);
       setTranslateY(0);
       startY.current = null;
     };
 
+    const handleScroll = () => {
+      if (window.scrollY > 5 && startY.current !== null && !isRefreshing) {
+        isPulling = false;
+        setPullingProgress(0);
+        setTranslateY(0);
+        startY.current = null;
+      }
+    };
 
-    container.addEventListener('touchstart', handleTouchStart);
-    container.addEventListener('touchmove', handleTouchMove);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [pullingProgress, isRefreshing, handlePullToRefresh]);
+  }, [isRefreshing, handlePullToRefresh, maxPull]);
 
   const renderHeader = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -170,10 +221,10 @@ export const DashboardLayout = ({
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-y-auto">
+    <div ref={containerRef} className="w-full h-full overflow-y-auto ptr">
       <div
         ref={contentRef}
-        className="transition-transform duration-200 ease-out"
+        className={`transition-transform duration-200 ease-out will-change-transform ptr__children ${isResetting ? 'ptr--reset' : ''}`}
         style={{ transform: `translateY(${translateY}px)` }}
       >
         {(pullingProgress > 0 || isRefreshing) && (
