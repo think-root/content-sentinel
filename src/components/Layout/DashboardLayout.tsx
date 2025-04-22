@@ -10,7 +10,7 @@ interface DashboardLayoutProps {
   isSettingsOpen: boolean;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
-  handleManualRefresh: () => Promise<boolean>;
+  handleManualRefresh: (showNotification?: boolean) => Promise<boolean>;
   handlePullToRefresh: () => Promise<void>;
   loading: boolean;
   previewsLoading: boolean;
@@ -164,7 +164,7 @@ export const DashboardLayout = ({
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={handleManualRefresh}
+              onClick={() => handleManualRefresh(true)}
               className={`p-2 rounded-md ${loading ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 cursor-pointer'} text-gray-700 dark:text-gray-200 transition-colors`}
               title="Refresh data"
               disabled={loading}
