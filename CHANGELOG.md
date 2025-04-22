@@ -1,3 +1,14 @@
+# [1.25.0](https://github.com/think-root/content-sentinel/compare/v1.24.0...v1.25.0) (2025-04-22)
+
+
+### Features
+
+* **DashboardLayout:** enhance pull-to-refresh functionality with improved touch handling and progress indication ([fde1183](https://github.com/think-root/content-sentinel/commit/fde1183244759c41afe5ce9e11350b015e512abd))
+* **DashboardLayout:** implement custom pull-to-refresh functionality with progress indicator ([4bf7a31](https://github.com/think-root/content-sentinel/commit/4bf7a310c8b3e87681bc611bfa2a96497f075a92))
+* **GenerateForm, ResultDialog:** enhance button states and improve modal behavior ([68bb275](https://github.com/think-root/content-sentinel/commit/68bb2755908ee3921823f29ecbe95be2aaabd2b1))
+* **SettingsModal:** improve touch handling and event prevention for better user experience ([944ec1f](https://github.com/think-root/content-sentinel/commit/944ec1f41ac3f17128378b73eca4188fa8b2b3b1))
+* **useDataRefresh:** add optional notification parameter to handleManualRefresh ([631f7be](https://github.com/think-root/content-sentinel/commit/631f7bece5b230cf80bb578230b4e72de65a2180))
+
 # [1.24.0](https://github.com/think-root/content-sentinel/compare/v1.23.0...v1.24.0) (2025-04-18)
 
 
