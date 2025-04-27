@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/think-root/content-sentinel/compare/v1.25.0...v1.26.0) (2025-04-27)
+
+
+### Features
+
+* **CronJobs:** enhance schedule input handling with auto-focus and escape key functionality ([64870e5](https://github.com/think-root/content-sentinel/commit/64870e5543a7fde518f95b9cfeea48e6d961b0b2))
+
 # [1.25.0](https://github.com/think-root/content-sentinel/compare/v1.24.0...v1.25.0) (2025-04-22)
 
 
