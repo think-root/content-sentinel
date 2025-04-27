@@ -18,10 +18,9 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 
 ## Features
 
-- **Posts Management**: View, search, and filter posts
-- **Manual Generation**: Manually generate posts by repository URL
-- **Auto Generation**: Automatically generate posts from trending GitHub repositories
+- **Posts Generation**: Manually generate posts by repository URL or from trending GitHub repositories
 - **Status Tracking**: Monitor which repositories have been or will be posted to social media next
+- **Posts Management**: View, search, and filter posts
 - **Dark/Light Mode**: Toggle the interface between dark and light themes
 
 ## Technology Stack
@@ -31,7 +30,7 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
 - **Build Tool**: Vite
 - **Icons**: Lucide React
 
-## Screenshots
+## Screenshots (may be outdated)
 
 <details>
   <summary>Show me what's hidden</summary>
