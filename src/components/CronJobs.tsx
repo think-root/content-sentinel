@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { updateCronStatus, updateCronSchedule, CronJob } from '../api/index';
 import { X, Pencil, Check, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
@@ -49,11 +49,20 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export function CronJobs({ jobs, loading, isApiReady = true }: CronJobsProps) {
+export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) => {
   const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const scheduleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingSchedule) {
+      setTimeout(() => {
+        scheduleInputRef.current?.focus();
+      }, 50);
+    }
+  }, [editingSchedule]);
 
   useEffect(() => {
     setLocalJobs(jobs);
@@ -271,11 +280,15 @@ export function CronJobs({ jobs, loading, isApiReady = true }: CronJobsProps) {
                                   <input
                                     type="text"
                                     value={scheduleInput}
+                                    autoFocus
                                     onChange={(e) => handleScheduleChange(e.target.value)}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') {
                                         e.preventDefault();
                                         validateAndSaveSchedule();
+                                      } else if (e.key === 'Escape') {
+                                        setEditingSchedule(null);
+                                        setScheduleError(null);
                                       }
                                     }}
                                     className={`w-full px-2 py-1 rounded border ${scheduleError
@@ -283,6 +296,7 @@ export function CronJobs({ jobs, loading, isApiReady = true }: CronJobsProps) {
                                       : 'border-gray-300 dark:border-gray-600'
                                       } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none`}
                                     placeholder="Cron schedule"
+                                    ref={scheduleInputRef}
                                   />
                                   <div className="flex items-center space-x-1">
                                     <button
@@ -382,12 +396,23 @@ export function CronJobs({ jobs, loading, isApiReady = true }: CronJobsProps) {
                                 <input
                                   type="text"
                                   value={scheduleInput}
+                                  autoFocus
                                   onChange={(e) => handleScheduleChange(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      validateAndSaveSchedule();
+                                    } else if (e.key === 'Escape') {
+                                      setEditingSchedule(null);
+                                      setScheduleError(null);
+                                    }
+                                  }}
                                   className={`flex-1 px-2 py-1 rounded border ${scheduleError
                                     ? 'border-red-300 dark:border-red-600'
                                     : 'border-gray-300 dark:border-gray-600'
                                     } bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none`}
                                   placeholder="Cron schedule"
+                                  ref={scheduleInputRef}
                                 />
                                 <button
                                   onClick={validateAndSaveSchedule}
