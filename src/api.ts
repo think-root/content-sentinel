@@ -13,6 +13,23 @@ function getApiConfig() {
   };
 }
 
+function getLlmConfig() {
+  return {
+    use_direct_url: true,
+    llm_provider: "openrouter",
+    llm_config: {
+      model: "openai/gpt-4.1-mini:online",
+      temperature: 0.1,
+      messages: [
+        {
+          role: "system",
+          content: "Ти слухняний і корисний помічник, який суворо дотримується всіх наведених нижче вимог. Твоя основна задача — створювати короткі описи GitHub репозиторіїв українською мовою на основі наданих URL.\n\nЦі URL ведуть на GitHub-репозиторії. Під час створення опису обов’язково дотримуйся наступних правил:\n\n1. Включай не більше трьох ключових функцій репозиторію.\n2. Не додавай жодних посилань у тексті.\n3. Пиши простою, зрозумілою мовою, без переліків. Інформацію про функції вплітай у зв’язний текст.\n4. Не згадуй сумісність, платформи, авторів, компанії або колаборації.\n5. Не використовуй жодної розмітки: ні HTML, ні Markdown.\n6. Опис має бути лаконічним і точним, як один твіт — не більше 270 символів, з урахуванням пробілів.\n7. Технічні терміни (назви мов програмування, бібліотек, інструментів, команд тощо) залишай англійською мовою.\n8. Перед генерацією переконайся, що текст відповідає всім цим вимогам.\n\nПісля цього тобі буде надано URL GitHub-репозиторію. Твоє завдання — ознайомитися з його вмістом і створити короткий, чіткий і зрозумілий опис, що повністю відповідає цим правилам."
+        }
+      ]
+    }
+  };
+}
+
 interface GetRepositoryRequest {
   limit: number;
   posted?: boolean;
@@ -46,7 +63,7 @@ export async function getRepositories(
   pageSize?: number
 ): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
-  
+
   if (!isConfigured) {
     return {
       status: "error",
@@ -89,7 +106,7 @@ export interface ManualGenerateResponse {
 
 export async function manualGenerate(url: string): Promise<ManualGenerateResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
-  
+
   if (!isConfigured) {
     return {
       status: "error",
@@ -97,11 +114,16 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
       dont_added: []
     };
   }
-  
+
+  const llmConfig = getLlmConfig();
+
   const response = await fetch(`${baseUrl}/manual-generate/`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({
+      url,
+      ...llmConfig
+    }),
   });
 
   return response.json();
@@ -109,13 +131,15 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
 
 export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
   const { baseUrl, headers, isConfigured } = getApiConfig();
-  
+
   if (!isConfigured) {
     return {
       status: "error"
     };
   }
-  
+
+  const llmConfig = getLlmConfig();
+
   const response = await fetch(`${baseUrl}/auto-generate/`, {
     method: "POST",
     headers,
@@ -123,6 +147,7 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
       max_repos: maxRepos,
       since,
       spoken_language_code: spokenLanguageCode,
+      ...llmConfig
     }),
   });
 
@@ -131,7 +156,7 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
-  
+
   if (!isConfigured) {
     return {
       status: "error",
@@ -147,7 +172,7 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
       }
     };
   }
-  
+
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
@@ -164,7 +189,7 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
-  
+
   if (!isConfigured) {
     return {
       status: "error",
@@ -180,7 +205,7 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
       }
     };
   }
-  
+
   const response = await fetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
@@ -204,7 +229,7 @@ export interface CollectSettings {
 export async function getCollectSettings(): Promise<CollectSettings> {
   const settings = getApiSettings();
   const isConfigured = isApiConfigured();
-  
+
   if (!isConfigured) {
     return {
       max_repos: 10,
@@ -212,7 +237,7 @@ export async function getCollectSettings(): Promise<CollectSettings> {
       spoken_language_code: "en"
     };
   }
-  
+
   const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/collect-settings`, {
     headers: {
       Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
@@ -231,14 +256,14 @@ export async function getCollectSettings(): Promise<CollectSettings> {
 export async function updateCollectSettings(settings: CollectSettings): Promise<{ status: string; message: string }> {
   const apiSettings = getApiSettings();
   const isConfigured = isApiConfigured();
-  
+
   if (!isConfigured) {
     return {
       status: "error",
       message: "API not configured"
     };
   }
-  
+
   const response = await fetch(`${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings/update`, {
     method: 'PUT',
     headers: {
@@ -254,5 +279,3 @@ export async function updateCollectSettings(settings: CollectSettings): Promise<
 
   return response.json();
 }
-
-
