@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/think-root/content-sentinel/compare/v1.26.0...v1.27.0) (2025-05-27)
+
+
+### Features
+
+* **API:** integrate LLM configuration for content generation ([12a9d52](https://github.com/think-root/content-sentinel/commit/12a9d52b508f960b90356d0a3693f38b03056b7a))
+
 # [1.26.0](https://github.com/think-root/content-sentinel/compare/v1.25.0...v1.26.0) (2025-04-27)
 
 
