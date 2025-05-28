@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/think-root/content-sentinel/compare/v1.27.0...v1.28.0) (2025-05-28)
+
+
+### Features
+
+* **CronJobHistory:** implement cron job history tracking and filtering ([50b09d6](https://github.com/think-root/content-sentinel/commit/50b09d64b1d4ac71465459ce1a5adf7bd70961f1))
+
 # [1.27.0](https://github.com/think-root/content-sentinel/compare/v1.26.0...v1.27.0) (2025-05-27)
 
 
