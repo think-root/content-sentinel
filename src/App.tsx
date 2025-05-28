@@ -7,6 +7,7 @@ import { useDisclosure } from './hooks/useDisclosure';
 import { useRepositories } from './hooks/useRepositories';
 import { usePreviews } from './hooks/usePreviews';
 import { useCronJobs } from './hooks/useCronJobs';
+import { useCronJobHistory } from './hooks/useCronJobHistory';
 import { useCache } from './hooks/useCache';
 import { useDataRefresh } from './hooks/useDataRefresh';
 import { useGenerateHandlers } from './hooks/useGenerateHandlers';
@@ -71,12 +72,38 @@ function App() {
     applyNewData: applyCronJobsNewData
   } = useCronJobs({ isCacheBust, setErrorWithScroll });
 
-  useCache({ fetchRepositories, fetchPreviews, fetchCronJobs });
+  const {
+    history,
+    loading: cronJobHistoryLoading,
+    page: cronJobHistoryCurrentPage,
+    pageSize: cronJobHistoryPageSize,
+    sortOrder: cronJobHistorySortOrder,
+    totalItems: cronJobHistoryTotalItems,
+    totalPages: cronJobHistoryTotalPages,
+    nameFilter: cronJobHistoryNameFilter,
+    successFilter: cronJobHistorySuccessFilter,
+    startDate: cronJobHistoryStartDate,
+    endDate: cronJobHistoryEndDate,
+    newDataAvailable: cronJobHistoryNewDataAvailable,
+    fetchCronJobHistory,
+    applyNewData: applyCronJobHistoryNewData,
+    setNameFilter: cronJobHistorySetNameFilter,
+    setSuccessFilter: cronJobHistorySetSuccessFilter,
+    setSortOrder: cronJobHistorySetSortOrder,
+    setStartDate: cronJobHistorySetStartDate,
+    setEndDate: cronJobHistorySetEndDate,
+    resetFilters: cronJobHistoryResetFilters,
+    setPageSize: cronJobHistorySetPageSize,
+    setPage: cronJobHistorySetPage
+  } = useCronJobHistory({ isCacheBust, setErrorWithScroll });
+
+  useCache({ fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory });
 
   const { handleManualRefresh, handlePullToRefresh } = useDataRefresh({
     fetchRepositories,
     fetchPreviews,
     fetchCronJobs,
+    fetchCronJobHistory,
     setLoading,
     setErrorWithScroll
   });
@@ -110,15 +137,17 @@ function App() {
     );
     fetchPreviews(isCacheBust);
     fetchCronJobs(isCacheBust);
-  }, [fetchRepositories, fetchPreviews, fetchCronJobs, isCacheBust, isApiReady]);
+    fetchCronJobHistory(isCacheBust);
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory, isCacheBust, isApiReady]);
 
   useEffect(() => {
-    if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable) {
+    if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable) {
       const message = 'New data received from server';
 
       if (repoNewDataAvailable) applyRepoNewData();
       if (previewsNewDataAvailable) applyPreviewsNewData();
       if (cronJobsNewDataAvailable) applyCronJobsNewData();
+      if (cronJobHistoryNewDataAvailable) applyCronJobHistoryNewData();
 
       if (!document.querySelector('[data-id="new-data-notification"]')) {
         toast.success(message, {
@@ -128,8 +157,8 @@ function App() {
       }
     }
   }, [
-    repoNewDataAvailable, previewsNewDataAvailable, cronJobsNewDataAvailable,
-    newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData
+    repoNewDataAvailable, previewsNewDataAvailable, cronJobsNewDataAvailable, cronJobHistoryNewDataAvailable,
+    newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData, applyCronJobHistoryNewData
   ]);
 
   return (
@@ -167,6 +196,25 @@ function App() {
                   handleManualGenerate={handleManualGenerate}
                   handleAutoGenerate={handleAutoGenerate}
                   isApiReady={isApiReady}
+                  cronJobHistory={history}
+                  cronJobHistoryLoading={cronJobHistoryLoading}
+                  cronJobHistoryPageSize={cronJobHistoryPageSize}
+                  cronJobHistoryNameFilter={cronJobHistoryNameFilter}
+                  cronJobHistorySuccessFilter={cronJobHistorySuccessFilter}
+                  cronJobHistoryStartDate={cronJobHistoryStartDate}
+                  cronJobHistoryEndDate={cronJobHistoryEndDate}
+                  cronJobHistorySetNameFilter={cronJobHistorySetNameFilter}
+                  cronJobHistorySetSuccessFilter={cronJobHistorySetSuccessFilter}
+                  cronJobHistorySetStartDate={cronJobHistorySetStartDate}
+                  cronJobHistorySetEndDate={cronJobHistorySetEndDate}
+                  cronJobHistoryResetFilters={cronJobHistoryResetFilters}
+                  cronJobHistorySetPageSize={cronJobHistorySetPageSize}
+                  cronJobHistorySortOrder={cronJobHistorySortOrder}
+                  cronJobHistorySetSortOrder={cronJobHistorySetSortOrder}
+                  cronJobHistoryTotalItems={cronJobHistoryTotalItems}
+                  cronJobHistoryTotalPages={cronJobHistoryTotalPages}
+                  cronJobHistoryCurrentPage={cronJobHistoryCurrentPage}
+                  cronJobHistorySetPage={cronJobHistorySetPage}
                 />
               </DashboardLayout>
               <SettingsModal isOpen={isSettingsOpen} onClose={onSettingsClose} />

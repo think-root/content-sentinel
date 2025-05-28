@@ -7,13 +7,14 @@ interface UseDataRefreshProps {
     append?: boolean,
     fetchAll?: boolean,
     itemsPerPage?: number,
-    sortBy?: 'id' | 'date_added' | 'date_posted',
-    sortOrder?: 'ASC' | 'DESC',
+    sortBy?: "id" | "date_added" | "date_posted",
+    sortOrder?: "ASC" | "DESC",
     page?: number,
     forceFetch?: boolean
   ) => Promise<void>;
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   fetchCronJobs?: (forceFetch?: boolean) => Promise<void>;
+  fetchCronJobHistory?: (forceFetch?: boolean) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setErrorWithScroll: (errorMessage: string, toastId?: string) => void;
 }
@@ -22,8 +23,9 @@ export const useDataRefresh = ({
   fetchRepositories,
   fetchPreviews,
   fetchCronJobs,
+  fetchCronJobHistory,
   setLoading,
-  setErrorWithScroll
+  setErrorWithScroll,
 }: UseDataRefreshProps) => {
   const handleManualRefresh = useCallback(
     async (showNotification: boolean = true): Promise<boolean> => {
@@ -64,6 +66,10 @@ export const useDataRefresh = ({
           fetchPromises.push(fetchCronJobs(true));
         }
 
+        if (fetchCronJobHistory) {
+          fetchPromises.push(fetchCronJobHistory(true));
+        }
+
         await Promise.all(fetchPromises);
 
         if (showNotification) {
@@ -74,14 +80,34 @@ export const useDataRefresh = ({
         }
 
         return true;
-      } catch {
-        setErrorWithScroll("Failed to refresh data", "refresh-error");
+      } catch (error) {
+        const err = error as Error;
+
+        if (err.message.includes("Rate limit exceeded")) {
+          toast.error("Rate limit exceeded. Please try again later.", {
+            id: "rate-limit-error",
+            duration: 5000,
+          });
+        } else {
+          setErrorWithScroll(
+            "Failed to refresh data: " + (err.message || "Unknown error"),
+            "refresh-error"
+          );
+        }
+
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [fetchRepositories, fetchPreviews, fetchCronJobs, setErrorWithScroll, setLoading]
+    [
+      fetchRepositories,
+      fetchPreviews,
+      fetchCronJobs,
+      fetchCronJobHistory,
+      setErrorWithScroll,
+      setLoading,
+    ]
   );
 
   const handlePullToRefresh = useCallback(async () => {
@@ -90,12 +116,23 @@ export const useDataRefresh = ({
       await handleManualRefresh(false);
     } catch (error) {
       console.error("Pull to refresh error:", error);
-      toast.error("Failed to refresh data", { id: "manual-refresh-notification" });
+      const err = error as Error;
+
+      if (err.message.includes("Rate limit exceeded")) {
+        toast.error("Rate limit exceeded. Please try again later.", {
+          id: "rate-limit-error",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Failed to refresh data: " + (err.message || "Unknown error"), {
+          id: "manual-refresh-notification",
+        });
+      }
     }
   }, [handleManualRefresh]);
 
   return {
     handleManualRefresh,
-    handlePullToRefresh
+    handlePullToRefresh,
   };
 };

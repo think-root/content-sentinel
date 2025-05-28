@@ -95,6 +95,13 @@ export async function getRepositories(
     body: JSON.stringify(requestBody),
   });
 
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
+
   return response.json();
 }
 
@@ -126,6 +133,13 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
     }),
   });
 
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
+
   return response.json();
 }
 
@@ -150,6 +164,13 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
       ...llmConfig
     }),
   });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
 
   return response.json();
 }
@@ -184,6 +205,13 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
     }),
   });
 
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
+
   return response.json();
 }
 
@@ -216,6 +244,13 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
       sort_order: "ASC",
     }),
   });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
 
   return response.json();
 }

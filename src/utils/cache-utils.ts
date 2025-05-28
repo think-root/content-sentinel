@@ -1,5 +1,5 @@
 import type { Repository } from '../types';
-import type { CronJob } from '../api/index';
+import type { CronJob, CronJobHistory } from '../api/index';
 
 interface RepositoriesCache {
   repositories: Repository[];
@@ -24,6 +24,11 @@ interface CronJobsCache {
   timestamp: number;
 }
 
+interface CronJobHistoryCache {
+  history: CronJobHistory[];
+  total: number;
+  timestamp: number;
+}
 
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
@@ -93,10 +98,33 @@ export const getCronJobsFromCache = (): CronJobsCache | null => {
   }
 };
 
+export const saveCronJobHistoryToCache = (data: CronJobHistoryCache) => {
+  localStorage.setItem('cache_cron_job_history', JSON.stringify({
+    ...data,
+    timestamp: Date.now()
+  }));
+};
+
+export const getCronJobHistoryFromCache = (): CronJobHistoryCache | null => {
+  const cachedData = localStorage.getItem('cache_cron_job_history');
+  if (!cachedData) return null;
+
+  try {
+    const data = JSON.parse(cachedData) as CronJobHistoryCache;
+    if (Date.now() - data.timestamp > CACHE_EXPIRY) {
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
 export const clearAllCaches = () => {
   localStorage.removeItem('cache_repositories');
   localStorage.removeItem('cache_previews');
   localStorage.removeItem('cache_cron_jobs');
+  localStorage.removeItem('cache_cron_job_history');
 
   localStorage.removeItem('cache_repositories_key');
 };

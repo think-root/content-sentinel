@@ -2,9 +2,10 @@ import { Stats } from '../Stats';
 import { RepositoryList } from '../RepositoryList';
 import { GenerateForm } from '../GenerateForm';
 import { CronJobs } from '../CronJobs';
+import { CronJobHistory } from '../CronJobHistory';
 import { RepositoryPreview } from '../RepositoryPreview';
 import type { Repository } from '../../types';
-import type { CronJob } from '../../api/index';
+import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../api/index';
 import type { ManualGenerateResponse } from '../../api';
 
 interface DashboardContentProps {
@@ -40,6 +41,25 @@ interface DashboardContentProps {
   handleManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
   handleAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<{ status: string; added?: string[]; dont_added?: string[] }>;
   isApiReady: boolean;
+  cronJobHistory?: CronJobHistoryType[];
+  cronJobHistoryLoading?: boolean;
+  cronJobHistoryPageSize?: number;
+  cronJobHistoryNameFilter?: string;
+  cronJobHistorySuccessFilter?: boolean;
+  cronJobHistoryStartDate?: string;
+  cronJobHistoryEndDate?: string;
+  cronJobHistorySetNameFilter?: (nameFilter?: string) => void;
+  cronJobHistorySetSuccessFilter?: (successFilter?: boolean) => void;
+  cronJobHistorySetStartDate?: (startDate?: string) => void;
+  cronJobHistorySetEndDate?: (endDate?: string) => void;
+  cronJobHistoryResetFilters?: () => void;
+  cronJobHistorySetPageSize?: (pageSize: number) => void;
+  cronJobHistorySortOrder?: 'asc' | 'desc';
+  cronJobHistorySetSortOrder?: (sortOrder: 'asc' | 'desc') => void;
+  cronJobHistoryTotalItems?: number;
+  cronJobHistoryTotalPages?: number;
+  cronJobHistoryCurrentPage?: number;
+  cronJobHistorySetPage?: (page: number) => void;
 }
 
 export const DashboardContent = ({
@@ -55,7 +75,26 @@ export const DashboardContent = ({
   fetchRepositories,
   handleManualGenerate,
   handleAutoGenerate,
-  isApiReady
+  isApiReady,
+  cronJobHistory,
+  cronJobHistoryLoading,
+  cronJobHistoryPageSize,
+  cronJobHistoryNameFilter,
+  cronJobHistorySuccessFilter,
+  cronJobHistoryStartDate,
+  cronJobHistoryEndDate,
+  cronJobHistorySetNameFilter,
+  cronJobHistorySetSuccessFilter,
+  cronJobHistorySetStartDate,
+  cronJobHistorySetEndDate,
+  cronJobHistoryResetFilters,
+  cronJobHistorySetPageSize,
+  cronJobHistorySortOrder,
+  cronJobHistorySetSortOrder,
+  cronJobHistoryTotalItems,
+  cronJobHistoryTotalPages,
+  cronJobHistoryCurrentPage,
+  cronJobHistorySetPage
 }: DashboardContentProps) => {
   return (
     <>
@@ -90,6 +129,31 @@ export const DashboardContent = ({
         loading={cronJobsLoading}
         isApiReady={isApiReady}
       />
+
+      {cronJobHistory && (
+        <CronJobHistory
+          history={cronJobHistory}
+          loading={cronJobHistoryLoading || false}
+          pageSize={cronJobHistoryPageSize || 10}
+          nameFilter={cronJobHistoryNameFilter}
+          successFilter={cronJobHistorySuccessFilter}
+          startDate={cronJobHistoryStartDate}
+          endDate={cronJobHistoryEndDate}
+          setNameFilter={cronJobHistorySetNameFilter}
+          setSuccessFilter={cronJobHistorySetSuccessFilter}
+          setStartDate={cronJobHistorySetStartDate}
+          setEndDate={cronJobHistorySetEndDate}
+          resetFilters={cronJobHistoryResetFilters}
+          setPageSize={cronJobHistorySetPageSize}
+          sortOrder={cronJobHistorySortOrder}
+          setSortOrder={cronJobHistorySetSortOrder}
+          totalItems={cronJobHistoryTotalItems}
+          totalPages={cronJobHistoryTotalPages}
+          currentPage={cronJobHistoryCurrentPage}
+          setPage={cronJobHistorySetPage}
+          isApiReady={isApiReady}
+        />
+      )}
 
       <RepositoryList
         repositories={repositories}
