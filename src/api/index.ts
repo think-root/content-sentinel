@@ -11,7 +11,7 @@ export interface CronJobHistory {
   name: string;
   timestamp: string;
   success: boolean;
-  error: string;
+  output?: string;
 }
 
 export interface CronJobHistoryResponse {
