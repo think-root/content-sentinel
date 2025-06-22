@@ -1,6 +1,7 @@
 import { Stats } from '../Stats';
 import { RepositoryList } from '../RepositoryList';
 import { GenerateForm } from '../GenerateForm';
+import { PromptSettings } from '../PromptSettings';
 import { CronJobs } from '../CronJobs';
 import { CronJobHistory } from '../CronJobHistory';
 import { RepositoryPreview } from '../RepositoryPreview';
@@ -122,6 +123,10 @@ export const DashboardContent = ({
       <GenerateForm
         onManualGenerate={handleManualGenerate}
         onAutoGenerate={handleAutoGenerate}
+      />
+
+      <PromptSettings
+        isApiReady={isApiReady}
       />
 
       <CronJobs
