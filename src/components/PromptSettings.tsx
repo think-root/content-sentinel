@@ -281,10 +281,10 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
             </label>
           </div>
 
-          {/* Prompt Content */}
+          {/* Prompt */}
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Prompt Content
+              Prompt
             </label>
             <textarea
               id="content"
