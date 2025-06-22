@@ -1,3 +1,16 @@
+# [1.29.0](https://github.com/think-root/content-sentinel/compare/v1.28.0...v1.29.0) (2025-06-22)
+
+
+### Features
+
+* **api:** refactor llm config management ([633c52b](https://github.com/think-root/content-sentinel/commit/633c52b0413847f110c811f549b06d471506c92e))
+* **API:** refine LLM prompt for GitHub repo descriptions ([8b1398a](https://github.com/think-root/content-sentinel/commit/8b1398ad00797f56aa3b44e34cf5309097dbddd8))
+* **components:** add prompt settings ([71b9814](https://github.com/think-root/content-sentinel/commit/71b9814ebd7040983cdbd219ff90501b607d509d))
+* **CronJobHistory:** display job output instead of error ([cb57e61](https://github.com/think-root/content-sentinel/commit/cb57e61800dfd1687c7b5b8c2b0a7af4ee970c3c))
+* **hooks:** add prompt settings import ([a905845](https://github.com/think-root/content-sentinel/commit/a905845ba02344c742196707f2faaa79eeef4ae5))
+* **hooks:** implement usePromptSettings for managing prompt settings ([73965c5](https://github.com/think-root/content-sentinel/commit/73965c51bcbdb250a3c2cacfd8fede3e8d72edb2))
+* **layout:** add prompt settings ([74d6ddb](https://github.com/think-root/content-sentinel/commit/74d6ddbd9e002ca501f42e416f7db1e6149aa5b2))
+
 # [1.28.0](https://github.com/think-root/content-sentinel/compare/v1.27.0...v1.28.0) (2025-05-28)
 
 
