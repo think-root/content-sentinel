@@ -8,6 +8,7 @@ import { useRepositories } from './hooks/useRepositories';
 import { usePreviews } from './hooks/usePreviews';
 import { useCronJobs } from './hooks/useCronJobs';
 import { useCronJobHistory } from './hooks/useCronJobHistory';
+import { usePromptSettings } from './hooks/usePromptSettings';
 import { useCache } from './hooks/useCache';
 import { useDataRefresh } from './hooks/useDataRefresh';
 import { useGenerateHandlers } from './hooks/useGenerateHandlers';
@@ -97,6 +98,10 @@ function App() {
     setPage: cronJobHistorySetPage
   } = useCronJobHistory({ isCacheBust, setErrorWithScroll });
 
+  const {
+    fetchSettings: fetchPromptSettings
+  } = usePromptSettings();
+
   useCache({ fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory });
 
   const { handleManualRefresh, handlePullToRefresh } = useDataRefresh({
@@ -138,7 +143,8 @@ function App() {
     fetchPreviews(isCacheBust);
     fetchCronJobs(isCacheBust);
     fetchCronJobHistory(isCacheBust);
-  }, [fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory, isCacheBust, isApiReady]);
+    fetchPromptSettings();
+  }, [fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory, fetchPromptSettings, isCacheBust, isApiReady]);
 
   useEffect(() => {
     if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable) {
