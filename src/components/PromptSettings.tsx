@@ -288,10 +288,10 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
             </label>
             <textarea
               id="content"
-              rows={8}
               value={localSettings.content}
               onChange={(e) => handleFieldChange('content', e.target.value)}
               disabled={saving}
+              style={{ height: '130px' }}
               className={`block w-full rounded-md border border-gray-300 dark:border-gray-600 ${
                 saving ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
               } text-gray-900 dark:text-white py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-vertical`}

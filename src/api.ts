@@ -395,3 +395,49 @@ export async function updatePromptSettings(
 
   return response.json();
 }
+
+export async function deleteRepository(identifier: { id?: number; url?: string }): Promise<{ status: string; message: string }> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return { status: "error", message: "API not configured" };
+  }
+
+  const response = await fetch(`${baseUrl}/delete-repository/`, {
+    method: "DELETE",
+    headers,
+    body: JSON.stringify(identifier),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    throw new Error(`Failed to delete repository: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateRepositoryText(identifier: { id?: number; url?: string }, text: string): Promise<{ status: string; message: string; data?: { id: number; url: string; text: string; updated_at: string } }> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return { status: "error", message: "API not configured" };
+  }
+
+  const response = await fetch(`${baseUrl}/update-repository-text/`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ ...identifier, text }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    throw new Error(`Failed to update repository text: ${response.status}`);
+  }
+
+  return response.json();
+}

@@ -69,6 +69,12 @@ export function RepositoryList({
     initialPageSize
   );
 
+  const handleRepositoryUpdate = () => {
+    // Refresh repositories with current filters
+    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, sortOrder, currentPage);
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
       <div className="flex items-center justify-between p-6">
@@ -136,6 +142,7 @@ export function RepositoryList({
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
+              onRepositoryUpdate={handleRepositoryUpdate}
             />
           </div>
           
@@ -147,6 +154,7 @@ export function RepositoryList({
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
+              onRepositoryUpdate={handleRepositoryUpdate}
             />
           </div>
         </div>
