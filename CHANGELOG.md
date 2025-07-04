@@ -1,3 +1,15 @@
+# [1.30.0](https://github.com/think-root/content-sentinel/compare/v1.29.0...v1.30.0) (2025-07-04)
+
+
+### Bug Fixes
+
+* **ui:** update prompt label ([67a15ca](https://github.com/think-root/content-sentinel/commit/67a15ca7fe2b85876e7213b4f5f12ba496634252))
+
+
+### Features
+
+* **ui:** add collapsible filters panel to posts list ([4e6d376](https://github.com/think-root/content-sentinel/commit/4e6d37611cbed2344238254c4516f1903e151ad6))
+
 # [1.29.0](https://github.com/think-root/content-sentinel/compare/v1.28.0...v1.29.0) (2025-06-22)
 
 
