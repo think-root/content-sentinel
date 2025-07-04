@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Repository } from '../types';
-import { Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X, Filter } from 'lucide-react';
-import { formatDate } from '../utils/date-format';
+import { Filter, ChevronDown } from 'lucide-react';
+import { filterRepositories, countActiveFilters } from '../utils/repositoryListUtils';
+import { useRepositoryFilters } from '../hooks/useRepositoryFilters';
+import { RepositoryListFilters } from './RepositoryListFilters';
+import { RepositoryTable } from './RepositoryTable';
+import { RepositoryMobileView } from './RepositoryMobileView';
+import { RepositoryPagination } from './RepositoryPagination';
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -14,196 +19,55 @@ interface RepositoryListProps {
   isApiReady?: boolean;
 }
 
-function TruncatedText({ text, maxChars = 150 }: { text: string, maxChars?: number }) {
-  const [expanded, setExpanded] = useState(false);
-  
-  if (!text) return <p>-</p>;
-  
-  const hasMoreText = text.length > maxChars;
-  const displayText = expanded ? text : hasMoreText ? text.substring(0, maxChars) + '...' : text;
-  
-  return (
-    <div>
-      <p className="whitespace-pre-line break-words leading-relaxed tracking-wide">{displayText}</p>
-      {hasMoreText && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-xs flex items-center"
-        >
-          {expanded ? (
-            <>
-              <ChevronUp className="h-3 w-3 mr-1" />
-              Show less
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-3 w-3 mr-1" />
-              Show more
-            </>
-          )}
-        </button>
-      )}
-    </div>
-  );
-}
-
-export function RepositoryList({ repositories, fetchRepositories, totalItems, totalPages, currentPage: initialPage, pageSize: initialPageSize, loading, isApiReady = true }: RepositoryListProps) {
+export function RepositoryList({ 
+  repositories, 
+  fetchRepositories, 
+  totalItems, 
+  totalPages, 
+  currentPage: initialPage, 
+  pageSize: initialPageSize, 
+  loading, 
+  isApiReady = true 
+}: RepositoryListProps) {
   const [isExpanded, setIsExpanded] = useState(() => {
     const saved = localStorage.getItem('dashboardExpanded');
     return saved === null ? true : saved === 'true';
   });
 
-  const [showFilters, setShowFilters] = useState<boolean>(() => {
-    const saved = localStorage.getItem('postsShowFilters');
-    return saved === 'true';
-  });
+  const {
+    searchTerm,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    itemsPerPage,
+    currentPage,
+    showFilters,
+    handleSearchTermChange,
+    handleStatusFilterChange,
+    handleSortByChange,
+    handleSortOrderChange,
+    handleItemsPerPageChange,
+    handlePageChange,
+    handleClearFilters,
+    handleToggleFilters
+  } = useRepositoryFilters(initialPageSize, initialPage, fetchRepositories, loading);
 
-  const [searchTerm, setSearchTerm] = useState(() => {
-    const saved = localStorage.getItem('dashboardSearchTerm');
-    return saved || '';
-  });
-  
-  const [statusFilter, setStatusFilter] = useState<'all' | 'posted' | 'unposted'>(() => {
-    const saved = localStorage.getItem('dashboardStatusFilter');
-    return (saved as 'all' | 'posted' | 'unposted') || 'all';
-  });
-  
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  
-  const [itemsPerPage, setItemsPerPage] = useState(() => {
-    const saved = localStorage.getItem('dashboardItemsPerPage');
-    return saved ? parseInt(saved, 10) : initialPageSize;
-  });
-  
-  const [sortBy, setSortBy] = useState<'id' | 'date_added' | 'date_posted'>(() => {
-    const saved = localStorage.getItem('dashboardSortBy');
-    return (saved as 'id' | 'date_added' | 'date_posted') || 'date_added';
-  });
-
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>(() => {
-    const saved = localStorage.getItem('dashboardSortOrder');
-    return (saved as 'ASC' | 'DESC') || 'DESC';
-  });
-  
   const toggleExpanded = () => {
     const newValue = !isExpanded;
     setIsExpanded(newValue);
     localStorage.setItem('dashboardExpanded', newValue.toString());
   };
 
-  const handleToggleFilters = () => {
-    const newValue = !showFilters;
-    setShowFilters(newValue);
-    localStorage.setItem('postsShowFilters', newValue.toString());
-  };
+  const filteredItems = filterRepositories(repositories, searchTerm);
 
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setSortBy('date_added');
-    setSortOrder('DESC');
-    setItemsPerPage(initialPageSize);
-    setCurrentPage(1);
-    
-    localStorage.removeItem('dashboardSearchTerm');
-    localStorage.setItem('dashboardStatusFilter', 'all');
-    localStorage.setItem('dashboardSortBy', 'date_added');
-    localStorage.setItem('dashboardSortOrder', 'DESC');
-    localStorage.setItem('dashboardItemsPerPage', initialPageSize.toString());
-    
-    fetchRepositories(undefined, false, initialPageSize === 0, initialPageSize, 'date_added', 'DESC', 1);
-  };
-
-  useEffect(() => {
-    setCurrentPage(initialPage);
-  }, [initialPage]);
-
-  useEffect(() => {
-  }, [searchTerm]);
-
-  const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
-    if (loading) return;
-    
-    setStatusFilter(value);
-    localStorage.setItem('dashboardStatusFilter', value);
-    setCurrentPage(1);
-    
-    const posted = value === 'all' ? undefined : value === 'posted';
-
-    fetchRepositories(
-      posted,
-      false,
-      itemsPerPage === 0,
-      itemsPerPage,
-      sortBy,
-      sortOrder,
-      1
-    );
-  };
-
-  const handleItemsPerPageChange = (value: number) => {
-    if (loading) return;
-    
-    setItemsPerPage(value);
-    localStorage.setItem('dashboardItemsPerPage', value.toString());
-    setCurrentPage(1);
-    
-    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(
-      posted,
-      false,
-      value === 0,
-      value,
-      sortBy,
-      sortOrder,
-      1
-    );
-  };
-
-  const handleSortByChange = (value: 'id' | 'date_added' | 'date_posted') => {
-    if (loading) return;
-    
-    setSortBy(value);
-    localStorage.setItem('dashboardSortBy', value);
-    setCurrentPage(1);
-    
-    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder, 1);
-  };
-
-  const handleSortOrderChange = (value: 'ASC' | 'DESC') => {
-    if (loading) return;
-    
-    setSortOrder(value);
-    localStorage.setItem('dashboardSortOrder', value);
-    setCurrentPage(1);
-    
-    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1);
-  };
-
-
-  const handlePageChange = (page: number) => {
-    if (loading) return;
-    
-    setCurrentPage(page);
-    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page);
-  };
-
-  const filteredItems = searchTerm
-    ? repositories.filter(repo => {
-      const searchTermLower = searchTerm.toLowerCase();
-      return (
-        (repo.text && repo.text.toLowerCase().includes(searchTermLower)) ||
-        (repo.url && repo.url.toLowerCase().includes(searchTermLower)) ||
-        (repo.date_added && formatDate(repo.date_added).toLowerCase().includes(searchTermLower)) ||
-        (repo.date_posted && formatDate(repo.date_posted).toLowerCase().includes(searchTermLower))
-      );
-    })
-    : repositories;
-
-  const paginatedItems = filteredItems;
+  const activeFiltersCount = countActiveFilters(
+    searchTerm,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    itemsPerPage,
+    initialPageSize
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
@@ -233,15 +97,9 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
           <Filter className="h-4 w-4" />
           Filters
           <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          {(searchTerm || statusFilter !== 'all' || sortBy !== 'date_added' || sortOrder !== 'DESC' || itemsPerPage !== initialPageSize) && (
+          {activeFiltersCount > 0 && (
             <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
-              {[
-                searchTerm,
-                statusFilter !== 'all',
-                sortBy !== 'date_added',
-                sortOrder !== 'DESC',
-                itemsPerPage !== initialPageSize
-              ].filter(Boolean).length}
+              {activeFiltersCount}
             </span>
           )}
         </button>
@@ -252,459 +110,57 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
           isExpanded ? 'max-h-full opacity-100 pb-6' : 'max-h-0 opacity-0'
         }`}
       >
-        {/* Filters panel */}
-        {showFilters && (
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700">
-            <div className="flex flex-col gap-4">
-              {/* Search row */}
-              <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Search
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search by URL, Text, or Dates..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setSearchTerm(value);
-                      localStorage.setItem('dashboardSearchTerm', value);
-                    }}
-                    disabled={loading}
-                    className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        localStorage.removeItem('dashboardSearchTerm');
-                      }}
-                      disabled={loading}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Clear search"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Controls row */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Status filter */}
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Status
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="all">All</option>
-                      <option value="posted">Posted</option>
-                      <option value="unposted">Unposted</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sort By filter */}
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sort By
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="id">ID</option>
-                      <option value="date_added">Date Added</option>
-                      <option value="date_posted">Date Posted</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Page Size filter */}
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Page Size
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value={0}>All</option>
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                      <option value={50}>50</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sort Order filter */}
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sort Order
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={sortOrder}
-                      onChange={(e) => handleSortOrderChange(e.target.value as 'ASC' | 'DESC')}
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="DESC">Newest First</option>
-                      <option value="ASC">Oldest First</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Clear filters button */}
-              {(searchTerm || statusFilter !== 'all' || sortBy !== 'date_added' || sortOrder !== 'DESC' || itemsPerPage !== initialPageSize) && (
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleClearFilters}
-                    disabled={loading}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <RepositoryListFilters
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          itemsPerPage={itemsPerPage}
+          showFilters={showFilters}
+          loading={loading}
+          initialPageSize={initialPageSize}
+          onSearchTermChange={handleSearchTermChange}
+          onStatusFilterChange={handleStatusFilterChange}
+          onSortByChange={handleSortByChange}
+          onSortOrderChange={handleSortOrderChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          onClearFilters={handleClearFilters}
+        />
 
         <div className="overflow-x-auto">
           <div className="md:block hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/12">ID</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Url</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Text</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Added</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Date Posted</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {!isApiReady ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4">
-                      <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
-                        Data could not be loaded because API keys are not configured
-                      </div>
-                    </td>
-                  </tr>
-                ) : loading ? (
-                  Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                      </td>
-                    </tr>
-                  ))
-                ) : totalItems === 0 || filteredItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                        {searchTerm && filteredItems.length === 0 ? 'No matching results found' : 'No data available'}
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedItems.map((repo) => (
-                    <tr key={repo.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {repo.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        <a
-                          href={repo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                        >
-                          {repo.url.replace('https://github.com/', '')}
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        <TruncatedText text={repo.text} maxChars={150} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {repo.date_added ? formatDate(repo.date_added) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {repo.date_posted ? formatDate(repo.date_posted) : '-'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <RepositoryTable
+              repositories={filteredItems}
+              loading={loading}
+              isApiReady={isApiReady}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              searchTerm={searchTerm}
+            />
           </div>
+          
           <div className="md:hidden block">
-            {!isApiReady ? (
-              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-                <div className="text-gray-500 dark:text-gray-400 text-sm text-center">
-                  Data could not be loaded because API keys are not configured
-                </div>
-              </div>
-            ) : loading ? (
-              Array.from({ length: itemsPerPage || 5 }).map((_, index) => (
-                <div key={index} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-                  <div className="mb-3">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-8 mb-2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                  </div>
-                </div>
-              ))
-            ) : totalItems === 0 || filteredItems.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                  {searchTerm && filteredItems.length === 0 ? 'No matching results found' : 'No data available'}
-              </div>
-            ) : (
-              paginatedItems.map((repo) => (
-                <div key={repo.id} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-                  <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ID</span>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {repo.id}
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Url</span>
-                    <div className="mt-1">
-                      <a
-                        href={repo.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
-                      >
-                        {repo.url.replace('https://github.com/', '')}
-                      </a>
-                    </div>
-                  </div>
-                
-                  <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Text</span>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      <TruncatedText text={repo.text} maxChars={150} />
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date Added</span>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {repo.date_added ? formatDate(repo.date_added) : '-'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date Posted</span>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {repo.date_posted ? formatDate(repo.date_posted) : '-'}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+            <RepositoryMobileView
+              repositories={filteredItems}
+              loading={loading}
+              isApiReady={isApiReady}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              searchTerm={searchTerm}
+            />
           </div>
         </div>
-      
 
-        {(totalItems > 0 && (!searchTerm || filteredItems.length > 0)) && (
-          <>
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 md:block hidden">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  {searchTerm ? (
-                    <p>Found <span className="font-medium">{filteredItems.length}</span> matching results</p>
-                  ) : itemsPerPage === 0 ? (
-                    <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
-                  ) : (
-                    <p>
-                      Showing <span className="font-medium">
-                        {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
-                      </span> to{' '}
-                      <span className="font-medium">
-                        {Math.min(currentPage * itemsPerPage, totalItems)}
-                      </span>{' '}
-                      of <span className="font-medium">{totalItems}</span> results
-                    </p>
-                  )}
-                </div>
-
-                {!searchTerm && itemsPerPage > 0 && totalItems > itemsPerPage && (
-                  <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Previous page"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                  
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                    
-                      return (
-                        <button
-                          key={pageNum}
-                          type="button"
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`relative inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 border ${currentPage === pageNum ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'} text-xs sm:text-sm font-medium rounded-md min-w-[30px] sm:min-w-[40px] text-center justify-center`}
-                          title={`Go to page ${pageNum}`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                  
-                    <button
-                      type="button"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Next page"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 md:hidden block">
-              <div className="flex flex-col items-center space-y-4 w-full">
-                <div className="text-xs text-gray-700 dark:text-gray-300 w-full text-center">
-                  {searchTerm ? (
-                    <p>Found <span className="font-medium">{filteredItems.length}</span> matching results</p>
-                  ) : itemsPerPage === 0 ? (
-                    <p>Showing all <span className="font-medium">{totalItems}</span> results</p>
-                  ) : (
-                    <p>
-                      Showing <span className="font-medium">
-                        {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
-                      </span> to{' '}
-                      <span className="font-medium">
-                        {Math.min(currentPage * itemsPerPage, totalItems)}
-                      </span>{' '}
-                      of <span className="font-medium">{totalItems}</span> results
-                    </p>
-                  )}
-                </div>
-
-                {!searchTerm && itemsPerPage > 0 && totalItems > itemsPerPage && (
-                  <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1 px-4 w-full justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px] justify-center flex-shrink-0"
-                      title="Previous page"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                    
-                      return (
-                        <button
-                          key={pageNum}
-                          type="button"
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium rounded-md min-w-[32px] justify-center flex-shrink-0 ${currentPage === pageNum
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300'
-                              : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
-                            }`}
-                          title={`Go to page ${pageNum}`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                  
-                    <button
-                      type="button"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px] justify-center flex-shrink-0"
-                      title="Next page"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+        <RepositoryPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          searchTerm={searchTerm}
+          filteredItemsCount={filteredItems.length}
+          loading={loading}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   );
