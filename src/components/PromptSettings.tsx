@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Bot, Save, RotateCcw, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { usePromptSettings } from '../hooks/usePromptSettings';
 import { toast } from 'react-hot-toast';
+import { ConfirmDialog } from './ConfirmDialog';
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -27,6 +28,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [temperatureError, setTemperatureError] = useState<string | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   useEffect(() => {
     if (isApiReady) {
@@ -121,18 +123,25 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
     }
   };
 
-  const handleResetToDefaults = async () => {
-    if (window.confirm('Are you sure you want to reset all prompt settings to defaults? This action cannot be undone.')) {
-      try {
-        await resetToDefaults();
-        setHasUnsavedChanges(false);
-        setTemperatureError(null);
-        toast.success('Settings reset to defaults successfully');
-      } catch (error) {
-        console.error('Failed to reset to defaults:', error);
-        toast.error('Failed to reset settings to defaults');
-      }
+  const handleResetToDefaults = () => {
+    setShowResetDialog(true);
+  };
+
+  const confirmResetToDefaults = async () => {
+    setShowResetDialog(false);
+    try {
+      await resetToDefaults();
+      setHasUnsavedChanges(false);
+      setTemperatureError(null);
+      toast.success('Settings reset to defaults successfully');
+    } catch (error) {
+      console.error('Failed to reset to defaults:', error);
+      toast.error('Failed to reset settings to defaults');
     }
+  };
+
+  const cancelResetToDefaults = () => {
+    setShowResetDialog(false);
   };
 
   return (
@@ -349,6 +358,17 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showResetDialog}
+        title="Reset to Defaults"
+        message="Are you sure you want to reset all prompt settings to defaults? This action cannot be undone."
+        confirmText="Reset"
+        cancelText="Cancel"
+        onConfirm={confirmResetToDefaults}
+        onCancel={cancelResetToDefaults}
+        variant="warning"
+      />
     </div>
   );
 };
