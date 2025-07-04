@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/think-root/content-sentinel/compare/v1.30.0...v1.31.0) (2025-07-04)
+
+
+### Features
+
+* **ui:** add inline edit and delete for repository text ([52ae49c](https://github.com/think-root/content-sentinel/commit/52ae49cbfea513fd3619f8c1ab1e149b29f2cf7f))
+
 # [1.30.0](https://github.com/think-root/content-sentinel/compare/v1.29.0...v1.30.0) (2025-07-04)
 
 
