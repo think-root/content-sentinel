@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Repository } from '../types';
-import { Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUp, ArrowDown, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X, Filter } from 'lucide-react';
 import { formatDate } from '../utils/date-format';
 
 interface RepositoryListProps {
@@ -53,6 +53,11 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     return saved === null ? true : saved === 'true';
   });
 
+  const [showFilters, setShowFilters] = useState<boolean>(() => {
+    const saved = localStorage.getItem('postsShowFilters');
+    return saved === 'true';
+  });
+
   const [searchTerm, setSearchTerm] = useState(() => {
     const saved = localStorage.getItem('dashboardSearchTerm');
     return saved || '';
@@ -84,6 +89,29 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     const newValue = !isExpanded;
     setIsExpanded(newValue);
     localStorage.setItem('dashboardExpanded', newValue.toString());
+  };
+
+  const handleToggleFilters = () => {
+    const newValue = !showFilters;
+    setShowFilters(newValue);
+    localStorage.setItem('postsShowFilters', newValue.toString());
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setSortBy('date_added');
+    setSortOrder('DESC');
+    setItemsPerPage(initialPageSize);
+    setCurrentPage(1);
+    
+    localStorage.removeItem('dashboardSearchTerm');
+    localStorage.setItem('dashboardStatusFilter', 'all');
+    localStorage.setItem('dashboardSortBy', 'date_added');
+    localStorage.setItem('dashboardSortOrder', 'DESC');
+    localStorage.setItem('dashboardItemsPerPage', initialPageSize.toString());
+    
+    fetchRepositories(undefined, false, initialPageSize === 0, initialPageSize, 'date_added', 'DESC', 1);
   };
 
   useEffect(() => {
@@ -154,9 +182,6 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
     fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1);
   };
 
-  const toggleSortOrder = () => {
-    handleSortOrderChange(sortOrder === 'ASC' ? 'DESC' : 'ASC');
-  };
 
   const handlePageChange = (page: number) => {
     if (loading) return;
@@ -182,11 +207,11 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-      <div
-        className="flex items-center justify-between p-6 cursor-pointer select-none"
-        onClick={toggleExpanded}
-      >
-        <div className="flex items-center">
+      <div className="flex items-center justify-between p-6">
+        <div
+          className="flex items-center cursor-pointer select-none flex-1"
+          onClick={toggleExpanded}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2">
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
             <polyline points="14 2 14 8 20 8" />
@@ -196,9 +221,30 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
           </svg>
           <h2 className="text-lg font-medium text-gray-900 dark:text-white">Posts</h2>
         </div>
-        <div className="text-gray-500 dark:text-gray-400">
-          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-        </div>
+
+        <button
+          onClick={handleToggleFilters}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            showFilters
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+          }`}
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+          <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          {(searchTerm || statusFilter !== 'all' || sortBy !== 'date_added' || sortOrder !== 'DESC' || itemsPerPage !== initialPageSize) && (
+            <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+              {[
+                searchTerm,
+                statusFilter !== 'all',
+                sortBy !== 'date_added',
+                sortOrder !== 'DESC',
+                itemsPerPage !== initialPageSize
+              ].filter(Boolean).length}
+            </span>
+          )}
+        </button>
       </div>
       
       <div
@@ -206,95 +252,155 @@ export function RepositoryList({ repositories, fetchRepositories, totalItems, to
           isExpanded ? 'max-h-full opacity-100 pb-6' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="flex flex-col md:flex-row justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by URL, Text, or Dates..."
-              value={searchTerm}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchTerm(value);
-                localStorage.setItem('dashboardSearchTerm', value);
-              }}
-              disabled={loading}
-              className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm py-2 px-3 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  localStorage.removeItem('dashboardSearchTerm');
-                }}
-                disabled={loading}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 relative">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 relative w-full sm:w-auto">
-              <select
-                value={statusFilter}
-                onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
-                disabled={loading}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                title="Filter posts by status"
-              >
-                <option value="all">All</option>
-                <option value="posted">Posted</option>
-                <option value="unposted">Unposted</option>
-              </select>
-            
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
-                disabled={loading}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-36 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                title="Sort posts by field"
-              >
-                <option value="id">ID</option>
-                <option value="date_added">Date Added</option>
-                <option value="date_posted">Date Posted</option>
-              </select>
+        {/* Filters panel */}
+        {showFilters && (
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700">
+            <div className="flex flex-col gap-4">
+              {/* Search row */}
+              <div className="flex flex-col">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Search
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by URL, Text, or Dates..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchTerm(value);
+                      localStorage.setItem('dashboardSearchTerm', value);
+                    }}
+                    disabled={loading}
+                    className="pl-10 pr-8 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        localStorage.removeItem('dashboardSearchTerm');
+                      }}
+                      disabled={loading}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              <select
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                disabled={loading}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 pl-3 pr-8 focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 w-full sm:w-24 text-center appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundPosition: 'right 0.5rem center', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-                title="Number of items to display per page"
-              >
-                <option value={0}>All</option>
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
+              {/* Controls row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Status filter */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'posted' | 'unposted')}
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="all">All</option>
+                      <option value="posted">Posted</option>
+                      <option value="unposted">Unposted</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
 
-              <button
-                onClick={toggleSortOrder}
-                disabled={loading}
-                className="rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm py-2.5 px-3 h-[42px] focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center justify-center w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                title={sortOrder === 'ASC' ? 'Ascending order' : 'Descending order'}
-              >
-                {sortOrder === 'ASC'
-                  ? <ArrowUp className="h-4 w-4 transition-transform duration-300" />
-                  : <ArrowDown className="h-4 w-4 transition-transform duration-300" />
-                }
-              </button>
+                {/* Sort By filter */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sort By
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => handleSortByChange(e.target.value as 'id' | 'date_added' | 'date_posted')}
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="id">ID</option>
+                      <option value="date_added">Date Added</option>
+                      <option value="date_posted">Date Posted</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page Size filter */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Page Size
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value={0}>All</option>
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sort Order filter */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Sort Order
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => handleSortOrderChange(e.target.value as 'ASC' | 'DESC')}
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="DESC">Newest First</option>
+                      <option value="ASC">Oldest First</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clear filters button */}
+              {(searchTerm || statusFilter !== 'all' || sortBy !== 'date_added' || sortOrder !== 'DESC' || itemsPerPage !== initialPageSize) && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleClearFilters}
+                    disabled={loading}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
+
         <div className="overflow-x-auto">
           <div className="md:block hidden">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
