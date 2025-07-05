@@ -114,6 +114,7 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
       url,
       use_direct_url: promptSettings.use_direct_url,
       llm_provider: promptSettings.llm_provider,
+      llm_output_language: promptSettings.llm_output_language,
       llm_config: {
         model: promptSettings.model,
         temperature: promptSettings.temperature,
@@ -331,6 +332,7 @@ export interface PromptSettings {
   model: string;
   temperature: number;
   content: string;
+  llm_output_language?: string;
   updated_at?: string;
 }
 
@@ -346,6 +348,7 @@ export async function getPromptSettings(): Promise<PromptSettings> {
       temperature: 0.5,
       content:
         "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories in Ukrainian. Your main task is to create descriptions based on the URL.",
+      llm_output_language: "",
     };
   }
 
