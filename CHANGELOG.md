@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/think-root/content-sentinel/compare/v1.31.0...v1.32.0) (2025-07-04)
+
+
+### Features
+
+* **ui:** add confirmation dialog for resetting prompt settings ([0dc1190](https://github.com/think-root/content-sentinel/commit/0dc1190db43f7b39fcd8a09cd2d9f650698a638b))
+
 # [1.31.0](https://github.com/think-root/content-sentinel/compare/v1.30.0...v1.31.0) (2025-07-04)
 
 
