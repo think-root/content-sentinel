@@ -158,6 +158,7 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
       spoken_language_code: spokenLanguageCode,
       use_direct_url: promptSettings.use_direct_url,
       llm_provider: promptSettings.llm_provider,
+      llm_output_language: promptSettings.llm_output_language,
       llm_config: {
         model: promptSettings.model,
         temperature: promptSettings.temperature,
