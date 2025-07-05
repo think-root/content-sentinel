@@ -16,7 +16,8 @@ const defaultSettings: PromptSettings = {
   llm_provider: "openai",
   model: "gpt-4.1",
   temperature: 0.5,
-  content: "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories in Ukrainian. Your main task is to create descriptions based on the URL."
+  content: "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories in Ukrainian. Your main task is to create descriptions based on the URL.",
+  llm_output_language: ""
 };
 
 export function usePromptSettings(): UsePromptSettingsReturn {
