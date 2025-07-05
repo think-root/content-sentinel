@@ -1,3 +1,11 @@
+# [1.33.0](https://github.com/think-root/content-sentinel/compare/v1.32.0...v1.33.0) (2025-07-05)
+
+
+### Features
+
+* **src/utils:** add language validation utility ([d3fd3d5](https://github.com/think-root/content-sentinel/commit/d3fd3d5bf05946cbedf0de95be847fa113a3163e))
+* **ui:** add language validation for prompt settings ([00f7cd6](https://github.com/think-root/content-sentinel/commit/00f7cd667ef869499dd39cb80b96b5f53f7b5386))
+
 # [1.32.0](https://github.com/think-root/content-sentinel/compare/v1.31.0...v1.32.0) (2025-07-04)
 
 
