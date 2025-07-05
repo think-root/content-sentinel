@@ -1,3 +1,10 @@
+## [1.33.1](https://github.com/think-root/content-sentinel/compare/v1.33.0...v1.33.1) (2025-07-05)
+
+
+### Bug Fixes
+
+* **api:** include llm_output_language in autoGenerate function ([22e636d](https://github.com/think-root/content-sentinel/commit/22e636d61817b09ca2c33ec106197f04ce850e1a))
+
 # [1.33.0](https://github.com/think-root/content-sentinel/compare/v1.32.0...v1.33.0) (2025-07-05)
 
 
