@@ -7,7 +7,6 @@ import { languageValidator, ValidationResult } from '../utils/language-validatio
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
-  { value: 'mistral_agent', label: 'Mistral Agent' },
   { value: 'mistral_api', label: 'Mistral API' },
   { value: 'openrouter', label: 'OpenRouter' }
 ];
@@ -247,7 +246,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* LLM Provider */}
             <div>
               <label htmlFor="llm_provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -292,40 +291,6 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                   saving ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
                 } text-gray-900 dark:text-white py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-
-            {/* Temperature */}
-            <div>
-              <label htmlFor="temperature" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Temperature ({localSettings.temperature})
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="range"
-                  id="temperature"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={localSettings.temperature}
-                  onChange={(e) => handleFieldChange('temperature', parseFloat(e.target.value))}
-                  disabled={saving}
-                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>0.0 (Focused)</span>
-                  <span>1.0 (Balanced)</span>
-                  <span>2.0 (Creative)</span>
-                </div>
-                {temperatureError && (
-                  <div className="flex items-center text-xs text-red-600 dark:text-red-400">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    {temperatureError}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* LLM Output Language */}
@@ -380,6 +345,39 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                   <div className="flex items-center text-xs text-green-600 dark:text-green-400">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Valid codes: {languageValidation.validCodes.join(', ')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            {/* Temperature */}
+            <div>
+              <label htmlFor="temperature" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Temperature ({localSettings.temperature})
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="range"
+                  id="temperature"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={localSettings.temperature}
+                  onChange={(e) => handleFieldChange('temperature', parseFloat(e.target.value))}
+                  disabled={saving}
+                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <span>0.0 (Focused)</span>
+                  <span>1.0 (Balanced)</span>
+                  <span>2.0 (Creative)</span>
+                </div>
+                {temperatureError && (
+                  <div className="flex items-center text-xs text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {temperatureError}
                   </div>
                 )}
               </div>
