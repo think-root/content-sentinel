@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bot, Save, RotateCcw, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Bot, Save, RotateCcw, AlertCircle, Loader2, RefreshCw, CheckCircle, Globe } from 'lucide-react';
 import { usePromptSettings } from '../hooks/usePromptSettings';
 import { toast } from 'react-hot-toast';
 import { ConfirmDialog } from './ConfirmDialog';
+import { languageValidator, ValidationResult } from '../utils/language-validation';
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -23,12 +24,20 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
     llm_provider: 'openai',
     model: 'gpt-4.1',
     temperature: 0.5,
-    content: ''
+    content: '',
+    llm_output_language: ''
   });
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [temperatureError, setTemperatureError] = useState<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [languageValidation, setLanguageValidation] = useState<ValidationResult>({
+    isValid: true,
+    validCodes: [],
+    invalidCodes: []
+  });
+  const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
+  const [isLanguageInputFocused, setIsLanguageInputFocused] = useState(false);
 
   useEffect(() => {
     if (isApiReady) {
@@ -43,7 +52,8 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
         llm_provider: settings.llm_provider,
         model: settings.model,
         temperature: settings.temperature,
-        content: settings.content
+        content: settings.content,
+        llm_output_language: settings.llm_output_language || ''
       });
       setHasUnsavedChanges(false);
     }
@@ -57,6 +67,42 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
     setTemperatureError(null);
     return true;
   };
+
+  const validateLanguageCodes = useCallback(async (codes: string) => {
+    if (!codes.trim()) {
+      setLanguageValidation({
+        isValid: true,
+        validCodes: [],
+        invalidCodes: []
+      });
+      return;
+    }
+
+    setIsValidatingLanguage(true);
+    try {
+      const result = await languageValidator.validateLanguageCodes(codes);
+      setLanguageValidation(result);
+    } catch (error) {
+      console.error('Language validation error:', error);
+      setLanguageValidation({
+        isValid: false,
+        validCodes: [],
+        invalidCodes: [],
+        message: 'Validation service unavailable'
+      });
+    } finally {
+      setIsValidatingLanguage(false);
+    }
+  }, []);
+
+  // Debounced validation
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      validateLanguageCodes(localSettings.llm_output_language);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [localSettings.llm_output_language, validateLanguageCodes]);
 
   const handleFieldChange = useCallback((field: string, value: string | number | boolean) => {
     setLocalSettings(prev => {
@@ -80,6 +126,12 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
 
   const handleSave = async () => {
     if (!validateTemperature(localSettings.temperature)) {
+      return;
+    }
+
+    // Validate language codes before saving
+    if (!languageValidation.isValid && localSettings.llm_output_language.trim()) {
+      toast.error(languageValidation.message || 'Please fix language code errors before saving');
       return;
     }
 
@@ -115,10 +167,16 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
         llm_provider: settings.llm_provider,
         model: settings.model,
         temperature: settings.temperature,
-        content: settings.content
+        content: settings.content,
+        llm_output_language: settings.llm_output_language || ''
       });
       setHasUnsavedChanges(false);
       setTemperatureError(null);
+      setLanguageValidation({
+        isValid: true,
+        validCodes: [],
+        invalidCodes: []
+      });
       toast.success('Changes reset successfully');
     }
   };
@@ -133,6 +191,11 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
       await resetToDefaults();
       setHasUnsavedChanges(false);
       setTemperatureError(null);
+      setLanguageValidation({
+        isValid: true,
+        validCodes: [],
+        invalidCodes: []
+      });
       toast.success('Settings reset to defaults successfully');
     } catch (error) {
       console.error('Failed to reset to defaults:', error);
@@ -264,6 +327,63 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                 )}
               </div>
             </div>
+
+            {/* LLM Output Language */}
+            <div>
+              <label htmlFor="llm_output_language" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <Globe className="h-4 w-4 inline mr-1" />
+                Output Languages
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  id="llm_output_language"
+                  value={localSettings.llm_output_language}
+                  onChange={(e) => handleFieldChange('llm_output_language', e.target.value)}
+                  onFocus={() => setIsLanguageInputFocused(true)}
+                  onBlur={() => setIsLanguageInputFocused(false)}
+                  disabled={saving}
+                  placeholder="en,uk,fr,de"
+                  className={`block w-full rounded-md border ${
+                    isLanguageInputFocused && !languageValidation.isValid && localSettings.llm_output_language.trim()
+                      ? 'border-red-300 dark:border-red-600 focus:border-red-300 dark:focus:border-red-600 focus:ring-red-500'
+                      : isLanguageInputFocused && languageValidation.isValid && localSettings.llm_output_language.trim()
+                      ? 'border-green-300 dark:border-green-600 focus:border-green-300 dark:focus:border-green-600 focus:ring-green-500'
+                      : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500'
+                  } ${
+                    saving ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
+                  } text-gray-900 dark:text-white py-2 px-3 pr-10 focus:outline-none sm:text-sm`}
+                />
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Comma-separated language codes (optional)
+                  </div>
+                  <div className="flex items-center">
+                    {isValidatingLanguage && (
+                      <Loader2 className="h-3 w-3 animate-spin text-gray-400 mr-2" />
+                    )}
+                    {!isValidatingLanguage && languageValidation.isValid && localSettings.llm_output_language.trim() && (
+                      <CheckCircle className="h-3 w-3 text-green-500 mr-2" />
+                    )}
+                    {!isValidatingLanguage && !languageValidation.isValid && localSettings.llm_output_language.trim() && (
+                      <AlertCircle className="h-3 w-3 text-red-500 mr-2" />
+                    )}
+                  </div>
+                </div>
+                {!languageValidation.isValid && languageValidation.message && (
+                  <div className="flex items-center text-xs text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {languageValidation.message}
+                  </div>
+                )}
+                {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
+                  <div className="flex items-center text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Valid codes: {languageValidation.validCodes.join(', ')}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Use Direct URL */}
@@ -315,9 +435,9 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleSave}
-              disabled={saving || !!temperatureError}
+              disabled={saving || !!temperatureError || (!languageValidation.isValid && !!localSettings.llm_output_language.trim())}
               className={`inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                saving || !!temperatureError
+                saving || !!temperatureError || (!languageValidation.isValid && !!localSettings.llm_output_language.trim())
                   ? 'bg-green-400 cursor-not-allowed'
                   : 'bg-green-600 hover:bg-green-700'
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto min-w-[120px]`}
