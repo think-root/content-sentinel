@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/think-root/content-sentinel/compare/v1.33.1...v1.34.0) (2025-08-08)
+
+
+### Features
+
+* **ui:** update table layout and truncate output text ([7ace911](https://github.com/think-root/content-sentinel/commit/7ace91128e3d9d184f90a7844a8958fe41547476))
+
 ## [1.33.1](https://github.com/think-root/content-sentinel/compare/v1.33.0...v1.33.1) (2025-07-05)
 
 
