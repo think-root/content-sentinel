@@ -5,6 +5,7 @@ import { getCronJobs } from '../api/index';
 import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '../api/index';
 import { CustomDateInput } from './CustomDateInput';
+import { TruncatedText } from './TruncatedText';
 
 interface CronJobHistoryProps {
   history?: CronJobHistoryType[];
@@ -375,9 +376,9 @@ export const CronJobHistory = ({
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Date</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Output</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Date</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-5/12">Output</th>
                 </tr>
               </thead>
               <tbody>
@@ -406,9 +407,9 @@ export const CronJobHistory = ({
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Date</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Output</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-5/12">Output</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -449,9 +450,9 @@ export const CronJobHistory = ({
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-2/6">Date</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Output</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/6">Status</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-5/12">Output</th>
                 </tr>
               </thead>
 
@@ -476,8 +477,10 @@ export const CronJobHistory = ({
                           {entry.success ? 'Success' : 'Failed'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {entry.output ? entry.output : 'None'}
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                        <div className="overflow-hidden">
+                          <TruncatedText text={entry.output || 'None'} maxChars={65} />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -530,7 +533,7 @@ export const CronJobHistory = ({
                     <div>
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Output</span>
                       <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                        {entry.output ? entry.output : 'None'}
+                        <TruncatedText text={entry.output || 'None'} maxChars={65} />
                       </div>
                     </div>
                   </div>
