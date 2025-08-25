@@ -1,3 +1,12 @@
+# [1.35.0](https://github.com/think-root/content-sentinel/compare/v1.34.0...v1.35.0) (2025-08-25)
+
+
+### Features
+
+* **api:** add error_message field to ManualGenerateResponse interface ([7d3c837](https://github.com/think-root/content-sentinel/commit/7d3c837ec7e53f7f3d045b0aeaa5600bd5c10b6b))
+* **ui:** add error message display in result dialog ([0a5a0c0](https://github.com/think-root/content-sentinel/commit/0a5a0c0970bdd8db3bc9c14b5202822fce8cb271))
+* **ui:** implement error message handling in result dialog ([c6f96ef](https://github.com/think-root/content-sentinel/commit/c6f96ef22f157004334d1453cbbab0863922b9ce))
+
 # [1.34.0](https://github.com/think-root/content-sentinel/compare/v1.33.1...v1.34.0) (2025-08-08)
 
 
