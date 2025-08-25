@@ -173,11 +173,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         }
         setErrorMessages(map);
 
-        // Open the dialog if there are added/notAdded repos or an error message
-        if (added.length > 0 || notAdded.length > 0 || response.error_message) {
-          setDialogContext('collect');
-          setIsResultDialogOpen(true);
-        }
+        // Always open the dialog to show results (even if no repositories were found)
+        setDialogContext('collect');
+        setIsResultDialogOpen(true);
       } catch (error) {
         console.error(error);
         toast.error('Failed to process auto generation');

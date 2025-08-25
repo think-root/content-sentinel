@@ -100,9 +100,17 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
           )}
           
           {added.length === 0 && notAdded.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              No repositories were processed.
-            </p>
+            <div className="text-center py-4">
+              {context === 'collect' ? (
+                <p className="bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 p-3 rounded-md">
+                  No new repositories found. All trending repositories are already in the database.
+                </p>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">
+                  No repositories were processed.
+                </p>
+              )}
+            </div>
           )}
         </div>
         
