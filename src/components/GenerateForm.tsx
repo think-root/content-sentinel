@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2, GitPullRequest, Play, Save, X, AlertCircle, FolderDown, Zap } from 'lucide-react';
 import { ResultDialog } from './ResultDialog';
-import { getCollectSettings, updateCollectSettings } from '../api';
+import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '../api';
 import { toast } from 'react-hot-toast';
 
 const LANGUAGE_MAPPING = {
@@ -14,8 +14,8 @@ const LANGUAGE_MAPPING = {
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
 interface GenerateFormProps {
-  onManualGenerate: (url: string) => Promise<{status: string; added?: string[]; dont_added?: string[]}>;
-  onAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<{status: string; added?: string[]; dont_added?: string[]}>;
+  onManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
+  onAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<ManualGenerateResponse>;
 }
 
 export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormProps) {
@@ -37,6 +37,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [addedRepos, setAddedRepos] = useState<string[]>([]);
   const [notAddedRepos, setNotAddedRepos] = useState<string[]>([]);
+  const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -111,16 +112,22 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         setIsManualLoading(true);
         await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
         const response = await onManualGenerate(url);
-        
-        if (response.status === 'ok') {
-          const added = response.added || [];
-          const notAdded = response.dont_added || [];
-          
-          setAddedRepos(added);
-          setNotAddedRepos(notAdded);
-          
-          setIsResultDialogOpen(true);
+
+        const added = response.added || [];
+        const notAdded = response.dont_added || [];
+
+        setAddedRepos(added as string[]);
+        setNotAddedRepos(notAdded as string[]);
+
+        const map: Record<string, string> = {};
+        if (response.error_message && response.error_message.trim() !== '') {
+          (response.dont_added || []).forEach(repo => {
+            map[repo] = response.error_message!;
+          });
         }
+        setErrorMessages(map);
+
+        setIsResultDialogOpen(true);
         
         setUrl('');
         
@@ -148,13 +155,24 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
         const response = await onAutoGenerate(maxRepos, since, spokenLanguageCode);
         
-        if (response.status === 'ok') {
-          const added = response.added || [];
-          const notAdded = response.dont_added || [];
-          
-          setAddedRepos(added);
-          setNotAddedRepos(notAdded);
-          
+        // Always set added and notAdded from the response
+        const added = response.added || [];
+        const notAdded = response.dont_added || [];
+
+        setAddedRepos(added as string[]);
+        setNotAddedRepos(notAdded as string[]);
+
+        // Build errorMessages map and set it
+        const map: Record<string, string> = {};
+        if (response.error_message && response.error_message.trim() !== '') {
+          (response.dont_added || []).forEach(repo => {
+            map[repo] = response.error_message!;
+          });
+        }
+        setErrorMessages(map);
+
+        // Open the dialog if there are added/notAdded repos or an error message
+        if (added.length > 0 || notAdded.length > 0 || response.error_message) {
           setIsResultDialogOpen(true);
         }
       } catch (error) {
@@ -175,6 +193,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         onClose={() => setIsResultDialogOpen(false)} 
         added={addedRepos} 
         notAdded={notAddedRepos} 
+        errorMessages={errorMessages}
       />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center mb-4">
