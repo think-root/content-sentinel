@@ -45,7 +45,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
           {added.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {context === 'manual' ? 'Successfully added:' : `Successfully added (${added.length}):`}
+                {context === 'manual' ? `Successfully added (${added.length}):` : `Successfully added (${added.length}):`}
               </h4>
               <ul className="space-y-1 text-sm">
                 {added.map((repo, index) => (
@@ -69,29 +69,25 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
           
           {notAdded.length > 0 && (
             <div>
-              {context !== 'manual' && (
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Not added ({notAdded.length}):
-                </h4>
-              )}
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {context === 'manual' ? `Not added (${notAdded.length}):` : `Not added (${notAdded.length}):`}
+              </h4>
               <ul className="space-y-1 text-sm">
                 {notAdded.map((repo, index) => (
                   <li 
                     key={index} 
                     className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-2 rounded-md"
                   >
-                    {context !== 'manual' && (
-                      <a
-                        href={repo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {repo.replace('https://github.com/', '')}
-                      </a>
-                    )}
-                    <span className={`block ${context !== 'manual' ? 'text-xs mt-1' : ''}`}>
-                      {errorMessages?.[repo] || "Repository already exists in database"}
+                    <a
+                      href={repo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                    >
+                      {repo.replace('https://github.com/', '')}
+                    </a>
+                    <span className="text-xs ml-2">
+                      ({errorMessages?.[repo] || "Repository already exists in database"})
                     </span>
                   </li>
                 ))}
