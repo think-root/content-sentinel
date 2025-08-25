@@ -4,6 +4,13 @@ import { ResultDialog } from './ResultDialog';
 import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '../api';
 import { toast } from 'react-hot-toast';
 
+// Function to validate GitHub repository URLs
+const isValidGithubRepoUrl = (url: string): boolean => {
+  // GitHub repository URL pattern
+  const githubUrlPattern = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/;
+  return githubUrlPattern.test(url.trim());
+};
+
 const LANGUAGE_MAPPING = {
   'English': 'en',
   'German': 'de',
@@ -111,25 +118,47 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
     if (url && !isManualLoading) {
       try {
         setIsManualLoading(true);
-        await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
-        const response = await onManualGenerate(url);
 
-        const added = response.added || [];
-        const notAdded = response.dont_added || [];
+        // Check if input contains valid GitHub repository URLs
+        const urls = url.split(/\s+/).filter(u => u.trim());
+        const invalidUrls = urls.filter(u => !isValidGithubRepoUrl(u));
 
-        setAddedRepos(added as string[]);
-        setNotAddedRepos(notAdded as string[]);
+        if (invalidUrls.length > 0) {
+          // If there are invalid URLs, show error dialog with a single clear message
+          setAddedRepos([]);
 
-        const map: Record<string, string> = {};
-        if (response.error_message && response.error_message.trim() !== '') {
-          (response.dont_added || []).forEach(repo => {
-            map[repo] = response.error_message!;
-          });
+          // Use the first invalid URL as the example in the error message
+          const invalidUrl = invalidUrls[0];
+          setNotAddedRepos([invalidUrl]);
+
+          const errorMap: Record<string, string> = {};
+          errorMap[invalidUrl] = `Invalid GitHub repository URL format. URLs should be in the format: https://github.com/username/repository`;
+
+          setErrorMessages(errorMap);
+          setDialogContext('manual');
+          setIsResultDialogOpen(true);
+        } else {
+        // All URLs are valid, proceed with API call
+          await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
+          const response = await onManualGenerate(url);
+
+          const added = response.added || [];
+          const notAdded = response.dont_added || [];
+
+          setAddedRepos(added as string[]);
+          setNotAddedRepos(notAdded as string[]);
+
+          const map: Record<string, string> = {};
+          if (response.error_message && response.error_message.trim() !== '') {
+            (response.dont_added || []).forEach(repo => {
+              map[repo] = response.error_message!;
+            });
+          }
+          setErrorMessages(map);
+
+          setDialogContext('manual');
+          setIsResultDialogOpen(true);
         }
-        setErrorMessages(map);
-
-        setDialogContext('manual');
-        setIsResultDialogOpen(true);
         
         setUrl('');
         
