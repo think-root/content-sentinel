@@ -8,9 +8,11 @@ interface ResultDialogProps {
   added: string[];
   notAdded: string[];
   errorMessages?: Record<string, string>;
+  context?: 'manual' | 'collect';
+  title?: string;
 }
 
-export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages }: ResultDialogProps) {
+export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, context, title }: ResultDialogProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -29,7 +31,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages }
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Collect posts
+            {title || 'Collect posts'}
           </h3>
           <button
             onClick={onClose}
@@ -43,7 +45,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages }
           {added.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Successfully added ({added.length}):
+                {context === 'manual' ? 'Successfully added:' : `Successfully added (${added.length}):`}
               </h4>
               <ul className="space-y-1 text-sm">
                 {added.map((repo, index) => (
@@ -67,24 +69,28 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages }
           
           {notAdded.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Not added ({notAdded.length}):
-              </h4>
+              {context !== 'manual' && (
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Not added ({notAdded.length}):
+                </h4>
+              )}
               <ul className="space-y-1 text-sm">
                 {notAdded.map((repo, index) => (
                   <li 
                     key={index} 
                     className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-2 rounded-md"
                   >
-                    <a 
-                      href={repo} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="hover:underline"
-                    >
-                      {repo.replace('https://github.com/', '')}
-                    </a>
-                    <span className="block text-xs mt-1">
+                    {context !== 'manual' && (
+                      <a
+                        href={repo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        {repo.replace('https://github.com/', '')}
+                      </a>
+                    )}
+                    <span className={`block ${context !== 'manual' ? 'text-xs mt-1' : ''}`}>
                       {errorMessages?.[repo] || "Repository already exists in database"}
                     </span>
                   </li>

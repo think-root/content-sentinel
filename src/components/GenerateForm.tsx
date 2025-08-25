@@ -38,6 +38,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [addedRepos, setAddedRepos] = useState<string[]>([]);
   const [notAddedRepos, setNotAddedRepos] = useState<string[]>([]);
   const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
+  const [dialogContext, setDialogContext] = useState<'manual' | 'collect'>('collect');
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -127,6 +128,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         }
         setErrorMessages(map);
 
+        setDialogContext('manual');
         setIsResultDialogOpen(true);
         
         setUrl('');
@@ -173,6 +175,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
         // Open the dialog if there are added/notAdded repos or an error message
         if (added.length > 0 || notAdded.length > 0 || response.error_message) {
+          setDialogContext('collect');
           setIsResultDialogOpen(true);
         }
       } catch (error) {
@@ -194,6 +197,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         added={addedRepos} 
         notAdded={notAddedRepos} 
         errorMessages={errorMessages}
+        context={dialogContext}
+        title={dialogContext === 'manual' ? 'Manual Generation' : 'Collect posts'}
       />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center mb-4">
