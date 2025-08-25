@@ -92,6 +92,7 @@ export interface ManualGenerateResponse {
   status: string;
   added?: string[];
   dont_added?: string[];
+  error_message?: string;
 }
 
 export async function manualGenerate(url: string): Promise<ManualGenerateResponse> {
