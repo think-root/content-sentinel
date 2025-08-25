@@ -7,9 +7,10 @@ interface ResultDialogProps {
   onClose: () => void;
   added: string[];
   notAdded: string[];
+  errorMessages?: Record<string, string>;
 }
 
-export function ResultDialog({ isOpen, onClose, added, notAdded }: ResultDialogProps) {
+export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages }: ResultDialogProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -84,7 +85,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded }: ResultDialogP
                       {repo.replace('https://github.com/', '')}
                     </a>
                     <span className="block text-xs mt-1">
-                      (Repository might already exist or be invalid)
+                      {errorMessages?.[repo] || "Repository already exists in database"}
                     </span>
                   </li>
                 ))}
