@@ -8,7 +8,8 @@ import { languageValidator, ValidationResult } from '../utils/language-validatio
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
   { value: 'mistral_api', label: 'Mistral API' },
-  { value: 'openrouter', label: 'OpenRouter' }
+  { value: 'openrouter', label: 'OpenRouter' },
+  { value: 'chutes', label: 'Chutes' }
 ];
 
 interface PromptSettingsProps {
