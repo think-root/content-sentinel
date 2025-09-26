@@ -13,6 +13,11 @@ interface RepositoriesCache {
   timestamp: number;
 }
 
+interface CacheResult<T> {
+  data: T;
+  isStale: boolean;
+}
+
 interface PreviewsCache {
   latestPost?: Repository;
   nextPost?: Repository;
@@ -32,6 +37,19 @@ interface CronJobHistoryCache {
 
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
+// Check if cache is expired without deleting the data
+export const isExpired = (key: string): boolean => {
+  const cachedData = localStorage.getItem(key);
+  if (!cachedData) return true;
+
+  try {
+    const data = JSON.parse(cachedData) as { timestamp: number };
+    return Date.now() - data.timestamp > CACHE_EXPIRY;
+  } catch {
+    return true;
+  }
+};
+
 export const saveRepositoriesToCache = (data: RepositoriesCache) => {
   localStorage.setItem('cache_repositories', JSON.stringify({
     ...data,
@@ -39,16 +57,18 @@ export const saveRepositoriesToCache = (data: RepositoriesCache) => {
   }));
 };
 
-export const getRepositoriesFromCache = (): RepositoriesCache | null => {
+export const getRepositoriesFromCache = (): CacheResult<RepositoriesCache> | null => {
   const cachedData = localStorage.getItem('cache_repositories');
   if (!cachedData) return null;
 
   try {
     const data = JSON.parse(cachedData) as RepositoriesCache;
-    if (Date.now() - data.timestamp > CACHE_EXPIRY) {
-      return null;
-    }
-    return data;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+    
+    return {
+      data,
+      isStale
+    };
   } catch {
     return null;
   }
@@ -61,16 +81,18 @@ export const savePreviewsToCache = (data: PreviewsCache) => {
   }));
 };
 
-export const getPreviewsFromCache = (): PreviewsCache | null => {
+export const getPreviewsFromCache = (): CacheResult<PreviewsCache> | null => {
   const cachedData = localStorage.getItem('cache_previews');
   if (!cachedData) return null;
 
   try {
     const data = JSON.parse(cachedData) as PreviewsCache;
-    if (Date.now() - data.timestamp > CACHE_EXPIRY) {
-      return null;
-    }
-    return data;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+    
+    return {
+      data,
+      isStale
+    };
   } catch {
     return null;
   }
@@ -83,16 +105,18 @@ export const saveCronJobsToCache = (data: CronJobsCache) => {
   }));
 };
 
-export const getCronJobsFromCache = (): CronJobsCache | null => {
+export const getCronJobsFromCache = (): CacheResult<CronJobsCache> | null => {
   const cachedData = localStorage.getItem('cache_cron_jobs');
   if (!cachedData) return null;
 
   try {
     const data = JSON.parse(cachedData) as CronJobsCache;
-    if (Date.now() - data.timestamp > CACHE_EXPIRY) {
-      return null;
-    }
-    return data;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+    
+    return {
+      data,
+      isStale
+    };
   } catch {
     return null;
   }
@@ -105,26 +129,48 @@ export const saveCronJobHistoryToCache = (data: CronJobHistoryCache) => {
   }));
 };
 
-export const getCronJobHistoryFromCache = (): CronJobHistoryCache | null => {
+export const getCronJobHistoryFromCache = (): CacheResult<CronJobHistoryCache> | null => {
   const cachedData = localStorage.getItem('cache_cron_job_history');
   if (!cachedData) return null;
 
   try {
     const data = JSON.parse(cachedData) as CronJobHistoryCache;
-    if (Date.now() - data.timestamp > CACHE_EXPIRY) {
-      return null;
-    }
-    return data;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+    
+    return {
+      data,
+      isStale
+    };
   } catch {
     return null;
   }
 };
 
 export const clearAllCaches = () => {
-  localStorage.removeItem('cache_repositories');
-  localStorage.removeItem('cache_previews');
-  localStorage.removeItem('cache_cron_jobs');
-  localStorage.removeItem('cache_cron_job_history');
-
-  localStorage.removeItem('cache_repositories_key');
+  const clearedCaches: string[] = [];
+  const cacheKeys = [
+    'cache_repositories',
+    'cache_previews',
+    'cache_cron_jobs',
+    'cache_cron_job_history',
+    'cache_repositories_key',
+    'promptSettings',
+    'language_validation_cache'
+  ];
+  
+  cacheKeys.forEach(key => {
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+      clearedCaches.push(key);
+      console.log(`✓ Cleared cache: ${key}`);
+    }
+  });
+  
+  console.log(`Cache clearing completed. Cleared ${clearedCaches.length} cache entries:`, clearedCaches);
+  
+  return {
+    success: true,
+    clearedCount: clearedCaches.length,
+    clearedCaches
+  };
 };
