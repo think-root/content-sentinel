@@ -4,33 +4,249 @@
 
 @layer base {
   :root {
-    --toast-bg: #fff;
-    --toast-color: #1f2937;
-    --toast-shadow: 0 0 10px rgba(0, 0, 0, 0.1), 0 0 5px rgba(0, 0, 0, 0.05);
+    /* Core colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    
+    /* Card colors */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Primary colors */
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Secondary colors */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Muted colors */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Accent colors */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Destructive colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Border and input */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --ring-subtle: 221.2 50% 85%; /* softer blue for subtle focus */
+    
+    /* Radius */
+    --radius: 0.65rem;
+    
+    /* Chart colors */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    
+    /* Success and warning */
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    
+    /* Toast styles */
+    --toast-bg: hsl(var(--background));
+    --toast-color: hsl(var(--foreground));
+    --toast-border: hsl(var(--border));
+    --toast-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
   }
 
   .dark {
-    --toast-bg: #1f2937;
-    --toast-color: #fff;
-    --toast-shadow: 0 0 10px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 0, 0, 0.15);
+    /* Core colors */
+    --background: 220 13% 9%;
+    --foreground: 210 40% 98%;
+    
+    /* Card colors */
+    --card: 220 13% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    /* Popover colors */
+    --popover: 220 13% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary colors */
+    --primary: 220 70% 50%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Secondary colors */
+    --secondary: 220 9% 18%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Muted colors */
+    --muted: 220 9% 18%;
+    --muted-foreground: 220 9% 60%;
+    
+    /* Accent colors */
+    --accent: 220 9% 18%;
+    --accent-foreground: 210 40% 98%;
+    
+  /* Destructive colors */
+  /* Increased brightness/saturation for better contrast on dark backgrounds */
+  --destructive: 0 72% 52%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Border and input */
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 220 70% 50%;
+    --ring-subtle: 220 40% 65%; /* softer blue for subtle focus */
+    
+    /* Chart colors */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* Success and warning */
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 48 80% 50%;
+    --warning-foreground: 26 83% 14%;
+    
+    /* Toast styles */
+    --toast-bg: hsl(var(--background));
+    --toast-color: hsl(var(--foreground));
+    --toast-border: hsl(var(--border));
+    --toast-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none !important;
-  border-color: rgb(180, 203, 236) !important;
-  box-shadow: 0 0 0 1px rgb(209 213 219) !important;
+@layer components {
+  /* Form controls */
+  .form-input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  .form-textarea {
+    @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  .form-select {
+    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  /* Card improvements */
+  .card-enhanced {
+    @apply bg-card text-card-foreground shadow-sm border border-border rounded-lg;
+  }
+  
+  /* Button improvements */
+  .btn-enhanced {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle disabled:pointer-events-none disabled:opacity-50;
+  }
+  
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground));
+  }
 }
 
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: rgb(69, 112, 172) !important;
-  box-shadow: 0 0 0 1px rgb(75 85 99) !important;
+@layer utilities {
+  /* Focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle;
+  }
+  
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-sm border border-border/50;
+  }
+  
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary) / 0.8) 100%);
+  }
 }
 
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input number styling */
 input[type="number"] {
   appearance: textfield;
 }
@@ -41,74 +257,44 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 
+/* Select styling */
 select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
 }
 
-.select-wrapper label {
-  cursor: default;
-  pointer-events: none;
+/* Loading states */
+.loading-pulse {
+  @apply animate-pulse bg-muted;
 }
 
-.number-input-wrapper,
-.select-wrapper {
-  position: relative;
+/* Better focus outlines */
+.focus-outline {
+  @apply focus:outline-none focus:ring-1 focus:ring-ring-subtle;
 }
 
-.number-input-controls,
-.select-arrow {
-  position: absolute;
-  right: 0;
-  top: 1px;
-  height: calc(100% - 2px);
-  display: flex;
-  flex-direction: column;
-  width: 2rem;
-  cursor: pointer;
+/* Text selection */
+::selection {
+  background-color: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
 }
 
-.number-input-up,
-.number-input-down,
-.select-arrow-icon {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
+::-moz-selection {
+  background-color: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
 }
 
-.select-arrow:hover .select-arrow-icon {
-  background-color: rgba(0, 0, 0, 0.05);
+/* Hide scrollbar for mobile tab navigation */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE and Edge */
+  -ms-overflow-style: none;
 }
 
-.dark .select-arrow:hover .select-arrow-icon {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.select-wrapper select {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-label {
-  pointer-events: none !important;
-}
-
-.select-wrapper * {
-  pointer-events: none;
-}
-
-.select-wrapper select {
-  pointer-events: auto;
-}
-
-select:hover {
-  background-color: rgb(249 250 251) !important;
-}
-
-.dark select:hover {
-  background-color: rgb(75 85 99) !important;
+.scrollbar-hide::-webkit-scrollbar {
+  /* Safari and Chrome */
+  display: none;
 }
 
