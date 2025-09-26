@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { getRepositories } from '../api';
 import type { Repository } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
@@ -21,6 +21,8 @@ interface RepositoriesState {
     totalItems: number;
   };
   loading: boolean;
+  statsLoading: boolean;
+  stale: boolean;
   newDataAvailable: boolean;
   newDataDetails: {
     newCount: number;
@@ -34,18 +36,23 @@ interface UseRepositoriesProps {
 }
 
 export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseRepositoriesProps) => {
-  const cachedRepositories = isCacheBust ? null : getRepositoriesFromCache();
+  const cachedRepositoriesResult = isCacheBust ? null : getRepositoriesFromCache();
+  const cachedRepositories = cachedRepositoriesResult?.data;
+  const isFetching = useRef<boolean>(false);
+  const pageSizeRef = useRef<number>(parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10));
 
   const [state, setState] = useState<RepositoriesState>({
     repositories: cachedRepositories?.repositories || [],
     stats: cachedRepositories?.stats || { all: 0, posted: 0, unposted: 0 },
     pagination: cachedRepositories?.pagination || {
       currentPage: 1,
-      pageSize: parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10),
+      pageSize: pageSizeRef.current,
       totalPages: 1,
       totalItems: 0
     },
-    loading: !cachedRepositories,
+    loading: !cachedRepositories || cachedRepositories.repositories.length === 0,
+    statsLoading: !cachedRepositories || !cachedRepositories.stats || (cachedRepositories.stats.all === 0 && cachedRepositories.stats.posted === 0 && cachedRepositories.stats.unposted === 0), // окрема логіка для статистики
+    stale: cachedRepositoriesResult?.isStale || false,
     newDataAvailable: false,
     newDataDetails: {
       newCount: 0,
@@ -62,7 +69,13 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     page?: number,
     isBackgroundFetch: boolean = false
   ) => {
+    // Guard against concurrent calls
+    if (isFetching.current) {
+      return;
+    }
+
     try {
+      isFetching.current = true;
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
 
       const response = await getRepositories(
@@ -93,7 +106,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
           }
         };
 
-        const cachedData = getRepositoriesFromCache();
+        const cachedDataResult = getRepositoriesFromCache();
+        const cachedData = cachedDataResult?.data;
 
         if (isBackgroundFetch && cachedData) {
           const comparison = compareRepositories(newData, cachedData);
@@ -142,7 +156,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
               pageSize: fetchAll ? 0 : response.data.page_size,
               totalPages: response.data.total_pages,
               totalItems: response.data.total_items
-            }
+            },
+            stale: false
           }));
 
           saveRepositoriesToCache({
@@ -164,13 +179,23 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       } else {
         throw new Error('Invalid response format');
       }
-    } catch (error) {
-      if (!isBackgroundFetch) {
+    } catch (error: any) {
+      // Handle rate limit errors specifically without triggering error toast
+      if (error?.message?.includes('Rate limit exceeded')) {
+        console.warn('Rate limit exceeded. Please try again later.');
+        return;
+      }
+      
+      // If we're doing a background fetch and there's stale cache, keep the stale data
+      if (isBackgroundFetch && cachedRepositories) {
+        setState(prev => ({ ...prev, stale: true }));
+      } else if (!isBackgroundFetch) {
         throw error;
       }
     } finally {
+      isFetching.current = false;
       if (!isBackgroundFetch) {
-        setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ ...prev, loading: false, statsLoading: false }));
       }
     }
   };
@@ -179,7 +204,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     statusFilter?: boolean,
     append: boolean = false,
     fetchAll: boolean = false,
-    itemsPerPage: number = state.pagination.pageSize,
+    itemsPerPage: number = pageSizeRef.current,
     sortBy?: 'id' | 'date_added' | 'date_posted',
     sortOrder?: 'ASC' | 'DESC',
     page?: number,
@@ -195,15 +220,21 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         page,
       });
       const currentCacheKey = localStorage.getItem("cache_repositories_key");
-      const hasCache = getRepositoriesFromCache() !== null;
-
-      if ((!hasCache || currentCacheKey !== cacheKey) && !forceFetch) {
-        if (!append) {
-          setState((prev) => ({ ...prev, loading: true }));
-        }
+      const cacheResult = getRepositoriesFromCache();
+      const hasCache = cacheResult?.data !== undefined;
+      
+      // Only set loading to true if there's no cache at all (not just stale)
+      if ((!hasCache || currentCacheKey !== cacheKey) && !forceFetch && !append) {
+        setState((prev) => ({ ...prev, loading: true }));
       }
 
+      if (!hasCache || !cacheResult?.data?.stats) {
+        setState((prev) => ({ ...prev, statsLoading: true }));
+      }
+
+      // Always do background fetch if there's cache (even if stale), unless forceFetch is true
       const isBackgroundFetch = hasCache && currentCacheKey === cacheKey && !forceFetch;
+      
       await fetchRepositoriesFromAPI(
         statusFilter,
         fetchAll,
@@ -222,28 +253,32 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.pagination.pageSize, setErrorWithScroll, isCacheBust]);
+  }, [setErrorWithScroll, isCacheBust]);
 
   const applyNewData = useCallback(() => {
-    if (state.newDataAvailable) {
-      const repoCache = getRepositoriesFromCache();
-      if (repoCache) {
-        setState(prev => ({
-          ...prev,
-          repositories: repoCache.repositories,
-          stats: repoCache.stats,
-          pagination: repoCache.pagination,
-          newDataAvailable: false
-        }));
-      }
+    const repoCacheResult = getRepositoriesFromCache();
+    if (repoCacheResult?.data) {
+      setState(prev => ({
+        ...prev,
+        repositories: repoCacheResult.data.repositories,
+        stats: repoCacheResult.data.stats,
+        pagination: repoCacheResult.data.pagination,
+        newDataAvailable: false
+      }));
     }
-  }, [state.newDataAvailable]);
+  }, []);
+
+  useEffect(() => {
+    fetchRepositories();
+  }, []);
 
   return {
     repositories: state.repositories,
     stats: state.stats,
     pagination: state.pagination,
     loading: state.loading,
+    statsLoading: state.statsLoading, // новий експорт
+    stale: state.stale,
     newDataAvailable: state.newDataAvailable,
     newDataDetails: state.newDataDetails,
     fetchRepositories,
