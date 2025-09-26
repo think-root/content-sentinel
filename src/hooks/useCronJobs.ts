@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { getCronJobs, type CronJob } from '../api/index';
 import { saveCronJobsToCache, getCronJobsFromCache } from '../utils/cache-utils';
 import { compareCronJobs } from '../utils/data-comparison';
@@ -7,6 +7,7 @@ import { isApiConfigured } from '../utils/api-settings';
 interface CronJobsState {
   cronJobs: CronJob[];
   loading: boolean;
+  stale: boolean;
   newDataAvailable: boolean;
 }
 
@@ -16,11 +17,14 @@ interface UseCronJobsProps {
 }
 
 export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProps) => {
-  const cachedCronJobs = isCacheBust ? null : getCronJobsFromCache();
+  const cachedCronJobsResult = isCacheBust ? null : getCronJobsFromCache();
+  const cachedCronJobs = cachedCronJobsResult?.data;
+  const isCachedDataStale = cachedCronJobsResult?.isStale || false;
 
   const [state, setState] = useState<CronJobsState>({
     cronJobs: cachedCronJobs?.cronJobs || [],
-    loading: !cachedCronJobs,
+    loading: !cachedCronJobs, // Only show loading when there's no cached data at all
+    stale: isCachedDataStale,
     newDataAvailable: false
   });
 
@@ -28,7 +32,8 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
     try {
       const cronJobsResponse = await getCronJobs();
 
-      const cachedData = getCronJobsFromCache();
+      const cachedDataResult = getCronJobsFromCache();
+      const cachedData = cachedDataResult?.data;
 
       if (isBackgroundFetch && cachedData) {
         const hasChanges = compareCronJobs(cronJobsResponse, cachedData.cronJobs);
@@ -48,7 +53,8 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
       } else if (!isBackgroundFetch || isCacheBust) {
         setState(prev => ({
           ...prev,
-          cronJobs: cronJobsResponse
+          cronJobs: cronJobsResponse,
+          stale: false // Reset stale state when we get fresh data
         }));
 
         saveCronJobsToCache({
@@ -69,42 +75,58 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
 
   const fetchCronJobs = useCallback(async (forceFetch: boolean = false) => {
     try {
-      const hasCache = getCronJobsFromCache() !== null;
+      const cacheResult = getCronJobsFromCache();
+      const hasCache = cacheResult?.data !== undefined;
+      // const isCacheStale = cacheResult?.isStale || false;
 
-      const isBackgroundFetch = hasCache && !forceFetch && !state.loading;
+      // Always perform background fetch when there's cache (even if stale)
+      const isBackgroundFetch = hasCache && !forceFetch;
+      
+      // Only show loading skeletons when there's no cached data at all
       if (!hasCache && !forceFetch) {
         setState((prev) => ({ ...prev, loading: true }));
       }
 
       await fetchCronJobsFromAPI(isBackgroundFetch);
+
+      // Update stale state if we just fetched fresh data
+      if (!isBackgroundFetch || isCacheBust) {
+        setState(prev => ({ ...prev, stale: false }));
+      }
     } catch {
       if (!isApiConfigured()) {
-  
-     setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ ...prev, loading: false }));
       } else {
         setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
         setState(prev => ({ ...prev, loading: false }));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.loading, setErrorWithScroll, isCacheBust]);
+  }, [setErrorWithScroll, isCacheBust]);
 
   const applyNewData = useCallback(() => {
     if (state.newDataAvailable) {
-      const cronJobsCache = getCronJobsFromCache();
-      if (cronJobsCache) {
+      const cronJobsCacheResult = getCronJobsFromCache();
+      if (cronJobsCacheResult?.data) {
         setState(prev => ({
           ...prev,
-          cronJobs: cronJobsCache.cronJobs,
+          cronJobs: cronJobsCacheResult.data.cronJobs,
+          stale: false, // Reset stale state when applying new data
           newDataAvailable: false
         }));
       }
     }
-  }, [state.newDataAvailable]);
+  }, []);
+
+  // Add initial loading effect
+  useEffect(() => {
+    fetchCronJobs(false);
+  }, []);
 
   return {
     cronJobs: state.cronJobs,
     loading: state.loading,
+    stale: state.stale,
     newDataAvailable: state.newDataAvailable,
     fetchCronJobs,
     applyNewData,
