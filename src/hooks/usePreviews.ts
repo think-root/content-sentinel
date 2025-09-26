@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { getLatestPostedRepository, getNextRepository } from '../api';
 import type { Repository } from '../types';
 import { savePreviewsToCache, getPreviewsFromCache } from '../utils/cache-utils';
@@ -11,6 +11,7 @@ interface PreviewsState {
   latestPost?: Repository;
   nextPost?: Repository;
   loading: boolean;
+  stale: boolean;
   newDataAvailable: boolean;
 }
 
@@ -20,12 +21,14 @@ interface UsePreviewsProps {
 }
 
 export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProps) => {
-  const cachedPreviews = isCacheBust ? null : getPreviewsFromCache();
+  const cachedPreviewsResult = isCacheBust ? null : getPreviewsFromCache();
+  const cachedPreviews = cachedPreviewsResult?.data;
 
   const [state, setState] = useState<PreviewsState>({
     latestPost: cachedPreviews?.latestPost,
     nextPost: cachedPreviews?.nextPost,
-    loading: !cachedPreviews,
+    loading: !cachedPreviews || (!cachedPreviews.latestPost && !cachedPreviews.nextPost),
+    stale: cachedPreviewsResult?.isStale || false,
     newDataAvailable: false
   });
 
@@ -45,7 +48,8 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
         nextPost: nextPostData
       };
 
-      const cachedData = getPreviewsFromCache();
+      const cachedDataResult = getPreviewsFromCache();
+      const cachedData = cachedDataResult?.data;
 
       if (isBackgroundFetch && cachedData) {
         const hasChanges = comparePreviews(newData, cachedData);
@@ -89,11 +93,17 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
 
   const fetchPreviews = useCallback(async (forceFetch: boolean = false) => {
     try {
-      const hasCache = getPreviewsFromCache() !== null;
+      const cacheResult = getPreviewsFromCache();
+      const hasCache = cacheResult?.data !== undefined;
 
+      // If there's any cache, do a background fetch (stale-while-revalidate)
       const isBackgroundFetch = hasCache && !forceFetch && !state.loading;
+      
       if (!hasCache && !forceFetch) {
         setState((prev) => ({ ...prev, loading: true }));
+      } else if (hasCache && !forceFetch) {
+        // Set stale state if cache is stale
+        setState(prev => ({ ...prev, stale: cacheResult?.isStale || false }));
       }
 
       await fetchPreviewsFromAPI(isBackgroundFetch);
@@ -105,27 +115,32 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
         setState(prev => ({ ...prev, loading: false }));
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.loading, setErrorWithScroll, isCacheBust]);
+  }, [setErrorWithScroll, isCacheBust]);
 
   const applyNewData = useCallback(() => {
     if (state.newDataAvailable) {
-      const previewsCache = getPreviewsFromCache();
-      if (previewsCache) {
+      const previewsCacheResult = getPreviewsFromCache();
+      if (previewsCacheResult?.data) {
         setState(prev => ({
           ...prev,
-          latestPost: previewsCache.latestPost,
-          nextPost: previewsCache.nextPost,
+          latestPost: previewsCacheResult.data.latestPost,
+          nextPost: previewsCacheResult.data.nextPost,
           newDataAvailable: false
         }));
       }
     }
-  }, [state.newDataAvailable]);
+  }, []);
+
+  // Add useEffect for initial loading
+  useEffect(() => {
+    fetchPreviews(false);
+  }, []);
 
   return {
     latestPost: state.latestPost,
     nextPost: state.nextPost,
     loading: state.loading,
+    stale: state.stale,
     newDataAvailable: state.newDataAvailable,
     fetchPreviews,
     applyNewData,
