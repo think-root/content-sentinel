@@ -118,7 +118,7 @@ class LanguageValidator {
       console.warn('Language validation API unavailable, using basic validation:', error);
       
       return {
-        isValid: true, // Allow save even if API fails
+        isValid: true,
         validCodes: codes,
         invalidCodes: [],
         message: 'Language codes validation unavailable. Basic format validation passed.'
