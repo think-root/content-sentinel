@@ -1,5 +1,6 @@
 import { Repository } from './types';
 import { getApiSettings, isApiConfigured } from "./utils/api-settings";
+import { queueRequest, createRequestSignature } from "./lib/requestQueue";
 
 function getApiConfig() {
   const settings = getApiSettings();
@@ -72,20 +73,33 @@ export async function getRepositories(
     page_size: pageSize,
   };
 
-  const response = await fetch(`${baseUrl}/get-repository/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(requestBody),
-  });
+  // Create a unique request signature
+  const signature = await createRequestSignature(
+    `${baseUrl}/get-repository/`,
+    "POST",
+    requestBody
+  );
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/get-repository/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error(`API request failed with status: ${response.status}`);
     }
-    throw new Error(`API request failed with status: ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export interface ManualGenerateResponse {
@@ -108,35 +122,50 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
 
   const promptSettings = await getPromptSettings();
 
-  const response = await fetch(`${baseUrl}/manual-generate/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      url,
-      use_direct_url: promptSettings.use_direct_url,
-      llm_provider: promptSettings.llm_provider,
-      llm_output_language: promptSettings.llm_output_language,
-      llm_config: {
-        model: promptSettings.model,
-        temperature: promptSettings.temperature,
-        messages: [
-          {
-            role: "system",
-            content: promptSettings.content,
-          },
-        ],
-      },
-    }),
-  });
+  const requestBody = {
+    url,
+    use_direct_url: promptSettings.use_direct_url,
+    llm_provider: promptSettings.llm_provider,
+    llm_output_language: promptSettings.llm_output_language,
+    llm_config: {
+      model: promptSettings.model,
+      temperature: promptSettings.temperature,
+      messages: [
+        {
+          role: "system",
+          content: promptSettings.content,
+        },
+      ],
+    },
+  };
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
+  // Create a unique request signature
+  const signature = await createRequestSignature(
+    `${baseUrl}/manual-generate/`,
+    "POST",
+    requestBody
+  );
+
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/manual-generate/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error(`API request failed with status: ${response.status}`);
     }
-    throw new Error(`API request failed with status: ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
@@ -150,37 +179,52 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
 
   const promptSettings = await getPromptSettings();
 
-  const response = await fetch(`${baseUrl}/auto-generate/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      max_repos: maxRepos,
-      since,
-      spoken_language_code: spokenLanguageCode,
-      use_direct_url: promptSettings.use_direct_url,
-      llm_provider: promptSettings.llm_provider,
-      llm_output_language: promptSettings.llm_output_language,
-      llm_config: {
-        model: promptSettings.model,
-        temperature: promptSettings.temperature,
-        messages: [
-          {
-            role: "system",
-            content: promptSettings.content,
-          },
-        ],
-      },
-    }),
-  });
+  const requestBody = {
+    max_repos: maxRepos,
+    since,
+    spoken_language_code: spokenLanguageCode,
+    use_direct_url: promptSettings.use_direct_url,
+    llm_provider: promptSettings.llm_provider,
+    llm_output_language: promptSettings.llm_output_language,
+    llm_config: {
+      model: promptSettings.model,
+      temperature: promptSettings.temperature,
+      messages: [
+        {
+          role: "system",
+          content: promptSettings.content,
+        },
+      ],
+    },
+  };
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
+  // Create a unique request signature
+  const signature = await createRequestSignature(
+    `${baseUrl}/auto-generate/`,
+    "POST",
+    requestBody
+  );
+
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/auto-generate/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error(`API request failed with status: ${response.status}`);
     }
-    throw new Error(`API request failed with status: ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
@@ -202,25 +246,40 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
     };
   }
 
-  const response = await fetch(`${baseUrl}/get-repository/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      limit: 1,
-      posted: true,
-      sort_by: "date_posted",
-      sort_order: "DESC",
-    }),
-  });
+  const requestBody = {
+    limit: 1,
+    posted: true,
+    sort_by: "date_posted",
+    sort_order: "DESC",
+  };
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
+  // Create a unique request signature
+  const signature = await createRequestSignature(
+    `${baseUrl}/get-repository/`,
+    "POST",
+    requestBody
+  );
+
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/get-repository/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error(`API request failed with status: ${response.status}`);
     }
-    throw new Error(`API request failed with status: ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
@@ -242,25 +301,40 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
     };
   }
 
-  const response = await fetch(`${baseUrl}/get-repository/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      limit: 1,
-      posted: false,
-      sort_by: "date_added",
-      sort_order: "ASC",
-    }),
-  });
+  const requestBody = {
+    limit: 1,
+    posted: false,
+    sort_by: "date_added",
+    sort_order: "ASC",
+  };
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
+  // Create a unique request signature
+  const signature = await createRequestSignature(
+    `${baseUrl}/get-repository/`,
+    "POST",
+    requestBody
+  );
+
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/get-repository/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error(`API request failed with status: ${response.status}`);
     }
-    throw new Error(`API request failed with status: ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export interface CollectSettings {
@@ -354,19 +428,31 @@ export async function getPromptSettings(): Promise<PromptSettings> {
     };
   }
 
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/prompt-settings`, {
-    headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const url = `${settings.contentMaestro.apiBaseUrl}/api/prompt-settings`;
+  const headers = {
+    Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+    "Content-Type": "application/json",
+  };
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch prompt settings`);
-  }
+  // Create a unique request signature
+  const signature = await createRequestSignature(url, "GET");
 
-  const data = await response.json();
-  return data;
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(url, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch prompt settings`);
+    }
+
+    const data = await response.json();
+    return data;
+  };
+
+  // Call queueRequest instead of direct fetch
+  return queueRequest(fetchFunction, signature);
 }
 
 export async function updatePromptSettings(
