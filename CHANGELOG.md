@@ -1,3 +1,18 @@
+# [1.36.0](https://github.com/think-root/content-sentinel/compare/v1.35.0...v1.36.0) (2025-09-26)
+
+
+### Bug Fixes
+
+* **ui:** standardize result dialog titles and link display ([5237bdf](https://github.com/think-root/content-sentinel/commit/5237bdfd41f9fd637d16a011c28d5e6a7d02e9c9))
+
+
+### Features
+
+* **ui:** add chutes provider to LLM providers list ([9a9fa56](https://github.com/think-root/content-sentinel/commit/9a9fa563aede4d5026294d6d93fa883489646ed9))
+* **ui:** add context-aware result dialog with dynamic titles and content ([bcd840c](https://github.com/think-root/content-sentinel/commit/bcd840c6c0273496315cc9599891a2e128f6331d))
+* **ui:** add github repository url validation and error handling ([41a3078](https://github.com/think-root/content-sentinel/commit/41a3078fbf89920c64bfd3346cdeba65ea14016b))
+* **ui:** always show result dialog after auto generation ([0ae5a95](https://github.com/think-root/content-sentinel/commit/0ae5a95db054f46d73963896d4f9bf29001173f4))
+
 # [1.35.0](https://github.com/think-root/content-sentinel/compare/v1.34.0...v1.35.0) (2025-08-25)
 
 
