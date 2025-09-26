@@ -43,7 +43,6 @@ export function useRepositoryLocalStorage() {
 
   const initializeFromStorage = useCallback(() => {
     return {
-      dashboardExpanded: getStoredValue('dashboardExpanded', true),
       postsShowFilters: getStoredValue('postsShowFilters', false),
       dashboardSearchTerm: getStoredValue('dashboardSearchTerm', ''),
       dashboardStatusFilter: getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted'),
