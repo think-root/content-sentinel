@@ -13,15 +13,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import './styles/pull-to-refresh.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>
 );
-
-window.clearApiCache = function (): Promise<string> {
-  localStorage.removeItem('cache_repositories_key');
-  return Promise.resolve('Cache cleared successfully');
-};
