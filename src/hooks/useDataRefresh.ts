@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from '../components/ui/common/toast-config';
+import { isRateLimited } from '../lib/requestQueue';
 
 interface UseDataRefreshProps {
   fetchRepositories: (
@@ -17,6 +18,14 @@ interface UseDataRefreshProps {
   fetchCronJobHistory?: (forceFetch?: boolean) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setErrorWithScroll: (errorMessage: string, toastId?: string) => void;
+  applyRepoNewData?: () => void;
+  applyPreviewsNewData?: () => void;
+  applyCronJobsNewData?: () => void;
+  applyCronJobHistoryNewData?: () => void;
+  repoNewDataAvailable?: boolean;
+  previewsNewDataAvailable?: boolean;
+  cronJobsNewDataAvailable?: boolean;
+  cronJobHistoryNewDataAvailable?: boolean;
 }
 
 export const useDataRefresh = ({
@@ -26,10 +35,46 @@ export const useDataRefresh = ({
   fetchCronJobHistory,
   setLoading,
   setErrorWithScroll,
+  applyRepoNewData,
+  applyPreviewsNewData,
+  applyCronJobsNewData,
+  applyCronJobHistoryNewData,
+  repoNewDataAvailable,
+  previewsNewDataAvailable,
+  cronJobsNewDataAvailable,
+  cronJobHistoryNewDataAvailable,
 }: UseDataRefreshProps) => {
+  const lastRefreshRef = useRef<number>(0);
+  const isRefreshingRef = useRef<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const handleManualRefresh = useCallback(
     async (showNotification: boolean = true): Promise<boolean> => {
-      setLoading(true);
+      // Debounce rapid refreshes (prevent calls within 1 second of each other)
+      const now = Date.now();
+      if (now - lastRefreshRef.current < 1000) {
+        return false;
+      }
+      lastRefreshRef.current = now;
+
+      // Check if we're currently rate limited
+      if (isRateLimited()) {
+        if (showNotification) {
+          toast.error("Rate limit exceeded. Please try again later.", {
+            id: "rate-limit-error",
+            duration: 5000,
+          });
+        }
+        return false;
+      }
+
+      // Prevent concurrent refreshes
+      if (isRefreshingRef.current) {
+        return false;
+      }
+
+      isRefreshingRef.current = true;
+      setIsRefreshing(true);
+
       try {
         const savedStatusFilter = localStorage.getItem("dashboardStatusFilter") as
           | "all"
@@ -48,8 +93,9 @@ export const useDataRefresh = ({
         );
         const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
 
-        const fetchPromises = [
-          fetchRepositories(
+        // Execute API calls sequentially with delays
+        try {
+          await fetchRepositories(
             posted,
             false,
             savedItemsPerPage === 0,
@@ -57,22 +103,84 @@ export const useDataRefresh = ({
             savedSortBy || "date_added",
             savedSortOrder || "DESC",
             1,
-            true
-          ),
-          fetchPreviews(true),
-        ];
+            false
+          );
+        } catch (error: any) {
+          // Handle 429 errors gracefully without showing error messages
+          if (!(error?.status === 429 || error?.statusCode === 429)) {
+            throw error;
+          }
+        }
+
+        // Add delay between API calls
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+        try {
+          await fetchPreviews(false);
+        } catch (error: any) {
+          // Handle 429 errors gracefully without showing error messages
+          if (!(error?.status === 429 || error?.statusCode === 429)) {
+            throw error;
+          }
+        }
+
+        // Add delay between API calls
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
         if (fetchCronJobs) {
-          fetchPromises.push(fetchCronJobs(true));
+          try {
+            await fetchCronJobs(false);
+          } catch (error: any) {
+            // Handle 429 errors gracefully without showing error messages
+            if (!(error?.status === 429 || error?.statusCode === 429)) {
+              throw error;
+            }
+          }
+
+          // Add delay between API calls
+          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
         }
 
         if (fetchCronJobHistory) {
-          fetchPromises.push(fetchCronJobHistory(true));
+          try {
+            await fetchCronJobHistory(false);
+          } catch (error: any) {
+            // Handle 429 errors gracefully without showing error messages
+            if (!(error?.status === 429 || error?.statusCode === 429)) {
+              throw error;
+            }
+          }
         }
 
-        await Promise.all(fetchPromises);
+        // Check if there's new data and apply it if needed
+        let hasNewData = false;
+        
+        // Check repositories
+        if (repoNewDataAvailable && applyRepoNewData) {
+          applyRepoNewData();
+          hasNewData = true;
+        }
+        
+        // Check previews
+        if (previewsNewDataAvailable && applyPreviewsNewData) {
+          applyPreviewsNewData();
+          hasNewData = true;
+        }
+        
+        // Check cron jobs
+        if (cronJobsNewDataAvailable && applyCronJobsNewData) {
+          applyCronJobsNewData();
+          hasNewData = true;
+        }
+        
+        // Check cron job history
+        if (cronJobHistoryNewDataAvailable && applyCronJobHistoryNewData) {
+          applyCronJobHistoryNewData();
+          hasNewData = true;
+        }
 
-        if (showNotification) {
+        // Only show notification if there's actually new data
+        if (showNotification && hasNewData) {
           toast.success("New data received from server", {
             id: "new-data-notification",
             duration: 5000,
@@ -83,12 +191,10 @@ export const useDataRefresh = ({
       } catch (error) {
         const err = error as Error;
 
-        if (err.message.includes("Rate limit exceeded")) {
-          toast.error("Rate limit exceeded. Please try again later.", {
-            id: "rate-limit-error",
-            duration: 5000,
-          });
-        } else {
+        // Only show error messages for non-rate limit errors
+        if (!(err.message.includes("Rate limit exceeded") ||
+              (err as any)?.status === 429 ||
+              (err as any)?.statusCode === 429)) {
           setErrorWithScroll(
             "Failed to refresh data: " + (err.message || "Unknown error"),
             "refresh-error"
@@ -97,7 +203,8 @@ export const useDataRefresh = ({
 
         return false;
       } finally {
-        setLoading(false);
+        setIsRefreshing(false);
+        isRefreshingRef.current = false;
       }
     },
     [
@@ -112,27 +219,20 @@ export const useDataRefresh = ({
 
   const handlePullToRefresh = useCallback(async () => {
     console.log("[PullToRefresh] Refresh triggered");
-    try {
-      await handleManualRefresh(false);
-    } catch (error) {
-      console.error("Pull to refresh error:", error);
-      const err = error as Error;
-
-      if (err.message.includes("Rate limit exceeded")) {
-        toast.error("Rate limit exceeded. Please try again later.", {
-          id: "rate-limit-error",
-          duration: 5000,
-        });
-      } else {
-        toast.error("Failed to refresh data: " + (err.message || "Unknown error"), {
-          id: "manual-refresh-notification",
-        });
-      }
+    
+    // Check if already refreshing
+    if (isRefreshingRef.current) {
+      console.log("[PullToRefresh] Refresh already in progress, skipping");
+      return;
     }
+    
+    // Use the same sequential approach as manual refresh
+    await handleManualRefresh(false);
   }, [handleManualRefresh]);
 
   return {
     handleManualRefresh,
     handlePullToRefresh,
+    isRefreshing,
   };
 };
