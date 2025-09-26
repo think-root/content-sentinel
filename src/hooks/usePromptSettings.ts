@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { getPromptSettings, updatePromptSettings, PromptSettings } from '../api';
 
 interface UsePromptSettingsReturn {
@@ -21,43 +21,100 @@ const defaultSettings: PromptSettings = {
 };
 
 export function usePromptSettings(): UsePromptSettingsReturn {
-  const [settings, setSettings] = useState<PromptSettings | null>(null);
+  // Initialize from cache when available to avoid showing skeletons on tab switch
+  const cached = (() => {
+    try {
+      const raw = localStorage.getItem('promptSettings');
+      return raw ? (JSON.parse(raw) as PromptSettings) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const [settings, setSettings] = useState<PromptSettings | null>(cached);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFetching = useRef<boolean>(false);
+  const fetchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSettings = useCallback(async (forceFetch?: boolean) => {
-    if (loading && !forceFetch) return;
-    
+    // Debounce rapid calls (100ms delay)
+    if (fetchTimeout.current) {
+      clearTimeout(fetchTimeout.current);
+    }
+
+    // Return early if already fetching
+    if (isFetching.current) return;
+
+    // Set fetching flag
+    isFetching.current = true;
+
+    const hasCache = Boolean(settings || localStorage.getItem('promptSettings'));
+    const isBackgroundFetch = hasCache && !forceFetch;
+
     try {
-      setLoading(true);
+      if (!isBackgroundFetch) {
+        setLoading(true);
+      }
       setError(null);
-      
+
       const data = await getPromptSettings();
       setSettings(data);
-      
+
       // Cache the settings
       localStorage.setItem('promptSettings', JSON.stringify(data));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch prompt settings';
-      setError(errorMessage);
-      console.error('Prompt settings fetch error:', errorMessage);
+      // Handle 429 errors silently (rate limiting)
+      const isRateLimitError = err instanceof Error && (
+        err.message.includes('429') ||
+        err.message.includes('Rate limit') ||
+        err.message.includes('rate limit')
+      );
       
-      // Try to load from cache or use defaults
-      const cached = localStorage.getItem('promptSettings');
-      if (cached) {
-        try {
-          setSettings(JSON.parse(cached));
-        } catch {
+      if (!isRateLimitError) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch prompt settings';
+        setError(errorMessage);
+        console.error('Prompt settings fetch error:', errorMessage);
+      }
+
+      // Try to load from cache or use defaults if we don't already have settings
+      if (!hasCache || !settings) {
+        const cachedRaw = localStorage.getItem('promptSettings');
+        if (cachedRaw) {
+          try {
+            setSettings(JSON.parse(cachedRaw));
+          } catch {
+            setSettings(defaultSettings);
+          }
+        } else {
           setSettings(defaultSettings);
         }
-      } else {
-        setSettings(defaultSettings);
       }
     } finally {
-      setLoading(false);
+      // Clear fetching flag after a small delay to prevent rapid successive calls
+      fetchTimeout.current = setTimeout(() => {
+        isFetching.current = false;
+        if (fetchTimeout.current) {
+          clearTimeout(fetchTimeout.current);
+          fetchTimeout.current = null;
+        }
+      }, 100); // 100ms debounce delay
+
+      if (!isBackgroundFetch) {
+        setLoading(false);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, settings]);
+
+  // Cleanup effect to clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (fetchTimeout.current) {
+        clearTimeout(fetchTimeout.current);
+      }
+    };
   }, []);
 
   const updateSettings = useCallback(async (updatedSettings: Partial<PromptSettings>) => {
