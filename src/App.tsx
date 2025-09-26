@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import './styles/pull-to-refresh.css';
+import { toast } from './components/ui/common/toast-config';
 import { useResponsiveToast } from './hooks/useResponsiveToast';
 import { useDisclosure } from './hooks/useDisclosure';
 import { useRepositories } from './hooks/useRepositories';
@@ -12,15 +11,11 @@ import { usePromptSettings } from './hooks/usePromptSettings';
 import { useCache } from './hooks/useCache';
 import { useDataRefresh } from './hooks/useDataRefresh';
 import { useGenerateHandlers } from './hooks/useGenerateHandlers';
-import { ToasterConfig } from './components/Toast/ToasterConfig';
-import { DashboardLayout } from './components/Layout/DashboardLayout';
-import { DashboardContent } from './components/Layout/DashboardContent';
-import { SettingsModal } from './components/SettingsModal';
+import { ToastConfig } from './components/ui/common/toast-config';
+import { DashboardLayout } from './components/ui/layout/dashboard-layout';
+import { DashboardContent } from './components/ui/layout/dashboard-content';
+import { SettingsModal } from './components/ui/common/settings-modal';
 import { isApiConfigured } from './utils/api-settings';
-
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-};
 
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -49,6 +44,7 @@ function App() {
     stats,
     pagination,
     loading,
+    statsLoading,
     newDataAvailable: repoNewDataAvailable,
     newDataDetails,
     fetchRepositories,
@@ -104,13 +100,21 @@ function App() {
 
   useCache({ fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory });
 
-  const { handleManualRefresh, handlePullToRefresh } = useDataRefresh({
+  const { handleManualRefresh, isRefreshing } = useDataRefresh({
     fetchRepositories,
     fetchPreviews,
     fetchCronJobs,
     fetchCronJobHistory,
     setLoading,
-    setErrorWithScroll
+    setErrorWithScroll,
+    applyRepoNewData,
+    applyPreviewsNewData,
+    applyCronJobsNewData,
+    applyCronJobHistoryNewData,
+    repoNewDataAvailable,
+    previewsNewDataAvailable,
+    cronJobsNewDataAvailable,
+    cronJobHistoryNewDataAvailable
   });
 
   const { handleManualGenerate, handleAutoGenerate } = useGenerateHandlers({
@@ -123,30 +127,16 @@ function App() {
       return;
     }
 
-    const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' | null;
-    const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' | null;
-    const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' | null;
-    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
-
-    const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
-
-    fetchRepositories(
-      posted,
-      false,
-      savedItemsPerPage === 0,
-      savedItemsPerPage,
-      savedSortBy || 'date_added',
-      savedSortOrder || 'DESC',
-      1,
-      isCacheBust
-    );
-    fetchPreviews(isCacheBust);
-    fetchCronJobs(isCacheBust);
-    fetchCronJobHistory(isCacheBust);
+    // Fetch prompt settings (this is the only part that's not handled by the hooks)
     fetchPromptSettings();
-  }, [fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory, fetchPromptSettings, isCacheBust, isApiReady]);
+  }, [fetchPromptSettings, isApiReady]);
 
   useEffect(() => {
+    // Prevent automatic updates when manual refresh is in progress
+    if (isRefreshing) {
+      return;
+    }
+
     if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable) {
       const message = 'New data received from server';
 
@@ -164,7 +154,7 @@ function App() {
     }
   }, [
     repoNewDataAvailable, previewsNewDataAvailable, cronJobsNewDataAvailable, cronJobHistoryNewDataAvailable,
-    newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData, applyCronJobHistoryNewData
+    newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData, applyCronJobHistoryNewData, isRefreshing
   ]);
 
   return (
@@ -173,18 +163,17 @@ function App() {
         <Route
           path="/dashboard/*"
           element={
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
-              <ToasterConfig position={toastPosition} />
+            <div className="min-h-screen bg-background transition-colors">
+              <ToastConfig position={toastPosition} />
 
               <DashboardLayout
+                isRefreshing={isRefreshing}
                 isSettingsOpen={isSettingsOpen}
                 onSettingsOpen={onSettingsOpen}
                 onSettingsClose={onSettingsClose}
                 handleManualRefresh={handleManualRefresh}
-                handlePullToRefresh={handlePullToRefresh}
                 loading={loading}
                 previewsLoading={previewsLoading}
-                isMobileDevice={isMobileDevice()}
                 isApiReady={isApiReady}
               >
                 <DashboardContent
@@ -194,6 +183,7 @@ function App() {
                   nextPost={nextPost}
                   cronJobs={cronJobs}
                   loading={loading}
+                  statsLoading={statsLoading} // новий пропс
                   previewsLoading={previewsLoading}
                   cronJobsLoading={cronJobsLoading}
                   pagination={pagination}
