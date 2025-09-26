@@ -5,9 +5,11 @@ import {
   getPreviewsFromCache,
   getCronJobsFromCache,
   getCronJobHistoryFromCache,
+  isExpired,
 } from "../utils/cache-utils";
 import { isApiConfigured } from "../utils/api-settings";
-import { toast } from "react-hot-toast";
+import { toast } from "../components/ui/common/toast-config";
+import { isRateLimited } from "../lib/requestQueue";
 
 interface UseCacheProps {
   fetchRepositories: (
@@ -40,6 +42,12 @@ export const useCache = ({
       return;
     }
 
+    // Check if currently rate limited
+    if (isRateLimited()) {
+      console.log("Currently rate limited, skipping cache validation");
+      return;
+    }
+
     // Clear any existing retry timeout
     if (retryTimeoutRef.current !== null) {
       window.clearTimeout(retryTimeoutRef.current);
@@ -51,9 +59,12 @@ export const useCache = ({
     const cronJobsCache = getCronJobsFromCache();
     const cronJobHistoryCache = getCronJobHistoryFromCache();
 
-    if (!repoCache || !previewsCache || !cronJobsCache || !cronJobHistoryCache) {
-      console.log("Cache expired, refreshing data...");
-
+    // Check each cache individually and only fetch what's expired
+    const fetchPromises: Promise<void>[] = [];
+    
+    // Fetch repositories if cache is expired or stale
+    if (isExpired('cache_repositories') || (repoCache && repoCache.isStale)) {
+      console.log("Repositories cache expired or stale, refreshing...");
       const savedStatusFilter = localStorage.getItem("dashboardStatusFilter") as
         | "all"
         | "posted"
@@ -66,69 +77,113 @@ export const useCache = ({
         | null;
       const savedSortOrder = localStorage.getItem("dashboardSortOrder") as "ASC" | "DESC" | null;
       const savedItemsPerPage = parseInt(localStorage.getItem("dashboardItemsPerPage") || "10", 10);
-
       const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
-
-      try {
-        await Promise.all([
-          fetchRepositories(
-            posted,
-            false,
-            savedItemsPerPage === 0,
-            savedItemsPerPage,
-            savedSortBy || "date_added",
-            savedSortOrder || "DESC",
-            1,
-            true
-          ),
-          fetchPreviews(true),
-          fetchCronJobs ? fetchCronJobs(true) : Promise.resolve(),
-          fetchCronJobHistory ? fetchCronJobHistory(true) : Promise.resolve(),
-        ]);
-
-        // Reset retry count on success
-        retryCountRef.current = 0;
-      } catch (error) {
-        const err = error as Error;
-
-        // If we hit a rate limit, implement exponential backoff
-        if (err.message.includes("Rate limit exceeded") && retryCountRef.current < maxRetries) {
-          retryCountRef.current++;
-          const backoffTime = Math.min(30000, 1000 * Math.pow(2, retryCountRef.current)); // Max 30 seconds
-
-          console.log(
-            `Rate limit hit. Retrying in ${backoffTime / 1000} seconds (attempt ${
-              retryCountRef.current
-            }/${maxRetries})...`
-          );
-
-          if (retryCountRef.current === 1) {
-            toast.error("Rate limit exceeded. Backing off and will retry automatically.", {
-              id: "rate-limit-error",
-              duration: 5000,
-            });
-          }
-
-          // Set a timeout to retry with exponential backoff
-          retryTimeoutRef.current = window.setTimeout(() => {
-            checkCacheValidity();
-          }, backoffTime);
-        } else if (retryCountRef.current >= maxRetries) {
-          // Reset retry count after max retries
-          retryCountRef.current = 0;
-          toast.error("Maximum retry attempts reached. Please try again later.", {
-            id: "max-retries-error",
+      
+      fetchPromises.push(
+        fetchRepositories(
+          posted,
+          false,
+          savedItemsPerPage === 0,
+          savedItemsPerPage,
+          savedSortBy || "date_added",
+          savedSortOrder || "DESC",
+          1,
+          true
+        )
+      );
+    }
+    
+    // Fetch previews if cache is expired or stale
+    if (isExpired('cache_previews') || (previewsCache && previewsCache.isStale)) {
+      console.log("Previews cache expired or stale, refreshing...");
+      fetchPromises.push(fetchPreviews(true));
+    }
+    
+    // Fetch cron jobs if cache is expired or stale
+    if ((isExpired('cache_cron_jobs') || (cronJobsCache && cronJobsCache.isStale)) && fetchCronJobs) {
+      console.log("Cron jobs cache expired or stale, refreshing...");
+      fetchPromises.push(fetchCronJobs(true));
+    }
+    
+    // Fetch cron job history if cache is expired or stale
+    if ((isExpired('cache_cron_job_history') || (cronJobHistoryCache && cronJobHistoryCache.isStale)) && fetchCronJobHistory) {
+      console.log("Cron job history cache expired or stale, refreshing...");
+      fetchPromises.push(fetchCronJobHistory(true));
+    }
+    
+    // If nothing needs to be fetched, return early
+    if (fetchPromises.length === 0) {
+      return;
+    }
+    
+    try {
+      // Execute fetches sequentially with delays to prevent burst requests
+      for (let i = 0; i < fetchPromises.length; i++) {
+        // Add delay between requests (1-2 seconds)
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        }
+        
+        // Check rate limit before each request
+        if (isRateLimited()) {
+          console.log("Hit rate limit during cache refresh, stopping further requests");
+          toast.error("Rate limit approaching. Pausing cache refresh.", {
+            id: "rate-limit-warning",
+            duration: 3000,
+          });
+          break;
+        }
+        
+        await fetchPromises[i];
+      }
+      
+      // Reset retry count on success
+      retryCountRef.current = 0;
+    } catch (error) {
+      const err = error as Error;
+      
+      // If we hit a rate limit, implement exponential backoff
+      if ((err.message.includes("Rate limit exceeded") || (err as any).status === 429) && retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        const backoffTime = Math.min(30000, 1000 * Math.pow(2, retryCountRef.current)); // Max 30 seconds
+        
+        console.log(
+          `Rate limit hit. Retrying in ${backoffTime / 1000} seconds (attempt ${
+            retryCountRef.current
+          }/${maxRetries})...`
+        );
+        
+        if (retryCountRef.current === 1) {
+          toast.error("Rate limit exceeded. Backing off and will retry automatically.", {
+            id: "rate-limit-error",
             duration: 5000,
           });
         }
+        
+        // Set a timeout to retry with exponential backoff
+        retryTimeoutRef.current = window.setTimeout(() => {
+          checkCacheValidity();
+        }, backoffTime);
+      } else if (retryCountRef.current >= maxRetries) {
+        // Reset retry count after max retries
+        retryCountRef.current = 0;
+        toast.error("Maximum retry attempts reached. Please try again later.", {
+          id: "max-retries-error",
+          duration: 5000,
+        });
+      } else {
+        // For other errors, just log and continue
+        console.error("Error during cache validation:", err);
       }
     }
   }, [fetchRepositories, fetchPreviews, fetchCronJobs, fetchCronJobHistory]);
 
   useEffect(() => {
     window.clearAllCaches = () => {
-      clearAllCaches();
-      return "All caches cleared successfully";
+      const result = clearAllCaches();
+      const message = "Cache successfully cleared";
+      console.log('Cache clearing result:', result);
+      return message;
     };
 
     return () => {
@@ -137,7 +192,7 @@ export const useCache = ({
   }, []);
 
   useEffect(() => {
-    const intervalId = setInterval(checkCacheValidity, 300000);
+    const intervalId = setInterval(checkCacheValidity, 600000); // 10 minutes
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
