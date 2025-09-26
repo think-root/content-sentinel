@@ -5,6 +5,7 @@ import { saveCronJobHistoryToCache, getCronJobHistoryFromCache } from '../utils/
 interface CronJobHistoryState {
   history: CronJobHistory[];
   loading: boolean;
+  stale: boolean;
   page: number;
   pageSize: number;
   nameFilter?: string;
@@ -24,11 +25,14 @@ interface UseCronJobHistoryProps {
 }
 
 export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJobHistoryProps) => {
-  const cachedHistory = isCacheBust ? null : getCronJobHistoryFromCache();
+  const cachedHistoryResult = isCacheBust ? null : getCronJobHistoryFromCache();
+  const cachedHistory = cachedHistoryResult?.data;
+  const isStale = cachedHistoryResult?.isStale || false;
 
   const [state, setState] = useState<CronJobHistoryState>({
     history: cachedHistory?.history || [],
     loading: !cachedHistory,
+    stale: isStale,
     page: 1,
     pageSize: parseInt(localStorage.getItem('cronHistoryPageSize') || '10', 10),
     sortOrder: (localStorage.getItem('cronHistorySortOrder') as 'asc' | 'desc') || 'desc',
@@ -47,10 +51,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
   });
 
   const fetchCronJobHistory = useCallback(async (forceFetch: boolean = false, append: boolean = false) => {
-    const hasCache = getCronJobHistoryFromCache() !== null;
+    const cacheResult = getCronJobHistoryFromCache();
+    const hasCache = cacheResult?.data !== undefined;
+    // const isStale = cacheResult?.isStale || false;
+    
+    // Always do background fetch when there's cache (even if stale), unless we're forcing a fetch
     const isBackgroundFetch = hasCache && !forceFetch && !state.loading;
 
     try {
+      // Only show loading skeletons when there's no cached data at all
       if (!hasCache && !forceFetch && !append) {
         setState((prev) => ({ ...prev, loading: true }));
       }
@@ -67,7 +76,8 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         state.endDate
       );
 
-      const cachedData = getCronJobHistoryFromCache();
+      const cachedDataResult = getCronJobHistoryFromCache();
+      const cachedData = cachedDataResult?.data;
 
       if (isBackgroundFetch && cachedData && !append) {
         const hasChanges = JSON.stringify(historyResponse.data) !== JSON.stringify(cachedData.history);
@@ -84,6 +94,8 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
             });
           }
         }
+        // Update stale state to false after successful background fetch
+        setState(prev => ({ ...prev, stale: false }));
       } else if (!isBackgroundFetch || isCacheBust) {
         const newHistory = append ? [...state.history, ...historyResponse.data] : historyResponse.data;
         const hasMore = historyResponse.pagination.has_next;
@@ -91,6 +103,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState(prev => ({
           ...prev,
           history: newHistory,
+          stale: false,
           page: currentPage,
           hasMore,
           totalItems: historyResponse.pagination.total_count,
@@ -116,62 +129,67 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState(prev => ({ ...prev, loading: false }));
       }
     }
-  }, [state.loading, setErrorWithScroll, isCacheBust, state.nameFilter, state.successFilter, state.page, state.pageSize, state.sortOrder, state.startDate, state.endDate, state.history]);
-
-  // Auto-fetch when filters or page change
-  useEffect(() => {
-    if (state.loading) {
-      fetchCronJobHistory(true);
-    }
-  }, [state.loading, fetchCronJobHistory]);
+  }, [setErrorWithScroll, isCacheBust, state.nameFilter, state.successFilter, state.page, state.pageSize, state.sortOrder, state.startDate, state.endDate]);
 
   // Initial fetch with saved filters
   useEffect(() => {
     fetchCronJobHistory(false);
-  }, [fetchCronJobHistory]);
+  }, []);
 
   const applyNewData = useCallback(() => {
-    if (state.newDataAvailable) {
-      const historyCache = getCronJobHistoryFromCache();
-      if (historyCache) {
-        setState(prev => ({
+    setState(prev => {
+      if (!prev.newDataAvailable) return prev;
+      
+      const historyCacheResult = getCronJobHistoryFromCache();
+      if (historyCacheResult?.data) {
+        return {
           ...prev,
-          history: historyCache.history,
+          history: historyCacheResult.data.history,
+          totalItems: historyCacheResult.data.total,
           newDataAvailable: false
-        }));
+        };
       }
-    }
-  }, [state.newDataAvailable]);
+      return prev;
+    });
+  }, []);
 
   const setNameFilter = (nameFilter?: string) => {
     const filterValue = nameFilter || 'all';
     localStorage.setItem('cronHistoryJobFilter', filterValue);
+    
     setState(prev => ({
       ...prev,
       nameFilter,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const setSuccessFilter = (successFilter?: boolean) => {
     const filterValue = successFilter === undefined ? 'all' : successFilter ? 'success' : 'failed';
     localStorage.setItem('cronHistoryStatusFilter', filterValue);
+    
     setState(prev => ({
       ...prev,
       successFilter,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const loadMore = () => {
     if (state.hasMore && !state.loading) {
-      setState(prev => ({ ...prev, loading: true }));
+      fetchCronJobHistory(true, true);
     }
   };
 
@@ -181,14 +199,18 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     } else {
       localStorage.removeItem('cronHistoryStartDate');
     }
+    
     setState(prev => ({
       ...prev,
       startDate,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const setEndDate = (endDate?: string) => {
@@ -197,14 +219,18 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     } else {
       localStorage.removeItem('cronHistoryEndDate');
     }
+    
     setState(prev => ({
       ...prev,
       endDate,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const resetFilters = () => {
@@ -213,6 +239,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     localStorage.setItem('cronHistorySortOrder', 'desc');
     localStorage.removeItem('cronHistoryStartDate');
     localStorage.removeItem('cronHistoryEndDate');
+    
     setState(prev => ({
       ...prev,
       nameFilter: undefined,
@@ -223,45 +250,60 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const setPageSize = (pageSize: number) => {
     localStorage.setItem('cronHistoryPageSize', pageSize.toString());
+    
     setState(prev => ({
       ...prev,
       pageSize,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const setPage = (page: number) => {
     setState(prev => ({
       ...prev,
       page,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   const setSortOrder = (sortOrder: 'asc' | 'desc') => {
     localStorage.setItem('cronHistorySortOrder', sortOrder);
+    
     setState(prev => ({
       ...prev,
       sortOrder,
       page: 1,
       history: [],
       hasMore: true,
-      loading: true
+      loading: true,
+      stale: false
     }));
+    
+    fetchCronJobHistory(true);
   };
 
   return {
     history: state.history,
     loading: state.loading,
+    stale: state.stale,
     page: state.page,
     pageSize: state.pageSize,
     sortOrder: state.sortOrder,
