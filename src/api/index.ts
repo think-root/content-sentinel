@@ -80,8 +80,8 @@ export const getCronJobHistory = async (
   params.append("limit", limit.toString());
   params.append("sort", sort);
   if (success !== undefined) params.append("success", success.toString());
-  if (start_date) params.append("start_date", start_date);
-  if (end_date) params.append("end_date", end_date);
+  if (start_date && start_date.trim() !== '') params.append("start_date", start_date);
+  if (end_date && end_date.trim() !== '') params.append("end_date", end_date);
 
   const response = await fetch(
     `${settings.contentMaestro.apiBaseUrl}/api/cron-history?${params.toString()}`,
