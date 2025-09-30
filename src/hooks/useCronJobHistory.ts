@@ -36,8 +36,14 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     page: 1,
     pageSize: parseInt(localStorage.getItem('cronHistoryPageSize') || '10', 10),
     sortOrder: (localStorage.getItem('cronHistorySortOrder') as 'asc' | 'desc') || 'desc',
-    startDate: localStorage.getItem('cronHistoryStartDate') || undefined,
-    endDate: localStorage.getItem('cronHistoryEndDate') || undefined,
+    startDate: (() => {
+      const saved = localStorage.getItem('cronHistoryStartDate');
+      return saved && saved.trim() !== '' ? saved : undefined;
+    })(),
+    endDate: (() => {
+      const saved = localStorage.getItem('cronHistoryEndDate');
+      return saved && saved.trim() !== '' ? saved : undefined;
+    })(),
     newDataAvailable: false,
     hasMore: true,
     totalItems: cachedHistory?.total || 0,
@@ -50,7 +56,19 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     })()
   });
 
-  const fetchCronJobHistory = useCallback(async (forceFetch: boolean = false, append: boolean = false) => {
+  const fetchCronJobHistory = useCallback(async (
+    forceFetch: boolean = false,
+    append: boolean = false,
+    overrides?: {
+      startDate?: string | null;
+      endDate?: string | null;
+      nameFilter?: string | null;
+      successFilter?: boolean | null;
+      sortOrder?: 'asc' | 'desc' | null;
+      pageSize?: number | null;
+      page?: number | null;
+    }
+  ) => {
     const cacheResult = getCronJobHistoryFromCache();
     const hasCache = cacheResult?.data !== undefined;
     // const isStale = cacheResult?.isStale || false;
@@ -64,16 +82,24 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState((prev) => ({ ...prev, loading: true }));
       }
 
-      const currentPage = append ? state.page + 1 : state.page;
+      const effectivePage = overrides?.page !== null && overrides?.page !== undefined ? overrides.page : state.page;
+      const currentPage = append ? effectivePage + 1 : effectivePage;
+
+      const effectiveStartDate = overrides?.startDate !== null && overrides?.startDate !== undefined ? overrides.startDate : state.startDate;
+      const effectiveEndDate = overrides?.endDate !== null && overrides?.endDate !== undefined ? overrides.endDate : state.endDate;
+      const effectiveNameFilter = overrides?.nameFilter !== null && overrides?.nameFilter !== undefined ? overrides.nameFilter : state.nameFilter;
+      const effectiveSuccessFilter = overrides?.successFilter !== null && overrides?.successFilter !== undefined ? overrides.successFilter : state.successFilter;
+      const effectiveSortOrder = overrides?.sortOrder !== null && overrides?.sortOrder !== undefined ? overrides.sortOrder : state.sortOrder;
+      const effectivePageSize = overrides?.pageSize !== null && overrides?.pageSize !== undefined ? overrides.pageSize : state.pageSize;
 
       const historyResponse = await getCronJobHistory(
-        state.nameFilter,
+        effectiveNameFilter,
         currentPage,
-        state.pageSize,
-        state.successFilter,
-        state.sortOrder,
-        state.startDate,
-        state.endDate
+        effectivePageSize,
+        effectiveSuccessFilter,
+        effectiveSortOrder,
+        effectiveStartDate,
+        effectiveEndDate
       );
 
       const cachedDataResult = getCronJobHistoryFromCache();
@@ -129,7 +155,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState(prev => ({ ...prev, loading: false }));
       }
     }
-  }, [setErrorWithScroll, isCacheBust, state.nameFilter, state.successFilter, state.page, state.pageSize, state.sortOrder, state.startDate, state.endDate]);
+  }, [setErrorWithScroll, isCacheBust]);
 
   // Initial fetch with saved filters
   useEffect(() => {
@@ -167,7 +193,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { nameFilter });
   };
 
   const setSuccessFilter = (successFilter?: boolean) => {
@@ -184,7 +210,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { successFilter });
   };
 
   const loadMore = () => {
@@ -210,7 +236,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { startDate });
   };
 
   const setEndDate = (endDate?: string) => {
@@ -230,7 +256,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { endDate });
   };
 
   const resetFilters = () => {
@@ -254,7 +280,14 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, {
+      nameFilter: undefined,
+      successFilter: undefined,
+      sortOrder: 'desc',
+      startDate: undefined,
+      endDate: undefined,
+      page: 1
+    });
   };
 
   const setPageSize = (pageSize: number) => {
@@ -270,7 +303,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { pageSize });
   };
 
   const setPage = (page: number) => {
@@ -281,7 +314,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { page });
   };
 
   const setSortOrder = (sortOrder: 'asc' | 'desc') => {
@@ -297,7 +330,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true);
+    fetchCronJobHistory(true, false, { sortOrder });
   };
 
   return {
