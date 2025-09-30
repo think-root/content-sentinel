@@ -1,3 +1,34 @@
+# [1.37.0](https://github.com/think-root/content-sentinel/compare/v1.36.0...v1.37.0) (2025-09-30)
+
+
+### Bug Fixes
+
+* **api:** validate start_date and end_date parameters ([01aef79](https://github.com/think-root/content-sentinel/commit/01aef79da92789a471c91faf095bf9e245c78489))
+* **language-validation:** allow validation to pass on API failure ([9936f29](https://github.com/think-root/content-sentinel/commit/9936f2985f4f19ee84e66bcdede9092778692a04))
+
+
+### Features
+
+* add refresh indicator component for loading state ([aa95bf1](https://github.com/think-root/content-sentinel/commit/aa95bf187f8fc856d5f6eb01ad4e958a75ff1f1e))
+* **api:** implement request queuing and signature generation ([436db80](https://github.com/think-root/content-sentinel/commit/436db807cea2394192b3e84e4ed0d5a56beb4df9))
+* **cache:** enhance caching mechanisms and add expiry checks ([9a65838](https://github.com/think-root/content-sentinel/commit/9a65838054c68981499f4c876b57fd3bb0b44f8a))
+* **cache:** improve cache validation and fetching logic ([ef7a762](https://github.com/think-root/content-sentinel/commit/ef7a7627ecbfe630fb47f07ce6ec246c042ec419))
+* **cron-job-history:** add stale state management and improve caching logic ([be7c32e](https://github.com/think-root/content-sentinel/commit/be7c32e9b290afe097db9727a40386d4934ba451))
+* **cron-jobs:** enhance state management and caching logic ([3f67757](https://github.com/think-root/content-sentinel/commit/3f6775772f6cc8da977515069dbf60eec1d30390))
+* **data-refresh:** enhance manual refresh logic and error handling ([83c63c9](https://github.com/think-root/content-sentinel/commit/83c63c947e2e328f5539bfd78966b293f73747a2))
+* **hooks:** improve handling of date filters in cron job history ([34ad0c7](https://github.com/think-root/content-sentinel/commit/34ad0c75b645cd842cf68d7cc9a185da751343ba))
+* **previews:** enhance previews fetching and caching logic ([195a5fa](https://github.com/think-root/content-sentinel/commit/195a5fa78520514c19ee990bc8670376a6359201))
+* **repositories:** enhance repository fetching logic and state management ([c4cbd17](https://github.com/think-root/content-sentinel/commit/c4cbd17d70bd1c6ad2103ef4fba2abd7d362d4ea))
+* **request-queue:** implement centralized request queue for API handling ([7f8fba9](https://github.com/think-root/content-sentinel/commit/7f8fba9f2a1410aab69ef6cea298a15a9ecd8ba6))
+* **settings:** enhance prompt settings fetching and caching logic ([98a6ce6](https://github.com/think-root/content-sentinel/commit/98a6ce6285b2e243072fdcb5a9a0264a5f67dbf4))
+* **tabs:** add tab persistence hook for dashboard ([79735b8](https://github.com/think-root/content-sentinel/commit/79735b877cb3755cd81e513ea48d987117f7e4d1))
+* **ui:** enhance color variables and component styles ([95dbffb](https://github.com/think-root/content-sentinel/commit/95dbffbeb1485dc32bde0ede9a57b79ec61ce81d))
+* **ui:** enhance date filtering in cron job history ([bcbad59](https://github.com/think-root/content-sentinel/commit/bcbad59bf136f553264fbab445f3fff67b5d1d34))
+* update dependencies and enhance Tailwind CSS configuration ([971ed61](https://github.com/think-root/content-sentinel/commit/971ed61e709a3f8f0901c9b51b22025daef93327))
+* **utils:** add formatDateOnly function for date formatting ([ebf8cc0](https://github.com/think-root/content-sentinel/commit/ebf8cc0a8ec3ded027e76508cc80c9eeffdf7788))
+* **utils:** add formatDateOnly function for date-only formatting ([f081562](https://github.com/think-root/content-sentinel/commit/f081562808b14b5ef80a4b42ab89392aac1aed31))
+* **utils:** add utility function for class name merging ([6711701](https://github.com/think-root/content-sentinel/commit/6711701f42bf7eb9d30cb6bff6b998388cb81cf2))
+
 # [1.36.0](https://github.com/think-root/content-sentinel/compare/v1.35.0...v1.36.0) (2025-09-26)
 
 
