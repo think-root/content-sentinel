@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatDate } from '@/utils/date-format';
+import { formatDate, formatDateOnly } from '@/utils/date-format';
 import { getCronJobs } from '@/api/index';
 import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '@/api/index';
@@ -84,6 +84,8 @@ export const CronJobHistory = ({
   const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>(sortOrder);
   const [selectedStartDate, setSelectedStartDate] = useState<string>(startDate || '');
   const [selectedEndDate, setSelectedEndDate] = useState<string>(endDate || '');
+  const [startDateOpen, setStartDateOpen] = useState<boolean>(false);
+  const [endDateOpen, setEndDateOpen] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(() => {
     const saved = localStorage.getItem('cronHistoryShowFilters');
     return saved === 'true';
@@ -176,7 +178,7 @@ export const CronJobHistory = ({
     setSelectedStartDate(date);
 
     if (setStartDate) {
-      setStartDate(date || undefined);
+      setStartDate(date && date.trim() !== '' ? date : undefined);
     }
   };
 
@@ -184,7 +186,7 @@ export const CronJobHistory = ({
     setSelectedEndDate(date);
 
     if (setEndDate) {
-      setEndDate(date || undefined);
+      setEndDate(date && date.trim() !== '' ? date : undefined);
     }
   };
 
@@ -196,15 +198,6 @@ export const CronJobHistory = ({
     setSelectedEndDate('');
     if (resetFilters) {
       resetFilters();
-    }
-    if (setSortOrder) {
-      setSortOrder('desc');
-    }
-    if (setStartDate) {
-      setStartDate(undefined);
-    }
-    if (setEndDate) {
-      setEndDate(undefined);
     }
   };
 
@@ -223,11 +216,11 @@ export const CronJobHistory = ({
 
   const hasActiveFilters = nameFilter || successFilter !== undefined || startDate || endDate;
 
-  const renderDatePicker = (date: string, onChange: (date: string) => void, placeholder: string) => {
+  const renderDatePicker = (date: string, onChange: (date: string) => void, placeholder: string, isOpen: boolean, setIsOpen: (open: boolean) => void) => {
     const selectedDate = date ? new Date(date) : undefined;
     
     return (
-      <Popover>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -236,7 +229,7 @@ export const CronJobHistory = ({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? formatDate(date) : placeholder}
+            {date ? formatDateOnly(date) : placeholder}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -249,6 +242,7 @@ export const CronJobHistory = ({
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
                 const day = date.getDate().toString().padStart(2, '0');
                 onChange(`${year}-${month}-${day}`);
+                setIsOpen(false);
               }
             }}
             initialFocus
@@ -259,7 +253,10 @@ export const CronJobHistory = ({
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => onChange('')}
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
               >
                 Clear date
               </Button>
@@ -382,7 +379,7 @@ export const CronJobHistory = ({
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Start Date
                 </label>
-                {renderDatePicker(selectedStartDate, handleStartDateChange, "Select start date")}
+                {renderDatePicker(selectedStartDate, handleStartDateChange, "Select start date", startDateOpen, setStartDateOpen)}
               </div>
 
               {/* End Date filter */}
@@ -390,7 +387,7 @@ export const CronJobHistory = ({
                 <label className="block text-sm font-medium text-foreground mb-2">
                   End Date
                 </label>
-                {renderDatePicker(selectedEndDate, handleEndDateChange, "Select end date")}
+                {renderDatePicker(selectedEndDate, handleEndDateChange, "Select end date", endDateOpen, setEndDateOpen)}
               </div>
             </div>
 
