@@ -82,24 +82,24 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState((prev) => ({ ...prev, loading: true }));
       }
 
-      const effectivePage = overrides?.page !== null && overrides?.page !== undefined ? overrides.page : state.page;
+      const effectivePage = overrides && 'page' in overrides ? (overrides.page ?? state.page) : state.page;
       const currentPage = append ? effectivePage + 1 : effectivePage;
 
-      const effectiveStartDate = overrides?.startDate !== null && overrides?.startDate !== undefined ? overrides.startDate : state.startDate;
-      const effectiveEndDate = overrides?.endDate !== null && overrides?.endDate !== undefined ? overrides.endDate : state.endDate;
-      const effectiveNameFilter = overrides?.nameFilter !== null && overrides?.nameFilter !== undefined ? overrides.nameFilter : state.nameFilter;
-      const effectiveSuccessFilter = overrides?.successFilter !== null && overrides?.successFilter !== undefined ? overrides.successFilter : state.successFilter;
-      const effectiveSortOrder = overrides?.sortOrder !== null && overrides?.sortOrder !== undefined ? overrides.sortOrder : state.sortOrder;
-      const effectivePageSize = overrides?.pageSize !== null && overrides?.pageSize !== undefined ? overrides.pageSize : state.pageSize;
+      const effectiveStartDate = overrides && 'startDate' in overrides ? overrides.startDate : state.startDate;
+      const effectiveEndDate = overrides && 'endDate' in overrides ? overrides.endDate : state.endDate;
+      const effectiveNameFilter = overrides && 'nameFilter' in overrides ? overrides.nameFilter : state.nameFilter;
+      const effectiveSuccessFilter = overrides && 'successFilter' in overrides ? overrides.successFilter : state.successFilter;
+      const effectiveSortOrder = overrides && 'sortOrder' in overrides ? (overrides.sortOrder ?? state.sortOrder) : state.sortOrder;
+      const effectivePageSize = overrides && 'pageSize' in overrides ? (overrides.pageSize ?? state.pageSize) : state.pageSize;
 
       const historyResponse = await getCronJobHistory(
-        effectiveNameFilter,
+        effectiveNameFilter ?? undefined,
         currentPage,
         effectivePageSize,
-        effectiveSuccessFilter,
+        effectiveSuccessFilter ?? undefined,
         effectiveSortOrder,
-        effectiveStartDate,
-        effectiveEndDate
+        effectiveStartDate ?? undefined,
+        effectiveEndDate ?? undefined
       );
 
       const cachedDataResult = getCronJobHistoryFromCache();
@@ -193,7 +193,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { nameFilter });
+    fetchCronJobHistory(true, false, {
+      nameFilter,
+      successFilter: state.successFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      pageSize: state.pageSize,
+      page: 1
+    });
   };
 
   const setSuccessFilter = (successFilter?: boolean) => {
@@ -210,12 +218,28 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { successFilter });
+    fetchCronJobHistory(true, false, {
+      successFilter,
+      nameFilter: state.nameFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      pageSize: state.pageSize,
+      page: 1
+    });
   };
 
   const loadMore = () => {
     if (state.hasMore && !state.loading) {
-      fetchCronJobHistory(true, true);
+      fetchCronJobHistory(true, true, {
+        nameFilter: state.nameFilter,
+        successFilter: state.successFilter,
+        sortOrder: state.sortOrder,
+        startDate: state.startDate,
+        endDate: state.endDate,
+        pageSize: state.pageSize,
+        page: state.page
+      });
     }
   };
 
@@ -236,7 +260,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { startDate });
+    fetchCronJobHistory(true, false, {
+      startDate,
+      nameFilter: state.nameFilter,
+      successFilter: state.successFilter,
+      sortOrder: state.sortOrder,
+      endDate: state.endDate,
+      pageSize: state.pageSize,
+      page: 1
+    });
   };
 
   const setEndDate = (endDate?: string) => {
@@ -256,7 +288,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { endDate });
+    fetchCronJobHistory(true, false, {
+      endDate,
+      nameFilter: state.nameFilter,
+      successFilter: state.successFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      pageSize: state.pageSize,
+      page: 1
+    });
   };
 
   const resetFilters = () => {
@@ -303,7 +343,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { pageSize });
+    fetchCronJobHistory(true, false, {
+      pageSize,
+      nameFilter: state.nameFilter,
+      successFilter: state.successFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      page: 1
+    });
   };
 
   const setPage = (page: number) => {
@@ -314,7 +362,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { page });
+    fetchCronJobHistory(true, false, {
+      page,
+      nameFilter: state.nameFilter,
+      successFilter: state.successFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      pageSize: state.pageSize
+    });
   };
 
   const setSortOrder = (sortOrder: 'asc' | 'desc') => {
@@ -330,7 +386,15 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       stale: false
     }));
     
-    fetchCronJobHistory(true, false, { sortOrder });
+    fetchCronJobHistory(true, false, {
+      sortOrder,
+      nameFilter: state.nameFilter,
+      successFilter: state.successFilter,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      pageSize: state.pageSize,
+      page: 1
+    });
   };
 
   return {
