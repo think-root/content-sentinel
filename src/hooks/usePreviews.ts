@@ -118,16 +118,16 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
   }, [setErrorWithScroll, isCacheBust]);
 
   const applyNewData = useCallback(() => {
-    if (state.newDataAvailable) {
-      const previewsCacheResult = getPreviewsFromCache();
-      if (previewsCacheResult?.data) {
-        setState(prev => ({
-          ...prev,
-          latestPost: previewsCacheResult.data.latestPost,
-          nextPost: previewsCacheResult.data.nextPost,
-          newDataAvailable: false
-        }));
-      }
+    // Note: No need to check state.newDataAvailable here as it's already checked in App.tsx
+    // before calling this function. Checking it here causes closure issues.
+    const previewsCacheResult = getPreviewsFromCache();
+    if (previewsCacheResult?.data) {
+      setState(prev => ({
+        ...prev,
+        latestPost: previewsCacheResult.data.latestPost,
+        nextPost: previewsCacheResult.data.nextPost,
+        newDataAvailable: false
+      }));
     }
   }, []);
 
