@@ -105,16 +105,16 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
   }, [setErrorWithScroll, isCacheBust]);
 
   const applyNewData = useCallback(() => {
-    if (state.newDataAvailable) {
-      const cronJobsCacheResult = getCronJobsFromCache();
-      if (cronJobsCacheResult?.data) {
-        setState(prev => ({
-          ...prev,
-          cronJobs: cronJobsCacheResult.data.cronJobs,
-          stale: false, // Reset stale state when applying new data
-          newDataAvailable: false
-        }));
-      }
+    // Note: No need to check state.newDataAvailable here as it's already checked in App.tsx
+    // before calling this function. Checking it here causes closure issues.
+    const cronJobsCacheResult = getCronJobsFromCache();
+    if (cronJobsCacheResult?.data) {
+      setState(prev => ({
+        ...prev,
+        cronJobs: cronJobsCacheResult.data.cronJobs,
+        stale: false, // Reset stale state when applying new data
+        newDataAvailable: false
+      }));
     }
   }, []);
 
