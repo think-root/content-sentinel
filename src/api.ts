@@ -2,6 +2,110 @@ import { Repository } from './types';
 import { getApiSettings, isApiConfigured } from "./utils/api-settings";
 import { queueRequest, createRequestSignature } from "./lib/requestQueue";
 
+// Cache for available languages to avoid repeated API calls
+let availableLanguagesCache: string[] | null = null;
+let languagesCacheExpiry: number = 0;
+const LANGUAGES_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Helper function to get available languages from the backend
+async function getAvailableLanguages(): Promise<string[]> {
+  const now = Date.now();
+  
+  // Return cached data if still valid
+  if (availableLanguagesCache && now < languagesCacheExpiry) {
+    return availableLanguagesCache;
+  }
+
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+  
+  if (!isConfigured) {
+    return ['uk']; // Default fallback
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/get-available-languages/`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      console.warn('Failed to fetch available languages, using default');
+      return ['uk'];
+    }
+
+    const data = await response.json();
+    const languages = data.languages || ['uk']; // Default to uk if no languages returned
+    
+    // Cache the result
+    availableLanguagesCache = languages;
+    languagesCacheExpiry = now + LANGUAGES_CACHE_DURATION;
+    
+    return languages;
+  } catch (error) {
+    console.warn('Error fetching available languages:', error);
+    return ['uk']; // Default fallback
+  }
+}
+
+// Helper function to handle language fallback
+async function handleLanguageFallback(
+  originalRequest: () => Promise<any>,
+  requestedLanguage: string,
+  createFallbackRequest?: (language: string) => Promise<any>
+): Promise<any> {
+  try {
+    return await originalRequest();
+  } catch (error) {
+    // Check if it's the specific "no text available for language" error
+    if (error instanceof Error && error.message.includes('no text available for language')) {
+      console.warn(`[Language Fallback] Language "${requestedLanguage}" not available, trying fallback...`);
+      
+      // Get available languages and try with the first one
+      const availableLanguages = await getAvailableLanguages();
+      const fallbackLanguage = availableLanguages[0] || 'uk';
+      
+      console.log(`[Language Fallback] Available languages: [${availableLanguages.join(', ')}]`);
+      
+      if (fallbackLanguage !== requestedLanguage) {
+        console.log(`[Language Fallback] Using fallback language: "${fallbackLanguage}" instead of "${requestedLanguage}"`);
+        
+        if (createFallbackRequest) {
+          try {
+            const result = await createFallbackRequest(fallbackLanguage);
+            console.log(`[Language Fallback] Successfully retrieved data using fallback language "${fallbackLanguage}"`);
+            return result;
+          } catch (fallbackError) {
+            console.error(`[Language Fallback] Fallback also failed with language "${fallbackLanguage}":`, fallbackError);
+            throw fallbackError;
+          }
+        } else {
+          // Fallback to default behavior if no fallback request function provided
+          console.warn(`[Language Fallback] No fallback request function provided, returning empty result`);
+          return {
+            status: "success",
+            data: {
+              all: 0,
+              posted: 0,
+              unposted: 0,
+              items: [],
+              page: 1,
+              page_size: 10,
+              total_pages: 0,
+              total_items: 0,
+            }
+          };
+        }
+      } else {
+        console.warn(`[Language Fallback] No fallback available, same language "${requestedLanguage}" returned`);
+      }
+    }
+    
+    // If it's not the language error or fallback failed, re-throw the original error
+    console.error(`[Language Fallback] Error not related to language availability:`, error);
+    throw error;
+  }
+}
+
 function getApiConfig() {
   const settings = getApiSettings();
   return {
@@ -47,6 +151,8 @@ export async function getRepositories(
   pageSize?: number
 ): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
+  const settings = getApiSettings();
+  const textLanguage = settings.displayLanguage || 'uk';
 
   if (!isConfigured) {
     return {
@@ -64,42 +170,54 @@ export async function getRepositories(
     };
   }
 
-  const requestBody: GetRepositoryRequest = {
-    limit: fetchAll || pageSize === 0 ? 0 : pageSize || limit,
-    posted,
-    sort_by: sortBy,
-    sort_order: sortOrder,
-    page,
-    page_size: pageSize,
-  };
+  const createRequest = (language: string) => {
+    const requestBody: GetRepositoryRequest = {
+      limit: fetchAll || pageSize === 0 ? 0 : pageSize || limit,
+      posted,
+      sort_by: sortBy,
+      sort_order: sortOrder,
+      page,
+      page_size: pageSize,
+      text_language: language,
+    };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(
-    `${baseUrl}/get-repository/`,
-    "POST",
-    requestBody
-  );
+    // Create a unique request signature
+    const signature = createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    );
 
-  // Wrap the actual fetch logic in a function
-  const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/get-repository/`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    });
+    // Wrap the actual fetch logic in a function
+    const fetchFunction = async () => {
+      const response = await fetch(`${baseUrl}/get-repository/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
+      const result = await response.json();
+      
+      // Check for language error in the response first
+      if (result.status === "error" && result.message && result.message.includes('no text available for language')) {
+        throw new Error(result.message);
       }
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
 
-    return response.json();
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      return result;
+    };
+
+    return queueRequest(fetchFunction, signature);
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Use fallback logic with a function that can create requests with different languages
+  return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
 }
 
 export interface ManualGenerateResponse {
@@ -229,6 +347,8 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
+  const settings = getApiSettings();
+  const textLanguage = settings.displayLanguage || 'uk';
 
   if (!isConfigured) {
     return {
@@ -246,44 +366,58 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
     };
   }
 
-  const requestBody = {
-    limit: 1,
-    posted: true,
-    sort_by: "date_posted",
-    sort_order: "DESC",
-  };
+  const createRequest = (language: string) => {
+    const requestBody = {
+      limit: 1,
+      posted: true,
+      sort_by: "date_posted",
+      sort_order: "DESC",
+      text_language: language,
+    };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(
-    `${baseUrl}/get-repository/`,
-    "POST",
-    requestBody
-  );
+    // Create a unique request signature
+    const signature = createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    );
 
-  // Wrap the actual fetch logic in a function
-  const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/get-repository/`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    });
+    // Wrap the actual fetch logic in a function
+    const fetchFunction = async () => {
+      const response = await fetch(`${baseUrl}/get-repository/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
+      const result = await response.json();
+      
+      // Check for language error in the response first
+      if (result.status === "error" && result.message && result.message.includes('no text available for language')) {
+        throw new Error(result.message);
       }
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
 
-    return response.json();
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      return result;
+    };
+
+    return queueRequest(fetchFunction, signature);
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Use fallback logic
+  return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
 }
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
+  const settings = getApiSettings();
+  const textLanguage = settings.displayLanguage || 'uk';
 
   if (!isConfigured) {
     return {
@@ -301,40 +435,52 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
     };
   }
 
-  const requestBody = {
-    limit: 1,
-    posted: false,
-    sort_by: "date_added",
-    sort_order: "ASC",
-  };
+  const createRequest = (language: string) => {
+    const requestBody = {
+      limit: 1,
+      posted: false,
+      sort_by: "date_added",
+      sort_order: "ASC",
+      text_language: language,
+    };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(
-    `${baseUrl}/get-repository/`,
-    "POST",
-    requestBody
-  );
+    // Create a unique request signature
+    const signature = createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    );
 
-  // Wrap the actual fetch logic in a function
-  const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/get-repository/`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    });
+    // Wrap the actual fetch logic in a function
+    const fetchFunction = async () => {
+      const response = await fetch(`${baseUrl}/get-repository/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
+      const result = await response.json();
+      
+      // Check for language error in the response first
+      if (result.status === "error" && result.message && result.message.includes('no text available for language')) {
+        throw new Error(result.message);
       }
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
 
-    return response.json();
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      return result;
+    };
+
+    return queueRequest(fetchFunction, signature);
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Use fallback logic
+  return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
 }
 
 export interface CollectSettings {
@@ -423,7 +569,7 @@ export async function getPromptSettings(): Promise<PromptSettings> {
       model: "gpt-4.1",
       temperature: 0.5,
       content:
-        "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories in Ukrainian. Your main task is to create descriptions based on the URL.",
+        "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories. Your main task is to create descriptions based on the URL.",
       llm_output_language: "",
     };
   }
@@ -512,23 +658,48 @@ export async function deleteRepository(identifier: { id?: number; url?: string }
 
 export async function updateRepositoryText(identifier: { id?: number; url?: string }, text: string): Promise<{ status: string; message: string; data?: { id: number; url: string; text: string; updated_at: string } }> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
+  const settings = getApiSettings();
+  const textLanguage = settings.displayLanguage || 'uk';
   
   if (!isConfigured) {
     return { status: "error", message: "API not configured" };
   }
 
-  const response = await fetch(`${baseUrl}/update-repository-text/`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify({ ...identifier, text }),
-  });
+  const createRequest = (language: string) => {
+    const fetchFunction = async () => {
+      const response = await fetch(`${baseUrl}/update-repository-text/`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ ...identifier, text, text_language: language }),
+      });
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
-    }
-    throw new Error(`Failed to update repository text: ${response.status}`);
-  }
+      const result = await response.json();
+      
+      // Check for language error in the response first
+      if (result.status === "error" && result.message && result.message.includes('no text available for language')) {
+        throw new Error(result.message);
+      }
 
-  return response.json();
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        throw new Error(`Failed to update repository text: ${response.status}`);
+      }
+      
+      return result;
+    };
+
+    // Create a unique request signature for update operations
+    const signature = createRequestSignature(
+      `${baseUrl}/update-repository-text/`,
+      "PATCH",
+      { ...identifier, text, text_language: language }
+    );
+
+    return queueRequest(fetchFunction, signature);
+  };
+
+  // Use fallback logic
+  return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
 }
