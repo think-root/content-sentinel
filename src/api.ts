@@ -125,6 +125,7 @@ interface GetRepositoryRequest {
   sort_order?: "ASC" | "DESC";
   page?: number;
   page_size?: number;
+  text_language?: string;
 }
 
 interface RepositoryResponse {
@@ -181,15 +182,10 @@ export async function getRepositories(
       text_language: language,
     };
 
-    // Create a unique request signature
-    const signature = createRequestSignature(
-      `${baseUrl}/get-repository/`,
-      "POST",
-      requestBody
-    );
 
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
+
       const response = await fetch(`${baseUrl}/get-repository/`, {
         method: "POST",
         headers,
@@ -213,7 +209,12 @@ export async function getRepositories(
       return result;
     };
 
-    return queueRequest(fetchFunction, signature);
+    // Create a unique request signature and queue the request
+    return createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    ).then(signature => queueRequest(fetchFunction, signature));
   };
 
   // Use fallback logic with a function that can create requests with different languages
@@ -257,13 +258,6 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
     },
   };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(
-    `${baseUrl}/manual-generate/`,
-    "POST",
-    requestBody
-  );
-
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
     const response = await fetch(`${baseUrl}/manual-generate/`, {
@@ -282,8 +276,12 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
     return response.json();
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Create a unique request signature and queue the request
+  return createRequestSignature(
+    `${baseUrl}/manual-generate/`,
+    "POST",
+    requestBody
+  ).then(signature => queueRequest(fetchFunction, signature));
 }
 
 export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
@@ -316,13 +314,6 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
     },
   };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(
-    `${baseUrl}/auto-generate/`,
-    "POST",
-    requestBody
-  );
-
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
     const response = await fetch(`${baseUrl}/auto-generate/`, {
@@ -341,8 +332,12 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
     return response.json();
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Create a unique request signature and queue the request
+  return createRequestSignature(
+    `${baseUrl}/auto-generate/`,
+    "POST",
+    requestBody
+  ).then(signature => queueRequest(fetchFunction, signature));
 }
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
@@ -371,16 +366,9 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
       limit: 1,
       posted: true,
       sort_by: "date_posted",
-      sort_order: "DESC",
+      sort_order: "DESC", // Show newest first
       text_language: language,
     };
-
-    // Create a unique request signature
-    const signature = createRequestSignature(
-      `${baseUrl}/get-repository/`,
-      "POST",
-      requestBody
-    );
 
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
@@ -407,7 +395,12 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
       return result;
     };
 
-    return queueRequest(fetchFunction, signature);
+    // Create a unique request signature and queue the request
+    return createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    ).then(signature => queueRequest(fetchFunction, signature));
   };
 
   // Use fallback logic
@@ -440,16 +433,9 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
       limit: 1,
       posted: false,
       sort_by: "date_added",
-      sort_order: "ASC",
+      sort_order: "ASC", // Show oldest first
       text_language: language,
     };
-
-    // Create a unique request signature
-    const signature = createRequestSignature(
-      `${baseUrl}/get-repository/`,
-      "POST",
-      requestBody
-    );
 
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
@@ -476,7 +462,12 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
       return result;
     };
 
-    return queueRequest(fetchFunction, signature);
+    // Create a unique request signature and queue the request
+    return createRequestSignature(
+      `${baseUrl}/get-repository/`,
+      "POST",
+      requestBody
+    ).then(signature => queueRequest(fetchFunction, signature));
   };
 
   // Use fallback logic
@@ -580,9 +571,6 @@ export async function getPromptSettings(): Promise<PromptSettings> {
     "Content-Type": "application/json",
   };
 
-  // Create a unique request signature
-  const signature = await createRequestSignature(url, "GET");
-
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
     const response = await fetch(url, {
@@ -597,8 +585,8 @@ export async function getPromptSettings(): Promise<PromptSettings> {
     return data;
   };
 
-  // Call queueRequest instead of direct fetch
-  return queueRequest(fetchFunction, signature);
+  // Create a unique request signature and queue the request
+  return createRequestSignature(url, "GET").then(signature => queueRequest(fetchFunction, signature));
 }
 
 export async function updatePromptSettings(
@@ -690,14 +678,12 @@ export async function updateRepositoryText(identifier: { id?: number; url?: stri
       return result;
     };
 
-    // Create a unique request signature for update operations
-    const signature = createRequestSignature(
+    // Create a unique request signature for update operations and queue the request
+    return createRequestSignature(
       `${baseUrl}/update-repository-text/`,
       "PATCH",
       { ...identifier, text, text_language: language }
-    );
-
-    return queueRequest(fetchFunction, signature);
+    ).then(signature => queueRequest(fetchFunction, signature));
   };
 
   // Use fallback logic
