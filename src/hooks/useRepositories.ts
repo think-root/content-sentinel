@@ -78,6 +78,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       isFetching.current = true;
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
 
+
       const response = await getRepositories(
         itemsPerPage,
         statusFilter,
@@ -89,6 +90,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       );
 
       if (response && response.data && response.data.items) {
+
         const processedItems = response.data.items.map((item: Repository) => ({
           ...item,
           posted: Boolean(item.posted)
@@ -290,7 +292,23 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
   }, []);
 
   useEffect(() => {
-    fetchRepositories();
+    // Load initial data with saved filter values
+    const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' || 'date_added';
+    const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' || 'DESC';
+    const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' || 'all';
+    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+    
+    const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+    
+    fetchRepositories(
+      posted,
+      false,
+      savedItemsPerPage === 0,
+      savedItemsPerPage,
+      savedSortBy,
+      savedSortOrder,
+      1
+    );
   }, []);
 
   return {
