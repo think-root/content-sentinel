@@ -3,6 +3,7 @@ export interface ApiSettings {
   apiBearerToken: string;
   dateFormat: string;
   timezone: string;
+  displayLanguage: string;
   contentAlchemist: {
     apiBaseUrl: string;
     apiBearerToken: string;
@@ -20,6 +21,7 @@ const defaultSettings: ApiSettings = {
   apiBearerToken: "",
   dateFormat: "DD.MM.YYYY HH:mm",
   timezone: "Europe/Kyiv",
+  displayLanguage: "uk",
   contentAlchemist: {
     apiBaseUrl: "",
     apiBearerToken: "",
