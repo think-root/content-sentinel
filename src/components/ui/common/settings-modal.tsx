@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '@/utils/api-settings';
 import { toast } from './toast-config';
-import { AlertCircle, Settings, RefreshCw } from 'lucide-react';
+import { AlertCircle, Settings, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
+import { languageValidator, ValidationResult } from '@/utils/language-validation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -34,9 +36,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [activeTab, setActiveTab] = useState<'general' | 'api' | 'cache'>('general');
   const [clearingCache, setClearingCache] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [languageValidation, setLanguageValidation] = useState<ValidationResult>({
+    isValid: true,
+    validCodes: [],
+    invalidCodes: []
+  });
+  const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
 
   const toastOptions = {
     id: 'unique-toast-settings'
+  };
+
+  // Language validation cache helpers
+  const LANG_VALIDATION_CACHE_KEY = 'settingsLanguageValidationCache';
+  const LANG_VALIDATION_TTL = 60 * 60 * 1000; // 1 hour
+
+  const normalizeCodesStr = (codes: string) =>
+    codes
+      .split(',')
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean)
+      .sort()
+      .join(',');
+
+  const getValidationCache = (): Record<string, { result: ValidationResult; ts: number }> => {
+    try {
+      const raw = localStorage.getItem(LANG_VALIDATION_CACHE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const setValidationCache = (codesKey: string, result: ValidationResult) => {
+    try {
+      const cache = getValidationCache();
+      cache[codesKey] = { result, ts: Date.now() };
+      localStorage.setItem(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
+    } catch {
+      // no-op
+    }
+  };
+
+  const getValidationFromCache = (codesKey: string): ValidationResult | null => {
+    const cache = getValidationCache();
+    const entry = cache[codesKey];
+    if (!entry) return null;
+    if (Date.now() - entry.ts > LANG_VALIDATION_TTL) return null;
+    return entry.result;
   };
 
   const tabs: Array<'general' | 'api' | 'cache'> = ['general', 'api', 'cache'];
@@ -96,17 +143,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   }, [isOpen]);
 
-  const handleSave = () => {
-    console.log('Current settings:', settings);
-    try {
-      console.log('Content Alchemist settings:', settings.contentAlchemist);
-      console.log('Content Maestro settings:', settings.contentMaestro);
+  const validateLanguageCodes = useCallback(async (codes: string) => {
+    const raw = codes || '';
+    const normalized = normalizeCodesStr(raw);
 
+    if (!normalized) {
+      setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
+      return;
+    }
+
+    // Try cache first to avoid spinner/flicker
+    const cached = getValidationFromCache(normalized);
+    if (cached) {
+      setLanguageValidation(cached);
+      // Background refresh without spinner
+      (async () => {
+        try {
+          const result = await languageValidator.validateLanguageCodes(raw);
+          setLanguageValidation(result);
+          setValidationCache(normalized, result);
+        } catch (error) {
+          console.error('Language validation error (background):', error);
+        }
+      })();
+      return;
+    }
+
+    // No cache => show spinner and validate
+    setIsValidatingLanguage(true);
+    try {
+      const result = await languageValidator.validateLanguageCodes(raw);
+      setLanguageValidation(result);
+      setValidationCache(normalized, result);
+    } catch (error) {
+      console.error('Language validation error:', error);
+      setLanguageValidation({
+        isValid: false,
+        validCodes: [],
+        invalidCodes: [],
+        message: 'Validation service unavailable'
+      });
+    } finally {
+      setIsValidatingLanguage(false);
+    }
+  }, []);
+
+  // Debounced validation for display language
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      validateLanguageCodes(settings.displayLanguage);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [settings.displayLanguage, validateLanguageCodes]);
+
+  const handleSave = () => {
+    try {
       const settingsToSave = {
         apiBaseUrl: settings.apiBaseUrl || "",
         apiBearerToken: settings.apiBearerToken || "",
         dateFormat: settings.dateFormat || "DD.MM.YYYY HH:mm",
         timezone: settings.timezone || "Europe/Kyiv",
+        displayLanguage: settings.displayLanguage || "uk",
         contentAlchemist: {
           apiBaseUrl: settings.contentAlchemist?.apiBaseUrl || "",
           apiBearerToken: settings.contentAlchemist?.apiBearerToken || "",
@@ -116,8 +214,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           apiBearerToken: settings.contentMaestro?.apiBearerToken || "",
         },
       };
-
-      console.log('Saving settings:', settingsToSave);
 
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
 
@@ -165,7 +261,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && onClose()}>
+    <TooltipProvider>
+      <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && onClose()}>
       <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full settings-modal-content">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -235,6 +332,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     value={settings.contentAlchemist?.apiBearerToken}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBearerToken', e.target.value)}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="displayLanguage">Display Language Code</Label>
+                  <Input
+                    type="text"
+                    id="displayLanguage"
+                    placeholder="uk or en, uk, fr"
+                    value={settings.displayLanguage}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value })}
+                  />
+                  <div className="space-y-1 mt-1">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        Language code for displaying posts (e.g., 'en', 'uk', 'fr'). Uses ISO 639-1 standard.
+                      </div>
+                      {settings.displayLanguage.trim() && (
+                        <div className="flex items-center">
+                          {isValidatingLanguage && (
+                            <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                          )}
+                          {!isValidatingLanguage && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div>
+                                  {languageValidation.isValid && (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  )}
+                                  {!languageValidation.isValid && (
+                                    <AlertCircle className="h-3 w-3 text-destructive" />
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
+                                  <div>Valid: {languageValidation.validCodes.join(', ')}</div>
+                                )}
+                                {!languageValidation.isValid && languageValidation.message && (
+                                  <div>{languageValidation.message}</div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -327,5 +471,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </TooltipProvider>
   );
 };
