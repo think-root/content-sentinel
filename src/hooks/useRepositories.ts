@@ -3,7 +3,7 @@ import { getRepositories } from '../api';
 import type { Repository } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
-import { isApiConfigured } from "../utils/api-settings";
+import { isApiConfigured, getApiSettings } from "../utils/api-settings";
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -94,7 +94,9 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
           posted: Boolean(item.posted)
         }));
 
-        const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page });
+        const settings = getApiSettings();
+        const textLanguage = settings.displayLanguage || 'uk';
+        const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page, textLanguage });
         localStorage.setItem('cache_repositories_key', cacheKey);
 
         const newData = {
@@ -180,9 +182,18 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         throw new Error('Invalid response format');
       }
     } catch (error: any) {
+      console.log('[useRepositories] Error in fetchRepositoriesFromAPI:', error.message);
+      
       // Handle rate limit errors specifically without triggering error toast
       if (error?.message?.includes('Rate limit exceeded')) {
         console.warn('Rate limit exceeded. Please try again later.');
+        return;
+      }
+      
+      // Handle language availability errors - don't re-throw them
+      if (error?.message?.includes('no text available for language')) {
+        console.log('[useRepositories] Language error detected, fallback should handle this');
+        // Don't re-throw language errors - let the fallback handle them
         return;
       }
       
@@ -211,6 +222,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     forceFetch: boolean = false
   ) => {
     try {
+      const settings = getApiSettings();
+      const textLanguage = settings.displayLanguage || 'uk';
       const cacheKey = JSON.stringify({
         statusFilter,
         fetchAll,
@@ -218,6 +231,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         sortBy,
         sortOrder,
         page,
+        textLanguage,
       });
       const currentCacheKey = localStorage.getItem("cache_repositories_key");
       const cacheResult = getRepositoriesFromCache();
@@ -244,12 +258,19 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         page,
         isBackgroundFetch
       );
-    } catch {
+    } catch (error: any) {
       if (!isApiConfigured()) {
         setState(prev => ({ ...prev, loading: false }));
       } else {
-        setErrorWithScroll("Failed to connect to Content Alchemist API", "content-alchemist-error");
-        setState((prev) => ({ ...prev, loading: false }));
+        // Check if it's a language availability error
+        if (error?.message?.includes('no text available for language')) {
+          console.log('[Language Fallback] Language error caught in useRepositories:', error.message);
+          // Don't show error toast for language errors - fallback should handle them
+          setState((prev) => ({ ...prev, loading: false }));
+        } else {
+          setErrorWithScroll("Failed to connect to Content Alchemist API", "content-alchemist-error");
+          setState((prev) => ({ ...prev, loading: false }));
+        }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
