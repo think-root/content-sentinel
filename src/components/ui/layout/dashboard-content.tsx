@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stats } from '../business/stats';
 import { RepositoryList } from '../business/repository-list';
 import { GenerateForm } from '../business/generate-form';
@@ -8,6 +8,8 @@ import { CronJobHistory } from '../business/cron-job-history';
 import { RepositoryPreview } from '../business/repository-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base/tabs';
 import { useTabPersistence } from '../../../hooks/useTabPersistence';
+import { useSwipeable } from 'react-swipeable';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import type { Repository } from '../../../types';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
@@ -105,6 +107,39 @@ export const DashboardContent = ({
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
+  // Ordered tabs for swipe navigation (readonly tuple for type-safety)
+  const orderedTabs = ['overview','repositories','automation','settings'] as const;
+
+  // Mobile detection flag
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 767px)');
+    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    // Initialize state
+    setIsMobile(mql.matches);
+    // Listen for viewport changes
+    mql.addEventListener?.('change', handleChange);
+    return () => {
+      mql.removeEventListener?.('change', handleChange);
+    };
+  }, []);
+
+  // Swipe intent handlers derived from useSwipeableTabs
+  const { onSwipedLeft, onSwipedRight } = useSwipeableTabs(
+    activeTab,
+    setActiveTab,
+    orderedTabs as unknown as string[],
+  );
+
+  // Initialize react-swipeable
+  const swipeableHandlers = useSwipeable({
+    onSwipedLeft,
+    onSwipedRight,
+    trackMouse: false,
+    preventScrollOnSwipe: false,
+    delta: 50,
+  });
+
   // Trigger API calls when switching to Overview tab
   useEffect(() => {
     if (activeTab === 'overview') {
@@ -151,93 +186,95 @@ export const DashboardContent = ({
           </TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Repository Statistics */}
-          <Stats
-            total={stats.all}
-            posted={stats.posted}
-            unposted={stats.unposted}
-            loading={statsLoading}
-          />
+        <div {...(isMobile ? swipeableHandlers : {})}>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Repository Statistics */}
+            <Stats
+              total={stats.all}
+              posted={stats.posted}
+              unposted={stats.unposted}
+              loading={statsLoading}
+            />
 
-          {/* Repository Previews */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <RepositoryPreview
-              title="Next post"
-              repository={nextPost}
-              loading={previewsLoading}
+            {/* Repository Previews */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <RepositoryPreview
+                title="Next post"
+                repository={nextPost}
+                loading={previewsLoading}
+                isApiReady={isApiReady}
+              />
+              <RepositoryPreview
+                title="Latest post"
+                repository={latestPost}
+                loading={previewsLoading}
+                isApiReady={isApiReady}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Repositories Tab */}
+          <TabsContent value="repositories" className="space-y-6">
+            {/* Generate Content */}
+            <GenerateForm
+              onManualGenerate={handleManualGenerate}
+              onAutoGenerate={handleAutoGenerate}
+            />
+            
+            <RepositoryList
+              repositories={repositories}
+              fetchRepositories={fetchRepositories}
+              currentPage={pagination.currentPage}
+              pageSize={pagination.pageSize}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              loading={loading}
               isApiReady={isApiReady}
             />
-            <RepositoryPreview
-              title="Latest post"
-              repository={latestPost}
-              loading={previewsLoading}
+          </TabsContent>
+
+          {/* Automation Tab */}
+          <TabsContent value="automation" className="space-y-6">
+            <CronJobs
+              jobs={cronJobs}
+              loading={cronJobsLoading}
               isApiReady={isApiReady}
             />
-          </div>
-        </TabsContent>
 
-        {/* Repositories Tab */}
-        <TabsContent value="repositories" className="space-y-6">
-          {/* Generate Content */}
-          <GenerateForm
-            onManualGenerate={handleManualGenerate}
-            onAutoGenerate={handleAutoGenerate}
-          />
-          
-          <RepositoryList
-            repositories={repositories}
-            fetchRepositories={fetchRepositories}
-            currentPage={pagination.currentPage}
-            pageSize={pagination.pageSize}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.totalItems}
-            loading={loading}
-            isApiReady={isApiReady}
-          />
-        </TabsContent>
+            {cronJobHistory && (
+              <CronJobHistory
+                history={cronJobHistory}
+                loading={cronJobHistoryLoading || false}
+                pageSize={cronJobHistoryPageSize || 10}
+                nameFilter={cronJobHistoryNameFilter}
+                successFilter={cronJobHistorySuccessFilter}
+                startDate={cronJobHistoryStartDate}
+                endDate={cronJobHistoryEndDate}
+                setNameFilter={cronJobHistorySetNameFilter}
+                setSuccessFilter={cronJobHistorySetSuccessFilter}
+                setStartDate={cronJobHistorySetStartDate}
+                setEndDate={cronJobHistorySetEndDate}
+                resetFilters={cronJobHistoryResetFilters}
+                setPageSize={cronJobHistorySetPageSize}
+                sortOrder={cronJobHistorySortOrder}
+                setSortOrder={cronJobHistorySetSortOrder}
+                totalItems={cronJobHistoryTotalItems}
+                totalPages={cronJobHistoryTotalPages}
+                currentPage={cronJobHistoryCurrentPage}
+                setPage={cronJobHistorySetPage}
+                isApiReady={isApiReady}
+              />
+            )}
+          </TabsContent>
 
-        {/* Automation Tab */}
-        <TabsContent value="automation" className="space-y-6">
-          <CronJobs
-            jobs={cronJobs}
-            loading={cronJobsLoading}
-            isApiReady={isApiReady}
-          />
-
-          {cronJobHistory && (
-            <CronJobHistory
-              history={cronJobHistory}
-              loading={cronJobHistoryLoading || false}
-              pageSize={cronJobHistoryPageSize || 10}
-              nameFilter={cronJobHistoryNameFilter}
-              successFilter={cronJobHistorySuccessFilter}
-              startDate={cronJobHistoryStartDate}
-              endDate={cronJobHistoryEndDate}
-              setNameFilter={cronJobHistorySetNameFilter}
-              setSuccessFilter={cronJobHistorySetSuccessFilter}
-              setStartDate={cronJobHistorySetStartDate}
-              setEndDate={cronJobHistorySetEndDate}
-              resetFilters={cronJobHistoryResetFilters}
-              setPageSize={cronJobHistorySetPageSize}
-              sortOrder={cronJobHistorySortOrder}
-              setSortOrder={cronJobHistorySetSortOrder}
-              totalItems={cronJobHistoryTotalItems}
-              totalPages={cronJobHistoryTotalPages}
-              currentPage={cronJobHistoryCurrentPage}
-              setPage={cronJobHistorySetPage}
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <PromptSettings
               isApiReady={isApiReady}
             />
-          )}
-        </TabsContent>
-
-        {/* Settings Tab */}
-        <TabsContent value="settings">
-          <PromptSettings
-            isApiReady={isApiReady}
-          />
-        </TabsContent>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
