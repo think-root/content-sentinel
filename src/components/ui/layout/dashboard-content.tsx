@@ -124,6 +124,10 @@ export const DashboardContent = ({
     };
   }, []);
 
+  // Track swipe-origin animations and direction (mobile-only)
+  const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
+  const [animateOnSwipe, setAnimateOnSwipe] = useState(false);
+
   // Swipe intent handlers derived from useSwipeableTabs
   const { onSwipedLeft, onSwipedRight } = useSwipeableTabs(
     activeTab,
@@ -133,8 +137,30 @@ export const DashboardContent = ({
 
   // Initialize react-swipeable
   const swipeableHandlers = useSwipeable({
-    onSwipedLeft,
-    onSwipedRight,
+    onSwipedLeft: () => {
+      if (isMobile) {
+        setLastSwipeDir("left");
+        setAnimateOnSwipe(true);
+        // Reset scroll position on swipe navigation (mobile only)
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+      onSwipedLeft();
+      if (isMobile) {
+        setTimeout(() => setAnimateOnSwipe(false), 300);
+      }
+    },
+    onSwipedRight: () => {
+      if (isMobile) {
+        setLastSwipeDir("right");
+        setAnimateOnSwipe(true);
+        // Reset scroll position on swipe navigation (mobile only)
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+      onSwipedRight();
+      if (isMobile) {
+        setTimeout(() => setAnimateOnSwipe(false), 300);
+      }
+    },
     trackMouse: false,
     preventScrollOnSwipe: false,
     delta: 50,
@@ -186,7 +212,14 @@ export const DashboardContent = ({
           </TabsTrigger>
         </TabsList>
 
-        <div {...(isMobile ? swipeableHandlers : {})}>
+        <div
+          {...(isMobile ? swipeableHandlers : {})}
+          className={`w-full ${
+            isMobile && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
+          } ${
+            isMobile && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
+          }`}
+        >
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Repository Statistics */}
