@@ -361,9 +361,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   />
                   <div className="space-y-1 mt-1">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                        Language code for displaying posts. Uses <a href="https://en.wikipedia.org/wiki/ISO_639-1" target="_blank" rel="noopener noreferrer" className="underline">ISO 639-1</a> standard.
+                      <div className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 leading-snug">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-[2px]" />
+                        <span className="whitespace-normal break-words">
+                          Language code for displaying posts. Uses{' '}
+                          <a
+                            href="https://en.wikipedia.org/wiki/ISO_639-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline"
+                          >
+                            ISO 639-1
+                          </a>{' '}
+                          standard.
+                        </span>
                       </div>
                       {settings.displayLanguage.trim() && (
                         <div className="flex items-center">
