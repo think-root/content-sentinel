@@ -157,14 +157,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   }, [isOpen]);
 
-  // Normalize legacy uppercase displayLanguage on modal open
+  // Rehydrate settings from storage on open, normalize displayLanguage, and clear ephemeral UI state
   useEffect(() => {
     if (!isOpen) return;
-    const dl = settings.displayLanguage || "";
-    const lowered = dl.toLowerCase();
-    if (dl && dl !== lowered) {
-      setSettings((prev) => ({ ...prev, displayLanguage: lowered }));
-    }
+
+    // Load fresh settings from localStorage
+    const fresh = getApiSettings();
+    const normalized = {
+      ...fresh,
+      displayLanguage: (fresh.displayLanguage || '').toLowerCase(),
+    };
+
+    setSettings(normalized);
+
+    // Clear transient UI state so errors/spinners do not persist across opens
+    resetFormState();
   }, [isOpen]);
 
   const validateLanguageCodes = useCallback(async (codes: string) => {
@@ -320,6 +327,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       ...prev,
       ...newSettings
     }));
+  };
+
+  // Clear ephemeral UI state without touching persistence or tabs
+  const resetFormState = () => {
+    setDateFormatError(null);
+    setTimezoneError(null);
+    setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
+    setIsValidatingLanguage(false);
+    setIsSaving(false);
+    setIsSwiping(false);
   };
 
   const updateContentAlchemist = (field: keyof ApiSettings['contentAlchemist'], value: string) => {
@@ -576,7 +593,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isSaving}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { resetFormState(); onClose(); }}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
           <Button
