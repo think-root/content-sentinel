@@ -4,6 +4,7 @@ import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '@/utils/api-sett
 import { toast } from './toast-config';
 import { AlertCircle, Settings, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
 import { languageValidator, ValidationResult } from '@/utils/language-validation';
+import { validateDateFormat, validateTimezone } from '@/utils/settings-validators';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 import {
   Dialog,
@@ -43,6 +44,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   });
   const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [dateFormatError, setDateFormatError] = useState<string | null>(null);
+  const [timezoneError, setTimezoneError] = useState<string | null>(null);
 
   // Track swipe-origin animations and direction (mobile-only)
   const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
@@ -218,8 +221,60 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     return () => clearTimeout(timeoutId);
   }, [settings.displayLanguage, validateLanguageCodes]);
 
+  // Debounced validation for date format (sync)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const value = settings.dateFormat || '';
+      const result = validateDateFormat(value);
+      if (!result.isValid) {
+        setDateFormatError(result.message || 'Allowed values: DD, MM, YYYY, HH, hh, mm, ss, A, a and include DD, MM, YYYY.');
+      } else {
+        setDateFormatError(null);
+      }
+    }, 450);
+
+    return () => clearTimeout(timeoutId);
+  }, [settings.dateFormat]);
+
+  // Debounced validation for timezone (sync)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const value = settings.timezone || '';
+      if (!value.trim()) {
+        // Empty timezone is allowed (no error)
+        setTimezoneError(null);
+        return;
+      }
+      const result = validateTimezone(value);
+      if (!result.isValid) {
+        setTimezoneError(result.message || 'Invalid timezone. Use IANA tz like Europe/Kyiv.');
+      } else {
+        setTimezoneError(null);
+      }
+    }, 450);
+
+    return () => clearTimeout(timeoutId);
+  }, [settings.timezone]);
+
   const handleSave = () => {
     if (isSaving) return;
+
+    // Early guards for validation errors
+    if (dateFormatError) {
+      toast.error(dateFormatError, toastOptions);
+      setIsSaving(false);
+      return;
+    }
+    if (timezoneError) {
+      toast.error(timezoneError, toastOptions);
+      setIsSaving(false);
+      return;
+    }
+    if (!languageValidation.isValid && settings.displayLanguage.trim()) {
+      toast.error(languageValidation.message || 'Please fix language code errors before saving', toastOptions);
+      setIsSaving(false);
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -323,10 +378,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   value={settings.dateFormat}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: e.target.value })}
                 />
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
-                </p>
+                {dateFormatError ? (
+                  <p className="text-sm text-destructive flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    {dateFormatError}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="timezone">Timezone</Label>
@@ -337,10 +399,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   value={settings.timezone}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ timezone: e.target.value })}
                 />
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  Europe/Kyiv, Europe/London, America/New_York
-                </p>
+                {timezoneError ? (
+                  <p className="text-sm text-destructive flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    {timezoneError}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    Europe/Kyiv, Europe/London, America/New_York
+                  </p>
+                )}
               </div>
             </TabsContent>
 
@@ -513,7 +582,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !!dateFormatError || !!timezoneError || (!languageValidation.isValid && !!settings.displayLanguage.trim())}
             aria-busy={isSaving ? 'true' : undefined}
           >
             {isSaving ? (
