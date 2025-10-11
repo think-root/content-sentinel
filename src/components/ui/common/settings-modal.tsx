@@ -42,6 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     invalidCodes: []
   });
   const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Track swipe-origin animations and direction (mobile-only)
   const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
@@ -208,6 +209,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   }, [settings.displayLanguage, validateLanguageCodes]);
 
   const handleSave = () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
     try {
       const settingsToSave = {
         apiBaseUrl: settings.apiBaseUrl || "",
@@ -230,16 +234,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       toast.dismiss('unique-toast-settings');
       toast.success('Settings successfully updated', toastOptions);
 
+      // Keep isSaving=true until reload so user sees spinner and buttons remain disabled.
       setTimeout(() => {
         onClose();
         window.location.reload();
+        // no setIsSaving(false) here because the page is reloading
       }, 1500);
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
       console.error('Settings save error:', error);
       toast.dismiss('unique-toast-settings');
       toast.error(errorMessage, toastOptions);
+      // On error, re-enable UI so user can retry.
+      setIsSaving(false);
     }
   };
 
@@ -272,7 +279,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <TooltipProvider>
-      <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && onClose()}>
+      <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && !isSaving && onClose()}>
       <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full settings-modal-content">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -351,7 +358,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="displayLanguage">Display Language Code</Label>
+                  <Label htmlFor="displayLanguage">Language Code</Label>
                   <Input
                     type="text"
                     id="displayLanguage"
@@ -490,11 +497,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handleSave}>
-            Save
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            aria-busy={isSaving ? 'true' : undefined}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
