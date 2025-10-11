@@ -43,6 +43,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   });
   const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
 
+  // Track swipe-origin animations and direction (mobile-only)
+  const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
+  const [animateOnSwipe, setAnimateOnSwipe] = useState(false);
+  
   const toastOptions = {
     id: 'unique-toast-settings'
   };
@@ -101,18 +105,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     },
     onSwipedLeft: () => {
       if (isMobileDevice()) {
+        setLastSwipeDir("left");
+        setAnimateOnSwipe(true);
         const currentIndex = tabs.indexOf(activeTab);
         if (currentIndex < tabs.length - 1) {
           setActiveTab(tabs[currentIndex + 1]);
         }
+        setTimeout(() => setAnimateOnSwipe(false), 300);
       }
     },
     onSwipedRight: () => {
       if (isMobileDevice()) {
+        setLastSwipeDir("right");
+        setAnimateOnSwipe(true);
         const currentIndex = tabs.indexOf(activeTab);
         if (currentIndex > 0) {
           setActiveTab(tabs[currentIndex - 1]);
         }
+        setTimeout(() => setAnimateOnSwipe(false), 300);
       }
     },
     preventScrollOnSwipe: true,
@@ -278,7 +288,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <TabsTrigger value="cache">Cache</TabsTrigger>
           </TabsList>
 
-          <div {...handlers} className="mt-4">
+          <div
+            {...handlers}
+            className={`mt-4 ${
+              isMobileDevice() && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
+            } ${
+              isMobileDevice() && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
+            }`}
+          >
             <TabsContent value="general" className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="dateFormat">Date Format</Label>
