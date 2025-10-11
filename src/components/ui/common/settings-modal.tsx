@@ -154,6 +154,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   }, [isOpen]);
 
+  // Normalize legacy uppercase displayLanguage on modal open
+  useEffect(() => {
+    if (!isOpen) return;
+    const dl = settings.displayLanguage || "";
+    const lowered = dl.toLowerCase();
+    if (dl && dl !== lowered) {
+      setSettings((prev) => ({ ...prev, displayLanguage: lowered }));
+    }
+  }, [isOpen]);
+
   const validateLanguageCodes = useCallback(async (codes: string) => {
     const raw = codes || '';
     const normalized = normalizeCodesStr(raw);
@@ -218,7 +228,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         apiBearerToken: settings.apiBearerToken || "",
         dateFormat: settings.dateFormat || "DD.MM.YYYY HH:mm",
         timezone: settings.timezone || "Europe/Kyiv",
-        displayLanguage: settings.displayLanguage || "uk",
+        displayLanguage: (settings.displayLanguage || "uk").toLowerCase(),
         contentAlchemist: {
           apiBaseUrl: settings.contentAlchemist?.apiBaseUrl || "",
           apiBearerToken: settings.contentAlchemist?.apiBearerToken || "",
@@ -364,7 +374,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     id="displayLanguage"
                     placeholder="uk or en, uk, fr"
                     value={settings.displayLanguage}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
                   />
                   <div className="space-y-1 mt-1">
                     <div className="flex items-center justify-between">

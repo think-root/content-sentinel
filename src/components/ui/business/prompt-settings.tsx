@@ -243,7 +243,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
     }
 
     try {
-      await updateSettings(localSettings);
+      await updateSettings({ ...localSettings, llm_output_language: (localSettings.llm_output_language || 'en').toLowerCase() });
       setHasUnsavedChanges(false);
       toast.success('Prompt settings updated successfully');
     } catch (error) {
@@ -399,7 +399,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                   id="llm_output_language"
                   type="text"
                   value={localSettings.llm_output_language}
-                  onChange={(e) => handleFieldChange('llm_output_language', e.target.value)}
+                  onChange={(e) => handleFieldChange('llm_output_language', e.target.value.toLowerCase())}
                   disabled={saving}
                   placeholder="en,uk,fr,de"
                 />
