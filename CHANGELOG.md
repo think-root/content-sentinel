@@ -1,3 +1,35 @@
+# [1.38.0](https://github.com/think-root/content-sentinel/compare/v1.37.0...v1.38.0) (2025-10-13)
+
+
+### Bug Fixes
+
+* **hooks:** prevent duplicate fetches and add loading watchdog ([5a9908f](https://github.com/think-root/content-sentinel/commit/5a9908ff7a42f564eb713cba31c3390b529bf685))
+* **hooks:** remove redundant check for newDataAvailable in applyNewData ([e358944](https://github.com/think-root/content-sentinel/commit/e3589446f2b4955ea6129a008155dfe9b07a6a43))
+* **hooks:** remove ukrainian localization from prompt settings content ([5c09e4d](https://github.com/think-root/content-sentinel/commit/5c09e4d3cfea6f2c941b3660bccaf14fca2b3254))
+* **hooks:** simplify applyNewData logic by removing redundant check ([7ed5562](https://github.com/think-root/content-sentinel/commit/7ed556217418458f8858adfd8e2e060212da9881))
+* **ui:** normalize language codes to lowercase ([18526e5](https://github.com/think-root/content-sentinel/commit/18526e50c3b5ba4dd44095ba8dbf8b18a4f990b4))
+* **ui:** rehydrate settings on open and reset UI ([b2e9322](https://github.com/think-root/content-sentinel/commit/b2e93225c8671b09d05bee9911008d7ae1b38ea9))
+* **useCronJobHistory:** respect explicit undefined overrides and preserve pageSize on filter changes ([89af84b](https://github.com/think-root/content-sentinel/commit/89af84b2517f8941a1eb348383eefbf8e00364b2))
+
+
+### Features
+
+* **api:** add language caching and fallback handling ([ce9bfce](https://github.com/think-root/content-sentinel/commit/ce9bfce503ea985d4e360409dffb2aa7c9855a95))
+* **config:** add slide fade-in animations to tailwind config ([527833e](https://github.com/think-root/content-sentinel/commit/527833e288cddeb2da10efef5a19224b547c5b25))
+* **hooks:** add language-aware caching and error handling for repository data ([249b131](https://github.com/think-root/content-sentinel/commit/249b131e3e9d2f91d0d907409e25b10664a141d7))
+* **hooks:** persist and load dashboard filter settings from local storage ([ed4ca74](https://github.com/think-root/content-sentinel/commit/ed4ca74a068703458a6a3af533ec74cf0043d92e))
+* **hooks:** refetch repositories with saved dashboard filters ([0c683fc](https://github.com/think-root/content-sentinel/commit/0c683fc23a6c3cfa38228131fbdb4bb8611b69c5))
+* **settings:** add display language configuration with default value ([a8ae2d8](https://github.com/think-root/content-sentinel/commit/a8ae2d862227ef845f6dd9b1a980077d14547a41))
+* **settings:** add display language validation with caching and UI feedback ([064654b](https://github.com/think-root/content-sentinel/commit/064654b10adec836b5b26eb04d45590dfff925f5))
+* **ui:** add date/timezone validation to settings modal ([399d694](https://github.com/think-root/content-sentinel/commit/399d694715ec2b065ae11eaa758f48b8c18f68d3))
+* **ui:** add mobile swipe animations to dashboard ([a10c280](https://github.com/think-root/content-sentinel/commit/a10c280d53830e5b433b552da257e58df6c899d5))
+* **ui:** add mobile swipe navigation to dashboard tabs ([a0ba0d1](https://github.com/think-root/content-sentinel/commit/a0ba0d1d1cfc543cf001f25c25d7a414e39e7368))
+* **ui:** add no‑op save detection to settings modal ([8f2acab](https://github.com/think-root/content-sentinel/commit/8f2acabf968376f80554caa1f5e7b28312501cf8))
+* **ui:** add saving state and spinner to settings modal ([4f3f484](https://github.com/think-root/content-sentinel/commit/4f3f484b2163d044badb54dfb49804a8aea88552))
+* **ui:** add settings-saved listener to trigger refresh ([ea3edb3](https://github.com/think-root/content-sentinel/commit/ea3edb3ba8a2cbb63274cc58b123f9d8b4bd1eca))
+* **ui:** add swipe animations to settings modal ([77126ed](https://github.com/think-root/content-sentinel/commit/77126ede0b717e427f10ace6bfdbb01f8c674fe9))
+* **ui:** dispatch settings-saved event and disable toasts ([5154b5d](https://github.com/think-root/content-sentinel/commit/5154b5dc683271553fb97df94719bb630b5b2c63))
+
 # [1.37.0](https://github.com/think-root/content-sentinel/compare/v1.36.0...v1.37.0) (2025-09-30)
 
 
