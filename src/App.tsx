@@ -131,7 +131,22 @@ function App() {
     fetchPromptSettings();
   }, [fetchPromptSettings, isApiReady]);
 
+  // Listen for settings saved event to trigger a single foreground refresh
   useEffect(() => {
+    const onSettingsSaved = async () => {
+      try {
+        await handleManualRefresh(false);
+      } catch {
+        // Swallow errors here; underlying hooks already handle error surfacing or rate limits
+      }
+    };
+    window.addEventListener('content-sentinel:settings-saved', onSettingsSaved as EventListener);
+    return () => {
+      window.removeEventListener('content-sentinel:settings-saved', onSettingsSaved as EventListener);
+    };
+  }, [handleManualRefresh]);
+ 
+   useEffect(() => {
     // Prevent automatic updates when manual refresh is in progress
     if (isRefreshing) {
       return;
