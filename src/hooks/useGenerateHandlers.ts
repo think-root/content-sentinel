@@ -18,7 +18,30 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
 
         if (added.length > 0) {
           const scrollPosition = window.scrollY;
-          await fetchRepositories();
+
+          // Read current filters from localStorage
+          const savedStatusFilter = (localStorage.getItem('dashboardStatusFilter') || 'all') as 'all' | 'posted' | 'unposted';
+          const savedSortBy = (localStorage.getItem('dashboardSortBy') || 'date_added') as 'id' | 'date_added' | 'date_posted';
+          const savedSortOrder = (localStorage.getItem('dashboardSortOrder') || 'DESC') as 'ASC' | 'DESC';
+          const itemsStr = localStorage.getItem('dashboardItemsPerPage');
+          const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
+
+          // Compute posted filter
+          const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+
+          // Foreground fetch with current filters and forceFetch=true; use page=1
+          await fetchRepositories(
+            posted,
+            false,
+            savedItemsPerPage === 0,
+            savedItemsPerPage,
+            savedSortBy || 'date_added',
+            savedSortOrder || 'DESC',
+            1,
+            true
+          );
+
+          // Restore prior scroll position
           window.scrollTo(0, scrollPosition);
         }
       }
@@ -34,7 +57,27 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await autoGenerate(maxRepos, since, spokenLanguageCode);
       if (response.status === 'ok') {
-        fetchRepositories();
+        // Read current filters from localStorage
+        const savedStatusFilter = (localStorage.getItem('dashboardStatusFilter') || 'all') as 'all' | 'posted' | 'unposted';
+        const savedSortBy = (localStorage.getItem('dashboardSortBy') || 'date_added') as 'id' | 'date_added' | 'date_posted';
+        const savedSortOrder = (localStorage.getItem('dashboardSortOrder') || 'DESC') as 'ASC' | 'DESC';
+        const itemsStr = localStorage.getItem('dashboardItemsPerPage');
+        const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
+
+        // Compute posted filter
+        const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+
+        // Foreground fetch with current filters and forceFetch=true; use page=1
+        await fetchRepositories(
+          posted,
+          false,
+          savedItemsPerPage === 0,
+          savedItemsPerPage,
+          savedSortBy || 'date_added',
+          savedSortOrder || 'DESC',
+          1,
+          true
+        );
       }
       return response;
     } catch {
