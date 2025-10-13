@@ -40,7 +40,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
   const cachedRepositories = cachedRepositoriesResult?.data;
   const isFetching = useRef<boolean>(false);
   const pageSizeRef = useRef<number>(parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10));
-
+  const loadingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   const [state, setState] = useState<RepositoriesState>({
     repositories: cachedRepositories?.repositories || [],
     stats: cachedRepositories?.stats || { all: 0, posted: 0, unposted: 0 },
@@ -207,9 +208,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       }
     } finally {
       isFetching.current = false;
-      if (!isBackgroundFetch) {
-        setState(prev => ({ ...prev, loading: false, statsLoading: false }));
-      }
+      setState(prev => ({ ...prev, loading: false, statsLoading: false }));
     }
   };
 
@@ -223,6 +222,10 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     page?: number,
     forceFetch: boolean = false
   ) => {
+    // Prevent “set loading then return” races: if already fetching and not forcing, do nothing
+    if (isFetching.current && !forceFetch) {
+      return;
+    }
     try {
       const settings = getApiSettings();
       const textLanguage = settings.displayLanguage || 'uk';
@@ -290,6 +293,48 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       }));
     }
   }, []);
+
+  // Dev-only watchdog for prolonged loading to catch regressions without changing UI
+  useEffect(() => {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+    // When loading becomes true, start a one-shot timer to warn if it persists > 8s
+    if (state.loading) {
+      // Clear any existing timer before scheduling a new one
+      if (loadingWatchdogRef.current) {
+        clearTimeout(loadingWatchdogRef.current);
+        loadingWatchdogRef.current = null;
+      }
+      loadingWatchdogRef.current = setTimeout(() => {
+        // If still loading after 8s, emit a single warning with diagnostic context
+        if (state.loading) {
+          console.warn('[useRepositories] loading persisted > 8s', {
+            isFetching: isFetching.current,
+            pagination: state.pagination,
+            stale: state.stale,
+            cacheKey: localStorage.getItem('cache_repositories_key') || null,
+          });
+        }
+        // Prevent repeated warnings during the same loading session
+        loadingWatchdogRef.current = null;
+      }, 8000);
+    } else {
+      // Loading flipped to false - cancel any pending watchdog timer
+      if (loadingWatchdogRef.current) {
+        clearTimeout(loadingWatchdogRef.current);
+        loadingWatchdogRef.current = null;
+      }
+    }
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (loadingWatchdogRef.current) {
+        clearTimeout(loadingWatchdogRef.current);
+        loadingWatchdogRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.loading]);
 
   useEffect(() => {
     // Load initial data with saved filter values
