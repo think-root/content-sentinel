@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '@/utils/api-settings';
 import { toast } from './toast-config';
@@ -23,6 +23,46 @@ import { Input } from '../base/input';
 import { Label } from '../base/label';
 import { Button } from '../base/button';
 
+// Normalize settings for comparison and equality check
+function normalizeValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function normalizeSettingsForCompare(s: ApiSettings) {
+  return {
+    apiBaseUrl: normalizeValue(s.apiBaseUrl),
+    apiBearerToken: normalizeValue(s.apiBearerToken),
+    dateFormat: normalizeValue(s.dateFormat) || 'DD.MM.YYYY HH:mm',
+    timezone: normalizeValue(s.timezone) || 'Europe/Kyiv',
+    displayLanguage: (normalizeValue(s.displayLanguage) || 'uk').toLowerCase(),
+    contentAlchemist: {
+      apiBaseUrl: normalizeValue(s.contentAlchemist?.apiBaseUrl),
+      apiBearerToken: normalizeValue(s.contentAlchemist?.apiBearerToken),
+    },
+    contentMaestro: {
+      apiBaseUrl: normalizeValue(s.contentMaestro?.apiBaseUrl),
+      apiBearerToken: normalizeValue(s.contentMaestro?.apiBearerToken),
+    },
+  };
+}
+
+function areApiSettingsEqual(oldSettings: ApiSettings, currentSettings: ApiSettings): boolean {
+  const a = normalizeSettingsForCompare(oldSettings);
+  const b = normalizeSettingsForCompare(currentSettings);
+  return (
+    a.apiBaseUrl === b.apiBaseUrl &&
+    a.apiBearerToken === b.apiBearerToken &&
+    a.dateFormat === b.dateFormat &&
+    a.timezone === b.timezone &&
+    a.displayLanguage === b.displayLanguage &&
+    a.contentAlchemist.apiBaseUrl === b.contentAlchemist.apiBaseUrl &&
+    a.contentAlchemist.apiBearerToken === b.contentAlchemist.apiBearerToken &&
+    a.contentMaestro.apiBaseUrl === b.contentMaestro.apiBaseUrl &&
+    a.contentMaestro.apiBearerToken === b.contentMaestro.apiBearerToken
+  );
+}
+
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
@@ -46,6 +86,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [isSaving, setIsSaving] = useState(false);
   const [dateFormatError, setDateFormatError] = useState<string | null>(null);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
+
+  // Capture initial settings snapshot on open to detect no-op saves
+  const initialSettingsRef = useRef<ApiSettings | null>(null);
 
   // Track swipe-origin animations and direction (mobile-only)
   const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
@@ -170,6 +213,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
     setSettings(normalized);
 
+    // Store initial snapshot for change detection
+    initialSettingsRef.current = normalized;
+
     // Clear transient UI state so errors/spinners do not persist across opens
     resetFormState();
   }, [isOpen]);
@@ -265,6 +311,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const handleSave = () => {
     if (isSaving) return;
+
+    // No-op save: if nothing changed, close immediately (no spinner, no toast, no reload)
+    if (initialSettingsRef.current && areApiSettingsEqual(initialSettingsRef.current, settings)) {
+      resetFormState();
+      onClose();
+      return; // Short-circuit: skip validation, saving, toasts, localStorage writes, and reload
+    }
 
     // Early guards for validation errors
     if (dateFormatError) {
