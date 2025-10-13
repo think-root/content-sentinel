@@ -93,63 +93,73 @@ export const useDataRefresh = ({
         );
         const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
 
-        // Execute API calls sequentially with delays
-        try {
-          await fetchRepositories(
-            posted,
-            false,
-            savedItemsPerPage === 0,
-            savedItemsPerPage,
-            savedSortBy || "date_added",
-            savedSortOrder || "DESC",
-            1,
-            false
-          );
-        } catch (error: any) {
-          // Handle 429 errors gracefully without showing error messages
-          if (!(error?.status === 429 || error?.statusCode === 429)) {
-            throw error;
+        // Execute API calls concurrently without artificial delays.
+        // Each task swallows 429 (rate limit) errors locally; non-429 errors bubble up.
+        const repoTask = (async () => {
+          try {
+            await fetchRepositories(
+              posted,
+              false,
+              savedItemsPerPage === 0,
+              savedItemsPerPage,
+              savedSortBy || "date_added",
+              savedSortOrder || "DESC",
+              1,
+              false
+            );
+          } catch (error: any) {
+            if (!(error?.status === 429 || error?.statusCode === 429)) {
+              throw error;
+            }
           }
-        }
+        })();
 
-        // Add delay between API calls
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-
-        try {
-          await fetchPreviews(false);
-        } catch (error: any) {
-          // Handle 429 errors gracefully without showing error messages
-          if (!(error?.status === 429 || error?.statusCode === 429)) {
-            throw error;
+        const previewsTask = (async () => {
+          try {
+            await fetchPreviews(false);
+          } catch (error: any) {
+            if (!(error?.status === 429 || error?.statusCode === 429)) {
+              throw error;
+            }
           }
-        }
+        })();
 
-        // Add delay between API calls
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-
-        if (fetchCronJobs) {
+        const cronJobsTask = fetchCronJobs ? (async () => {
           try {
             await fetchCronJobs(false);
           } catch (error: any) {
-            // Handle 429 errors gracefully without showing error messages
             if (!(error?.status === 429 || error?.statusCode === 429)) {
               throw error;
             }
           }
+        })() : null;
 
-          // Add delay between API calls
-          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-        }
-
-        if (fetchCronJobHistory) {
+        const cronHistoryTask = fetchCronJobHistory ? (async () => {
           try {
             await fetchCronJobHistory(false);
           } catch (error: any) {
-            // Handle 429 errors gracefully without showing error messages
             if (!(error?.status === 429 || error?.statusCode === 429)) {
               throw error;
             }
           }
+        })() : null;
+
+        const tasks = [repoTask, previewsTask, cronJobsTask, cronHistoryTask].filter(Boolean) as Promise<void>[];
+
+        const results = await Promise.allSettled(tasks);
+
+        // If any non-429 error occurred, surface the first one to the outer catch handler.
+        const non429Errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => (r as PromiseRejectedResult).reason)
+          .filter((err: any) =>
+            !(err?.status === 429 ||
+              err?.statusCode === 429 ||
+              (typeof err?.message === 'string' && err.message.includes('Rate limit exceeded')))
+          );
+
+        if (non429Errors.length > 0) {
+          throw non429Errors[0];
         }
 
         // Check if there's new data and apply it if needed
