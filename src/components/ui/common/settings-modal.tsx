@@ -356,8 +356,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
 
-      toast.dismiss('unique-toast-settings');
-      toast.success('Settings successfully updated', toastOptions);
+      // toast.dismiss('unique-toast-settings');
+      // toast.success('Settings successfully updated', toastOptions);
+
+      // Notify app to perform a single foreground refresh after settings save
+      window.dispatchEvent(new CustomEvent('content-sentinel:settings-saved'));
 
       // Keep isSaving=true until reload so user sees spinner and buttons remain disabled.
       setTimeout(() => {
