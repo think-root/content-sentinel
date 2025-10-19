@@ -486,7 +486,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
             </TabsContent>
 
-            <TabsContent value="api" className="space-y-6">
+            <TabsContent value="api" className="space-y-6 overflow-y-auto max-h-[60vh] sm:overflow-visible sm:max-h-none scrollbar-thin">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium border-b pb-2">Content Alchemist API</h3>
                 <div className="space-y-2">
