@@ -1,1 +1,2 @@
-/* /index.html 200
+/ /dashboard/ 302
+/dashboard/* /dashboard/index.html 200
