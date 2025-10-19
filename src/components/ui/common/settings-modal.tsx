@@ -140,39 +140,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const tabs: Array<'general' | 'api' | 'cache'> = ['general', 'api', 'cache'];
 
   const handlers = useSwipeable({
-    onSwipeStart: () => {
-      if (isMobileDevice()) {
+  onSwipeStart: (eventData) => {
+  if (isMobileDevice()) {
+  // Only prevent swipe if it's a clear horizontal swipe, not vertical scrolling
+    const { deltaX, deltaY } = eventData;
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
         setIsSwiping(true);
-      }
-    },
-    onSwiped: () => {
-      if (isMobileDevice()) {
-        setIsSwiping(false);
-      }
-    },
-    onSwipedLeft: () => {
-      if (isMobileDevice()) {
-        setLastSwipeDir("left");
+    }
+  }
+  },
+  onSwiped: () => {
+    if (isMobileDevice()) {
+    setIsSwiping(false);
+  }
+  },
+  onSwipedLeft: (eventData) => {
+  if (isMobileDevice()) {
+  const { deltaX, deltaY } = eventData;
+  // Only trigger tab change if it's clearly a horizontal swipe
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
+      setLastSwipeDir("left");
         setAnimateOnSwipe(true);
         const currentIndex = tabs.indexOf(activeTab);
-        if (currentIndex < tabs.length - 1) {
-          setActiveTab(tabs[currentIndex + 1]);
+      if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+    setTimeout(() => setAnimateOnSwipe(false), 300);
+  }
+  }
+  },
+  onSwipedRight: (eventData) => {
+  if (isMobileDevice()) {
+      const { deltaX, deltaY } = eventData;
+      // Only trigger tab change if it's clearly a horizontal swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
+          setLastSwipeDir("right");
+          setAnimateOnSwipe(true);
+          const currentIndex = tabs.indexOf(activeTab);
+          if (currentIndex > 0) {
+            setActiveTab(tabs[currentIndex - 1]);
+          }
+          setTimeout(() => setAnimateOnSwipe(false), 300);
         }
-        setTimeout(() => setAnimateOnSwipe(false), 300);
       }
     },
-    onSwipedRight: () => {
-      if (isMobileDevice()) {
-        setLastSwipeDir("right");
-        setAnimateOnSwipe(true);
-        const currentIndex = tabs.indexOf(activeTab);
-        if (currentIndex > 0) {
-          setActiveTab(tabs[currentIndex - 1]);
-        }
-        setTimeout(() => setAnimateOnSwipe(false), 300);
-      }
-    },
-    preventScrollOnSwipe: true,
+    preventScrollOnSwipe: false,
     trackMouse: false
   });
 
@@ -184,8 +196,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         if (!isMobileDevice()) return;
         const modalContent = document.querySelector('.settings-modal-content');
         const target = e.target as Node;
+
+        // Allow scrolling within scrollable containers inside the modal
+        const scrollableContainer = target.closest('[data-scrollable="true"]') ||
+                                   target.closest('.overflow-y-auto');
+
         if (modalContent && !modalContent.contains(target)) {
           e.preventDefault();
+        } else if (scrollableContainer) {
+          // Allow natural scrolling within scrollable containers
+          return;
         }
       };
 
@@ -415,6 +435,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }));
   };
 
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (isMobileDevice()) {
+      // Scroll the focused input into view on mobile
+      setTimeout(() => {
+        e.target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 100);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && !isSaving && onClose()}>
@@ -486,37 +519,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
             </TabsContent>
 
-            <TabsContent value="api" className="space-y-6 overflow-y-auto max-h-[60vh] sm:overflow-visible sm:max-h-none scrollbar-thin">
+            <TabsContent value="api" className="space-y-6 overflow-y-auto max-h-[60vh] sm:overflow-visible sm:max-h-none scrollbar-thin" data-scrollable="true">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium border-b pb-2">Content Alchemist API</h3>
                 <div className="space-y-2">
                   <Label htmlFor="alchemistApiBaseUrl">API Base URL</Label>
                   <Input
-                    type="text"
-                    id="alchemistApiBaseUrl"
-                    placeholder="Enter API base URL"
-                    value={settings.contentAlchemist?.apiBaseUrl}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBaseUrl', e.target.value)}
+                  type="text"
+                  id="alchemistApiBaseUrl"
+                  placeholder="Enter API base URL"
+                  value={settings.contentAlchemist?.apiBaseUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBaseUrl', e.target.value)}
+                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="alchemistApiBearerToken">API Bearer Token</Label>
                   <Input
-                    type="password"
-                    id="alchemistApiBearerToken"
-                    placeholder="Enter API bearer token"
-                    value={settings.contentAlchemist?.apiBearerToken}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBearerToken', e.target.value)}
+                  type="password"
+                  id="alchemistApiBearerToken"
+                  placeholder="Enter API bearer token"
+                  value={settings.contentAlchemist?.apiBearerToken}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBearerToken', e.target.value)}
+                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="displayLanguage">Language Code</Label>
                   <Input
-                    type="text"
-                    id="displayLanguage"
-                    placeholder="uk or en, uk, fr"
-                    value={settings.displayLanguage}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
+                  type="text"
+                  id="displayLanguage"
+                  placeholder="uk or en, uk, fr"
+                  value={settings.displayLanguage}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
+                    onFocus={handleInputFocus}
                   />
                   <div className="space-y-1 mt-1">
                     <div className="flex items-center justify-between">
@@ -574,21 +610,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div className="space-y-2">
                   <Label htmlFor="maestroApiBaseUrl">API Base URL</Label>
                   <Input
-                    type="text"
-                    id="maestroApiBaseUrl"
-                    placeholder="Enter API base URL"
-                    value={settings.contentMaestro?.apiBaseUrl}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBaseUrl', e.target.value)}
+                  type="text"
+                  id="maestroApiBaseUrl"
+                  placeholder="Enter API base URL"
+                  value={settings.contentMaestro?.apiBaseUrl}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBaseUrl', e.target.value)}
+                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="maestroApiBearerToken">API Bearer Token</Label>
                   <Input
-                    type="password"
-                    id="maestroApiBearerToken"
-                    placeholder="Enter API bearer token"
-                    value={settings.contentMaestro?.apiBearerToken}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBearerToken', e.target.value)}
+                  type="password"
+                  id="maestroApiBearerToken"
+                  placeholder="Enter API bearer token"
+                  value={settings.contentMaestro?.apiBearerToken}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBearerToken', e.target.value)}
+                    onFocus={handleInputFocus}
                   />
                 </div>
               </div>
