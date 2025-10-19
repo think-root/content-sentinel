@@ -7,7 +7,7 @@ export default defineConfig(() => {
     base: "/dashboard/",
     build: {
       assetsDir: "assets",
-      outDir: "dist",
+      outDir: "dist/dashboard",
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
