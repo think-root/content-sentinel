@@ -35,7 +35,7 @@ export const DashboardLayout = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center min-w-0 flex-1">
               <Link 
-                to="/dashboard/" 
+                to="/" 
                 onClick={() => window.location.reload()} 
                 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2 sm:gap-3 hover:text-primary cursor-pointer transition-colors truncate"
               >

@@ -4,10 +4,10 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(() => {
   return {
     plugins: [react()],
-    base: "/dashboard/",
+    base: "/",
     build: {
       assetsDir: "assets",
-      outDir: "dist/dashboard",
+      outDir: "dist",
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {

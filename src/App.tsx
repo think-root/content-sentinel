@@ -176,7 +176,7 @@ function App() {
     <Router>
       <Routes>
         <Route
-          path="/dashboard/*"
+          path="/*"
           element={
             <div className="min-h-screen bg-background transition-colors">
               <ToastConfig position={toastPosition} />
