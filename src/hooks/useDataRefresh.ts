@@ -163,38 +163,24 @@ export const useDataRefresh = ({
         }
 
         // Check if there's new data and apply it if needed
-        let hasNewData = false;
-        
         // Check repositories
         if (repoNewDataAvailable && applyRepoNewData) {
           applyRepoNewData();
-          hasNewData = true;
         }
-        
+
         // Check previews
         if (previewsNewDataAvailable && applyPreviewsNewData) {
           applyPreviewsNewData();
-          hasNewData = true;
         }
-        
+
         // Check cron jobs
         if (cronJobsNewDataAvailable && applyCronJobsNewData) {
           applyCronJobsNewData();
-          hasNewData = true;
         }
-        
+
         // Check cron job history
         if (cronJobHistoryNewDataAvailable && applyCronJobHistoryNewData) {
           applyCronJobHistoryNewData();
-          hasNewData = true;
-        }
-
-        // Only show notification if there's actually new data
-        if (showNotification && hasNewData) {
-          toast.success("New data received from server", {
-            id: "new-data-notification",
-            duration: 5000,
-          });
         }
 
         return true;
