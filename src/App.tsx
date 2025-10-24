@@ -153,19 +153,10 @@ function App() {
     }
 
     if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable) {
-      const message = 'New data received from server';
-
       if (repoNewDataAvailable) applyRepoNewData();
       if (previewsNewDataAvailable) applyPreviewsNewData();
       if (cronJobsNewDataAvailable) applyCronJobsNewData();
       if (cronJobHistoryNewDataAvailable) applyCronJobHistoryNewData();
-
-      if (!document.querySelector('[data-id="new-data-notification"]')) {
-        toast.success(message, {
-          id: 'new-data-notification',
-          duration: 5000
-        });
-      }
     }
   }, [
     repoNewDataAvailable, previewsNewDataAvailable, cronJobsNewDataAvailable, cronJobHistoryNewDataAvailable,
