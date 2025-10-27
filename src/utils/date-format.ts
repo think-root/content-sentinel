@@ -1,13 +1,15 @@
 import { getApiSettings } from "./api-settings";
+import { normalizeTimezoneForIntl } from "./timezone-mapper";
 
 export function formatDate(dateString: string): string {
   const settings = getApiSettings();
   const dateFormat = settings.dateFormat || "DD.MM.YYYY HH:mm:ss";
   const is12HourFormat = dateFormat.includes('hh:');
   const timezone = settings.timezone || "Europe/Kyiv";
+  const normalizedTimezone = normalizeTimezoneForIntl(timezone);
 
   const options: Intl.DateTimeFormatOptions = {
-    timeZone: timezone,
+    timeZone: normalizedTimezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -47,22 +49,21 @@ export function formatDateOnly(dateString: string): string {
   const settings = getApiSettings();
   const dateFormat = settings.dateFormat || "DD.MM.YYYY HH:mm:ss";
   const timezone = settings.timezone || "Europe/Kyiv";
+  const normalizedTimezone = normalizeTimezoneForIntl(timezone);
 
-  // Derive date-only pattern from the full date format
   const dateOnlyFormat = dateFormat
-    .replace(/HH?(:mm(:ss)?)?/g, '')  // Remove hour patterns
-    .replace(/mm(:ss)?/g, '')         // Remove minute patterns
-    .replace(/ss/g, '')               // Remove second patterns
-    .replace(/A/g, '')                // Remove AM/PM indicators
-    .replace(/a/g, '')                // Remove am/pm indicators
-    .replace(/\s+/g, ' ')             // Normalize whitespace
-    .trim();                          // Remove leading/trailing whitespace
+    .replace(/HH?(:mm(:ss)?)?/g, '')
+    .replace(/mm(:ss)?/g, '')
+    .replace(/ss/g, '')
+    .replace(/A/g, '')
+    .replace(/a/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // If no date components remain, use default date format
   const finalDateFormat = dateOnlyFormat || "DD.MM.YYYY";
 
   const options: Intl.DateTimeFormatOptions = {
-    timeZone: timezone,
+    timeZone: normalizedTimezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
