@@ -546,45 +546,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="displayLanguage">Language Code</Label>
-                  <Input
-                  type="text"
-                  id="displayLanguage"
-                  placeholder="uk or en, uk, fr"
-                  value={settings.displayLanguage}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
-                    onFocus={handleInputFocus}
-                  />
-                  <div className="space-y-1 mt-1">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 leading-snug">
-                        <AlertCircle className="h-4 w-4 flex-shrink-0 mt-[2px]" />
-                        <span className="whitespace-normal break-words">
-                          Language code for displaying posts. Uses{' '}
-                          <a
-                            href="https://en.wikipedia.org/wiki/ISO_639-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline"
-                          >
-                            ISO 639-1
-                          </a>{' '}
-                          standard.
-                        </span>
-                      </div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        id="displayLanguage"
+                        placeholder="uk or en, uk, fr"
+                        value={settings.displayLanguage}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
+                        onFocus={handleInputFocus}
+                        className={settings.displayLanguage.trim() ? 'pr-10' : ''}
+                      />
                       {settings.displayLanguage.trim() && (
-                        <div className="flex items-center">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
                           {isValidatingLanguage && (
-                            <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                           )}
                           {!isValidatingLanguage && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div>
+                                <div className="cursor-help">
                                   {languageValidation.isValid && (
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 text-success" />
                                   )}
                                   {!languageValidation.isValid && (
-                                    <AlertCircle className="h-3 w-3 text-destructive" />
+                                    <AlertCircle className="h-4 w-4 text-destructive" />
                                   )}
                                 </div>
                               </TooltipTrigger>
@@ -601,6 +586,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         </div>
                       )}
                     </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 leading-snug mt-1">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0 mt-[2px]" />
+                      <span className="whitespace-normal break-words">
+                        Language code for displaying posts. Uses{' '}
+                        <a
+                          href="https://en.wikipedia.org/wiki/ISO_639-1"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          ISO 639-1
+                        </a>{' '}
+                        standard.
+                      </span>
                   </div>
                 </div>
               </div>

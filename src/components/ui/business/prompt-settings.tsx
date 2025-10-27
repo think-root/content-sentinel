@@ -395,49 +395,47 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                 <Label htmlFor="llm_output_language" className="flex items-center">
                   Output Languages
                 </Label>
-                <Input
-                  id="llm_output_language"
-                  type="text"
-                  value={localSettings.llm_output_language}
-                  onChange={(e) => handleFieldChange('llm_output_language', e.target.value.toLowerCase())}
-                  disabled={saving}
-                  placeholder="en,uk,fr,de"
-                />
-                {/* Helper + validation inline under input */}
-                <div className="space-y-1 mt-1">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">Comma-separated language codes</div>
-                    {localSettings.llm_output_language.trim() && (
-                      <div className="flex items-center">
-                        {isValidatingLanguage && (
-                          <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
-                        )}
-                        {!isValidatingLanguage && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div>
-                                {languageValidation.isValid && (
-                                  <CheckCircle className="h-3 w-3 text-green-500" />
-                                )}
-                                {!languageValidation.isValid && (
-                                  <AlertCircle className="h-3 w-3 text-destructive" />
-                                )}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
-                                <div>Valid: {languageValidation.validCodes.join(', ')}</div>
-                              )}
-                              {!languageValidation.isValid && languageValidation.message && (
-                                <div>{languageValidation.message}</div>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
+                      <div className="relative">
+                        <Input
+                          id="llm_output_language"
+                          type="text"
+                          value={localSettings.llm_output_language}
+                          onChange={(e) => handleFieldChange('llm_output_language', e.target.value.toLowerCase())}
+                          disabled={saving}
+                          placeholder="en,uk,fr,de"
+                          className={localSettings.llm_output_language.trim() ? 'pr-10' : ''}
+                        />
+                        {localSettings.llm_output_language.trim() && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                            {isValidatingLanguage && (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                            {!isValidatingLanguage && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="cursor-help">
+                                    {languageValidation.isValid && (
+                                      <CheckCircle className="h-4 w-4 text-success" />
+                                    )}
+                                    {!languageValidation.isValid && (
+                                      <AlertCircle className="h-4 w-4 text-destructive" />
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
+                                    <div>Valid: {languageValidation.validCodes.join(', ')}</div>
+                                  )}
+                                  {!languageValidation.isValid && languageValidation.message && (
+                                    <div>{languageValidation.message}</div>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                      <div className="text-xs text-muted-foreground">Comma-separated language codes</div>
               </div>
             </div>
 
