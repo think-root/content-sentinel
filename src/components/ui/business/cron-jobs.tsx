@@ -3,6 +3,7 @@ import { updateCronStatus, updateCronSchedule, CronJob } from '@/api/index';
 import { X, Pencil, Check, AlertCircle } from 'lucide-react';
 import { formatDate } from '@/utils/date-format';
 import { getApiSettings } from '@/utils/api-settings';
+import { normalizeTimezoneForIntl } from '@/utils/timezone-mapper';
 import { toast } from '@/components/ui/common/toast-config';
 import cronstrue from 'cronstrue';
 import {
@@ -37,6 +38,7 @@ const validateCronExpression = (cron: string): boolean => {
 const getHumanReadableCron = (cronExpression: string): string => {
   try {
     const { timezone } = getApiSettings();
+    const normalizedTimezone = normalizeTimezoneForIntl(timezone);
     const [minute, hour, dayOfMonth, month, dayOfWeek] = cronExpression.split(' ');
 
     if (hour === '*' || minute === '*') {
@@ -47,7 +49,7 @@ const getHumanReadableCron = (cronExpression: string): string => {
     utcDate.setUTCHours(parseInt(hour));
     utcDate.setUTCMinutes(parseInt(minute));
 
-    const localDate = new Date(utcDate.toLocaleString('en-US', { timeZone: timezone }));
+    const localDate = new Date(utcDate.toLocaleString('en-US', { timeZone: normalizedTimezone }));
     const localHour = localDate.getHours();
     const localMinute = localDate.getMinutes();
 
