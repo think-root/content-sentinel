@@ -1,8 +1,4 @@
-/**
- * Utility validators for settings inputs.
- * - Date format validator supports specific tokens and separators.
- * - Timezone validator checks IANA tz with Intl APIs.
- */
+import { normalizeTimezoneForIntl } from './timezone-mapper';
 
 export type ValidationResult = { isValid: boolean; message?: string };
 
@@ -84,7 +80,7 @@ export function validateTimezone(tz: string): ValidationResult {
     return { isValid: true };
   }
 
-  const ianaPattern = /^[A-Za-z]+\/[A-Za-z_]+$/;
+  const ianaPattern = /^[A-Za-z_]+(?:\/[A-Za-z_]+)+$/;
   if (!ianaPattern.test(value)) {
     return {
       isValid: false,
@@ -92,13 +88,14 @@ export function validateTimezone(tz: string): ValidationResult {
     };
   }
 
-  // Prefer supportedValuesOf when available
+  const normalizedValue = normalizeTimezoneForIntl(value);
+
   const hasSupportedValuesOf =
     typeof (Intl as any).supportedValuesOf === "function";
   if (hasSupportedValuesOf) {
     try {
       const supported = (Intl as any).supportedValuesOf("timeZone") as string[];
-      if (!supported.includes(value)) {
+      if (!supported.includes(normalizedValue)) {
         return {
           isValid: false,
           message: "Timezone not recognized by Intl. Check spelling (e.g., Europe/Kyiv)",
@@ -106,14 +103,11 @@ export function validateTimezone(tz: string): ValidationResult {
       }
       return { isValid: true };
     } catch {
-      // If supportedValuesOf throws, fall through to fallback
     }
   }
 
-  // Fallback: attempt to create a formatter with the provided timezone
   try {
-    const fmt = new Intl.DateTimeFormat("en-US", { timeZone: value });
-    // Try formatting a date to trigger potential errors
+    const fmt = new Intl.DateTimeFormat("en-US", { timeZone: normalizedValue });
     fmt.format(new Date());
     return { isValid: true };
   } catch {
