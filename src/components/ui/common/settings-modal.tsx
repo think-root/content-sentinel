@@ -482,7 +482,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   id="dateFormat"
                   placeholder="example: DD.MM.YYYY HH:mm:ss"
                   value={settings.dateFormat}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: e.target.value.trim() })}
                 />
                 {dateFormatError ? (
                   <p className="text-sm text-destructive flex items-center gap-2">
@@ -503,7 +503,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   id="timezone"
                   placeholder="Enter timezone (e.g. Europe/Kyiv)"
                   value={settings.timezone}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ timezone: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ timezone: e.target.value.trim() })}
                 />
                 {timezoneError ? (
                   <p className="text-sm text-destructive flex items-center gap-2">
