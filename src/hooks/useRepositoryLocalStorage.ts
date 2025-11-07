@@ -1,7 +1,18 @@
 import { useCallback } from 'react';
 
+/**
+ * Typed storage keys used by repository dashboard
+ */
+export type RepositoryStorageKey =
+  | 'dashboardSearchTerm'
+  | 'dashboardStatusFilter'
+  | 'dashboardSortBy'
+  | 'dashboardSortOrder'
+  | 'dashboardItemsPerPage'
+  | 'postsShowFilters';
+
 export function useRepositoryLocalStorage() {
-  const getStoredValue = useCallback(<T>(key: string, defaultValue: T): T => {
+  const getStoredValue = useCallback(<T>(key: RepositoryStorageKey, defaultValue: T): T => {
     try {
       const saved = localStorage.getItem(key);
       if (saved === null) return defaultValue;
@@ -25,7 +36,7 @@ export function useRepositoryLocalStorage() {
     }
   }, []);
 
-  const setStoredValue = useCallback(<T>(key: string, value: T): void => {
+  const setStoredValue = useCallback(<T>(key: RepositoryStorageKey, value: T): void => {
     try {
       localStorage.setItem(key, String(value));
     } catch (error) {
@@ -33,7 +44,7 @@ export function useRepositoryLocalStorage() {
     }
   }, []);
 
-  const removeStoredValue = useCallback((key: string): void => {
+  const removeStoredValue = useCallback((key: RepositoryStorageKey): void => {
     try {
       localStorage.removeItem(key);
     } catch (error) {
@@ -41,6 +52,18 @@ export function useRepositoryLocalStorage() {
     }
   }, []);
 
+  /**
+   * Initialize all repository filter parameters from localStorage.
+   * Returns the full saved filter parameter set with defaults applied for missing values.
+   *
+   * Default values:
+   * - postsShowFilters: false
+   * - dashboardSearchTerm: '' (empty string)
+   * - dashboardStatusFilter: 'all'
+   * - dashboardSortBy: 'date_added'
+   * - dashboardSortOrder: 'DESC'
+   * - dashboardItemsPerPage: 10
+   */
   const initializeFromStorage = useCallback(() => {
     return {
       postsShowFilters: getStoredValue('postsShowFilters', false),
