@@ -4,6 +4,7 @@ import type { Repository } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
 import { isApiConfigured, getApiSettings } from "../utils/api-settings";
+import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -36,10 +37,11 @@ interface UseRepositoriesProps {
 }
 
 export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseRepositoriesProps) => {
+  const { getStoredValue } = useRepositoryLocalStorage();
   const cachedRepositoriesResult = isCacheBust ? null : getRepositoriesFromCache();
   const cachedRepositories = cachedRepositoriesResult?.data;
   const isFetching = useRef<boolean>(false);
-  const pageSizeRef = useRef<number>(parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10));
+  const pageSizeRef = useRef<number>(getStoredValue('dashboardItemsPerPage', 10));
   const loadingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [state, setState] = useState<RepositoriesState>({
@@ -337,13 +339,30 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
   }, [state.loading]);
 
   useEffect(() => {
-    // Load initial data with saved filter values
-    const savedSortBy = localStorage.getItem('dashboardSortBy') as 'id' | 'date_added' | 'date_posted' || 'date_added';
-    const savedSortOrder = localStorage.getItem('dashboardSortOrder') as 'ASC' | 'DESC' || 'DESC';
-    const savedStatusFilter = localStorage.getItem('dashboardStatusFilter') as 'all' | 'posted' | 'unposted' || 'all';
-    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+    // Load initial data with saved filter values using centralized storage utilities
+    const savedSortBy = getStoredValue('dashboardSortBy', 'date_added' as 'id' | 'date_added' | 'date_posted');
+    const savedSortOrder = getStoredValue('dashboardSortOrder', 'DESC' as 'ASC' | 'DESC');
+    const savedStatusFilter = getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted');
+    const savedItemsPerPage = getStoredValue('dashboardItemsPerPage', 10);
     
     const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+    
+    // Validate cache key against current parameters
+    const settings = getApiSettings();
+    const textLanguage = settings.displayLanguage || 'uk';
+    const expectedCacheKey = JSON.stringify({
+      statusFilter: posted,
+      fetchAll: savedItemsPerPage === 0,
+      itemsPerPage: savedItemsPerPage,
+      sortBy: savedSortBy,
+      sortOrder: savedSortOrder,
+      page: 1,
+      textLanguage,
+    });
+    const currentCacheKey = localStorage.getItem('cache_repositories_key');
+    
+    // Force fetch if cache key doesn't match current parameters
+    const shouldForceFetch = currentCacheKey !== expectedCacheKey;
     
     fetchRepositories(
       posted,
@@ -352,8 +371,10 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       savedItemsPerPage,
       savedSortBy,
       savedSortOrder,
-      1
+      1,
+      shouldForceFetch
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
