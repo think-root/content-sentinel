@@ -169,11 +169,10 @@ export const DashboardContent = ({
   // Trigger API calls when switching to Overview tab
   useEffect(() => {
     if (activeTab === 'overview') {
-      // Fetch repositories and previews for the Overview tab
-      fetchRepositories();
+      // Only fetch previews - repositories hook handles its own initialization
       fetchPreviews();
     }
-  }, [activeTab, fetchRepositories, fetchPreviews]);
+  }, [activeTab, fetchPreviews]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
