@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, GitPullRequest, Play, Save, X, AlertCircle, FolderDown, Zap } from 'lucide-react';
+import { Loader2, GitPullRequest, Play, X, AlertCircle, FolderDown, Zap } from 'lucide-react';
 import { ResultDialog } from '../common/result-dialog';
 import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '@/api';
 import { toast } from '../common/toast-config';
@@ -53,18 +53,24 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
   const [dialogContext, setDialogContext] = useState<'manual' | 'collect'>('collect');
 
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const loadSettings = useCallback(async () => {
     try {
       const settings = await getCollectSettings();
-      setMaxRepos(settings.max_repos);
-      setSince(settings.since);
-      setSpokenLanguageCode(settings.spoken_language_code);
 
-      localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
-      localStorage.setItem('dashboardSince', settings.since);
-      localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
+      const lastEdited = localStorage.getItem('dashboardLastEdited');
+      const isRecentEdit = lastEdited && (Date.now() - parseInt(lastEdited, 10) < 20000); // 20 seconds window
+
+      if (!isRecentEdit) {
+        setMaxRepos(settings.max_repos);
+        setSince(settings.since);
+        setSpokenLanguageCode(settings.spoken_language_code);
+
+        localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
+        localStorage.setItem('dashboardSince', settings.since);
+        localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
+      }
     } catch {
       console.error('Failed to load collect settings');
 
@@ -85,6 +91,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
         localStorage.setItem('dashboardSpokenLanguageCode', 'en');
       }
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
@@ -92,9 +100,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
     loadSettings();
   }, [loadSettings]);
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = useCallback(async () => {
     try {
-      setIsSaving(true);
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await updateCollectSettings({
         max_repos: maxRepos,
@@ -103,7 +110,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       });
 
       if (response.status === 'success') {
-        toast.success(response.message || 'Settings saved successfully');
+        // toast.success(response.message || 'Settings saved successfully');
 
         localStorage.setItem('dashboardMaxRepos', maxRepos.toString());
         localStorage.setItem('dashboardSince', since);
@@ -114,10 +121,18 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
     } catch (error) {
       console.error('Save settings error:', error);
       toast.error(error instanceof Error ? `Failed to save settings: ${error.message}` : 'Failed to save settings');
-    } finally {
-      setIsSaving(false);
     }
-  };
+  }, [maxRepos, since, spokenLanguageCode]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const timer = setTimeout(() => {
+      handleSaveSettings();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [handleSaveSettings, isLoaded]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -352,10 +367,11 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     const value = Number(e.target.value);
                     setMaxRepos(value);
                     localStorage.setItem('dashboardMaxRepos', value.toString());
+                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
                   }}
                   min="1"
                   max="100"
-                  disabled={isAutoLoading || isSaving}
+                  disabled={isAutoLoading}
                   className="mt-1"
                 />
               </div>
@@ -368,8 +384,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   onValueChange={(value: string) => {
                     setSince(value);
                     localStorage.setItem('dashboardSince', value);
+                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
                   }}
-                  disabled={isAutoLoading || isSaving}
+                  disabled={isAutoLoading}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select date range" />
@@ -390,8 +407,10 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   onValueChange={(value: string) => {
                     const languageCode = LANGUAGE_MAPPING[value as keyof typeof LANGUAGE_MAPPING];
                     setSpokenLanguageCode(languageCode);
+                    localStorage.setItem('dashboardSpokenLanguageCode', languageCode);
+                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
                   }}
-                  disabled={isAutoLoading || isSaving}
+                  disabled={isAutoLoading}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select language" />
@@ -410,7 +429,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
               <Button
                 type="submit"
                 size="sm"
-                disabled={isAutoLoading || isSaving}
+                disabled={isAutoLoading}
                 title="Generate posts out of collect schedule"
                 className="w-full sm:w-auto min-w-[150px]"
               >
@@ -420,23 +439,6 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   <Play className="h-4 w-4 mr-2" />
                 )}
                 {isAutoLoading ? 'Processing...' : 'Trigger'}
-              </Button>
-
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSaveSettings}
-                disabled={isSaving || isAutoLoading}
-                title="Save settings to server"
-                variant="outline"
-                className="w-full sm:w-auto min-w-[150px]"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                {isSaving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </form>
