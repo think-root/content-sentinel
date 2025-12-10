@@ -500,7 +500,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
                 onChange={(e) => handleFieldChange('content', e.target.value)}
                 disabled={saving}
                 placeholder="Enter your AI prompt content here..."
-                className="min-h-[130px] resize-vertical"
+                className="min-h-[170px] resize-vertical"
               />
               <div className="text-xs text-muted-foreground">
                 {localSettings.content.length} characters
