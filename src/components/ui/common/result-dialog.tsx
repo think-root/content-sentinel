@@ -57,7 +57,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
                 {added.map((repo: string, index: number) => (
                   <li 
                   key={index} 
-                  className="bg-success/20 text-success-foreground p-2 rounded-md"
+                    className="bg-success/20 text-success p-2 rounded-md"
                   >
                   <a 
                     href={repo} 
@@ -85,7 +85,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
                 {notAdded.map((repo, index) => (
                   <li 
                     key={index} 
-                    className="bg-destructive/20 text-destructive-foreground p-2 rounded-md"
+                    className="bg-destructive/20 text-destructive p-2 rounded-md"
                   >
                     <a
                       href={repo}
@@ -107,7 +107,7 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
           {added.length === 0 && notAdded.length === 0 && (
             <div className="text-center py-4">
               {context === 'collect' ? (
-                <p className="bg-warning/10 text-warning-foreground p-3 rounded-md">
+                <p className="bg-warning/10 text-warning p-3 rounded-md">
                   No new repositories found. All trending repositories are already in the database.
                 </p>
               ) : (
