@@ -1,3 +1,43 @@
+# [1.39.0](https://github.com/think-root/content-sentinel/compare/v1.38.0...v1.39.0) (2025-12-20)
+
+
+### Bug Fixes
+
+* **hooks:** remove redundant new data notification logic ([9839734](https://github.com/think-root/content-sentinel/commit/9839734a4224217cb290bc5b87a5624ea43c8535))
+* Ignore swipe gestures when text is selected in dashboard content. ([fde7447](https://github.com/think-root/content-sentinel/commit/fde7447ddf7710855c0d6075c5d1b572ac3488f1))
+* Prevent swipe gestures in settings modal when text is selected. ([646f92a](https://github.com/think-root/content-sentinel/commit/646f92adda8d93fc7f2c5ab8b088438727a709c1))
+* **redirects:** correct redirect rule for index.html ([1b31c33](https://github.com/think-root/content-sentinel/commit/1b31c333b245061b8c01f063c31536c9d960f851))
+* **redirects:** correct redirect rule syntax ([2ca5887](https://github.com/think-root/content-sentinel/commit/2ca5887786a0a0e3d456a85cd30cd620fd69a7cf))
+* **ui:** adjust padding in API settings tab ([f168924](https://github.com/think-root/content-sentinel/commit/f168924a30ae0758db433aed2fe80c7abaca573c))
+* **ui:** debounce collect settings autosave ([163fd23](https://github.com/think-root/content-sentinel/commit/163fd23ea4196dbe4468e152dcd41b07159c038c))
+* **ui:** improve input field validation UI for language codes ([7133486](https://github.com/think-root/content-sentinel/commit/7133486cbc8584822cc4dd4f575ce5eb6533beb0))
+* **ui:** increase prompt textarea min height ([d0b3146](https://github.com/think-root/content-sentinel/commit/d0b314691e4b89e46b062640abe63bb56221a0ce))
+* **ui:** normalize timezone handling in cron job display ([a17e005](https://github.com/think-root/content-sentinel/commit/a17e005c82c7d8d6a8a07d39da4f469e512fcf96))
+* **ui:** optimize overview tab data fetching logic ([b706698](https://github.com/think-root/content-sentinel/commit/b7066984cecf1ca535c2244c4070f7ca0e9fa60d))
+* **ui:** remove redundant data notification toast ([03d9806](https://github.com/think-root/content-sentinel/commit/03d98067a708656cc143165d916b302ebe2166b9))
+* **ui:** trim whitespace from date format and timezone inputs ([319f221](https://github.com/think-root/content-sentinel/commit/319f221a11bf5098ee8319166f70b84c79566c00))
+* **utils:** improve timezone validation regex and logic ([68a9de1](https://github.com/think-root/content-sentinel/commit/68a9de11435c5c79c1481932b1af943686b8ceed))
+* **utils:** normalize timezone handling in date formatting ([9fb6422](https://github.com/think-root/content-sentinel/commit/9fb6422eb9edc57b4804e738e62d96856f745634))
+
+
+### Features
+
+* **hooks:** add typed storage keys and initializeFromStorage utility ([f556340](https://github.com/think-root/content-sentinel/commit/f5563400757d1a6d87b91e91463a6f9761d41294))
+* **hooks:** implement centralized local storage utility and cache validation in useRepositories ([bbb7c14](https://github.com/think-root/content-sentinel/commit/bbb7c14bdfb433ce9ef45656fbeaa3d57cc764ee))
+* **redirects:** add redirect rule for index.html ([f04f563](https://github.com/think-root/content-sentinel/commit/f04f563c9d4271584b025a56ccbaf24893e13e98))
+* **redirects:** add redirect rules for dashboard ([f21f1bc](https://github.com/think-root/content-sentinel/commit/f21f1bca026363b219f2a3fabde1908671921c7e))
+* **redirects:** add wildcard redirect to root ([339b2fc](https://github.com/think-root/content-sentinel/commit/339b2fcbcfdd7d7321e54e481b9ce6e2da361e3c))
+* **redirects:** update redirect rules for index.html ([2dd5932](https://github.com/think-root/content-sentinel/commit/2dd5932ed9791ee0920cf58caf611a9f0369e6ce))
+* **ui:** add scrollable area to API settings tab ([7f256d0](https://github.com/think-root/content-sentinel/commit/7f256d020504e3242e0d972f279fb996aa4994ea))
+* **ui:** enhance mobile swipe and scroll in settings modal ([49ec8d2](https://github.com/think-root/content-sentinel/commit/49ec8d2e814d664b8590637649a16540f7c16ed8))
+* update paths in index.html, manifest.json, and routing ([97d5873](https://github.com/think-root/content-sentinel/commit/97d58735e0cc78a136719f6c196fd72d7ce58f58))
+* **utils:** add timezone normalization and aliasing functions ([c3e3256](https://github.com/think-root/content-sentinel/commit/c3e3256d06fc150c10fd8ce1461621280f0d900b))
+
+
+### Performance Improvements
+
+* **hooks:** run data refresh calls concurrently without delays ([41b8114](https://github.com/think-root/content-sentinel/commit/41b81142948fd9afa06202dc40f4a324504ea0bf))
+
 # [1.38.0](https://github.com/think-root/content-sentinel/compare/v1.37.0...v1.38.0) (2025-10-13)
 
 
