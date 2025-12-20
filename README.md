@@ -96,27 +96,6 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
    npm start
    ```
 
-### Docker
-
-Run via docker compose:
-
-```bash
-docker compose up -d
-```
-
-Or run the container directly:
-
-```bash
-docker run -d \
-  --name content-sentinel \
-  -p ${PORT:-3000}:${PORT:-3000} \
-  --env-file .env \
-  --restart unless-stopped \
-  content-sentinel:latest
-```
-
-Access the application at http://localhost:3000/dashboard/
-
 ### Configuration Settings
 
 For successful use, you must fill in some settings that can be found in the site header on the right, the “Settings” button.
