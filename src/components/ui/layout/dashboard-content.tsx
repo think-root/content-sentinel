@@ -138,6 +138,10 @@ export const DashboardContent = ({
   // Initialize react-swipeable
   const swipeableHandlers = useSwipeable({
     onSwipedLeft: () => {
+      // Ignore swipe if user is selecting text
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) return;
+
       if (isMobile) {
         setLastSwipeDir("left");
         setAnimateOnSwipe(true);
@@ -150,6 +154,10 @@ export const DashboardContent = ({
       }
     },
     onSwipedRight: () => {
+      // Ignore swipe if user is selecting text
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) return;
+
       if (isMobile) {
         setLastSwipeDir("right");
         setAnimateOnSwipe(true);
