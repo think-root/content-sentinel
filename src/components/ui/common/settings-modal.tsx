@@ -141,6 +141,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const handlers = useSwipeable({
   onSwipeStart: (eventData) => {
+      // Ignore swipe if user is selecting text
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) return;
+
   if (isMobileDevice()) {
   // Only prevent swipe if it's a clear horizontal swipe, not vertical scrolling
     const { deltaX, deltaY } = eventData;
@@ -155,6 +159,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   }
   },
   onSwipedLeft: (eventData) => {
+    // Ignore swipe if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+
   if (isMobileDevice()) {
   const { deltaX, deltaY } = eventData;
   // Only trigger tab change if it's clearly a horizontal swipe
@@ -170,6 +178,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   }
   },
   onSwipedRight: (eventData) => {
+    // Ignore swipe if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+
   if (isMobileDevice()) {
       const { deltaX, deltaY } = eventData;
       // Only trigger tab change if it's clearly a horizontal swipe
@@ -195,7 +207,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       const preventTouchMove = (e: TouchEvent) => {
         if (!isMobileDevice()) return;
         const modalContent = document.querySelector('.settings-modal-content');
-        const target = e.target as Node;
+        const target = e.target as HTMLElement;
 
         // Allow scrolling within scrollable containers inside the modal
         const scrollableContainer = target.closest('[data-scrollable="true"]') ||
