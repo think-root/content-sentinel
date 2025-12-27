@@ -26,6 +26,7 @@ interface DashboardContentProps {
   latestPost?: Repository;
   nextPost?: Repository;
   cronJobs: CronJob[];
+  onCronJobsUpdate?: (jobs: CronJob[]) => void;
   loading: boolean;
   statsLoading: boolean;
   previewsLoading: boolean;
@@ -77,6 +78,7 @@ export const DashboardContent = ({
   latestPost,
   nextPost,
   cronJobs,
+  onCronJobsUpdate,
   loading,
   statsLoading, // новий пропс
   previewsLoading,
@@ -309,6 +311,7 @@ export const DashboardContent = ({
           <TabsContent value="automation" className="space-y-6">
             <CronJobs
               jobs={cronJobs}
+              onJobsUpdate={onCronJobsUpdate}
               loading={cronJobsLoading}
               isApiReady={isApiReady}
             />

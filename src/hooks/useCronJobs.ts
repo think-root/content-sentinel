@@ -118,6 +118,18 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
     }
   }, []);
 
+  const updateCronJobs = useCallback((updatedJobs: CronJob[]) => {
+    setState(prev => ({
+      ...prev,
+      cronJobs: updatedJobs
+    }));
+
+    saveCronJobsToCache({
+      cronJobs: updatedJobs,
+      timestamp: Date.now()
+    });
+  }, []);
+
   // Add initial loading effect
   useEffect(() => {
     fetchCronJobs(false);
@@ -130,6 +142,7 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
     newDataAvailable: state.newDataAvailable,
     fetchCronJobs,
     applyNewData,
+    updateCronJobs,
     setLoading: (loading: boolean) => setState(prev => ({ ...prev, loading }))
   };
 };

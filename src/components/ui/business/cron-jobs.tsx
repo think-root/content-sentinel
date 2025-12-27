@@ -28,6 +28,7 @@ interface CronJobsProps {
   jobs: CronJob[];
   loading: boolean;
   isApiReady?: boolean;
+  onJobsUpdate?: (jobs: CronJob[]) => void;
 }
 
 const validateCronExpression = (cron: string): boolean => {
@@ -64,7 +65,7 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) => {
+export const CronJobs = ({ jobs, loading, isApiReady = true, onJobsUpdate }: CronJobsProps) => {
   const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -85,17 +86,18 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
 
   const toggleJobStatus = async (name: string, currentStatus: boolean) => {
     try {
-      setLocalJobs(prevJobs => 
-        prevJobs.map(job => 
-          job.name === name 
-            ? {
-                ...job,
-                is_active: !currentStatus,
-                updated_at: new Date().toISOString()
-              }
-            : job
-        )
+      const updatedJobs = localJobs.map(job =>
+        job.name === name
+          ? {
+              ...job,
+              is_active: !currentStatus,
+              updated_at: new Date().toISOString()
+            }
+          : job
       );
+
+      setLocalJobs(updatedJobs);
+      if (onJobsUpdate) onJobsUpdate(updatedJobs);
 
       await updateCronStatus(name, !currentStatus);
       toast.success(`Job "${name}" ${!currentStatus ? 'activated' : 'deactivated'} successfully`, {
@@ -103,13 +105,15 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
         id: `status-update-${name}`
       });
     } catch {
-      setLocalJobs(prevJobs => 
-        prevJobs.map(job => 
-          job.name === name 
+      setLocalJobs(prevJobs => {
+        const revertedJobs = prevJobs.map(job =>
+          job.name === name
             ? { ...job, is_active: currentStatus }
             : job
-        )
-      );
+        );
+        if (onJobsUpdate) onJobsUpdate(revertedJobs);
+        return revertedJobs;
+      });
       toast.error('Failed to connect to Content Maestro API', {
         ...toastOptions,
         id: 'content-maestro-error'
@@ -143,18 +147,19 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
     const previousSchedule = editingSchedule.schedule;
 
     try {
-      setLocalJobs(prevJobs => 
-        prevJobs.map(job => 
-          job.name === editingSchedule.name 
-            ? {
-                ...job,
-                schedule: scheduleInput,
-                updated_at: new Date().toISOString()
-              }
-            : job
-        )
+      const updatedJobs = localJobs.map(job =>
+        job.name === editingSchedule.name
+          ? {
+              ...job,
+              schedule: scheduleInput,
+              updated_at: new Date().toISOString()
+            }
+          : job
       );
-      
+
+      setLocalJobs(updatedJobs);
+      if (onJobsUpdate) onJobsUpdate(updatedJobs);
+
       await updateCronSchedule(editingSchedule.name, scheduleInput);
       setEditingSchedule(null);
       setScheduleError(null);
@@ -163,13 +168,15 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
         id: `schedule-update-${editingSchedule.name}`
       });
     } catch {
-      setLocalJobs(prevJobs => 
-        prevJobs.map(job => 
-          job.name === editingSchedule.name 
+      setLocalJobs(prevJobs => {
+        const revertedJobs = prevJobs.map(job =>
+          job.name === editingSchedule.name
             ? { ...job, schedule: previousSchedule }
             : job
-        )
-      );
+        );
+        if (onJobsUpdate) onJobsUpdate(revertedJobs);
+        return revertedJobs;
+      });
       toast.error('Failed to connect to Content Maestro API', {
         ...toastOptions,
         id: 'content-maestro-error'

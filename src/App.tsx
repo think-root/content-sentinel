@@ -66,7 +66,8 @@ function App() {
     loading: cronJobsLoading,
     newDataAvailable: cronJobsNewDataAvailable,
     fetchCronJobs,
-    applyNewData: applyCronJobsNewData
+    applyNewData: applyCronJobsNewData,
+    updateCronJobs
   } = useCronJobs({ isCacheBust, setErrorWithScroll });
 
   const {
@@ -188,6 +189,7 @@ function App() {
                   latestPost={latestPost}
                   nextPost={nextPost}
                   cronJobs={cronJobs}
+                  onCronJobsUpdate={updateCronJobs}
                   loading={loading}
                   statsLoading={statsLoading} // новий пропс
                   previewsLoading={previewsLoading}
