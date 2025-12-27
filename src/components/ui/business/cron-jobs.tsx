@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/base/table';
 import { Switch } from '@/components/ui/base/switch';
 import { Button } from '@/components/ui/base/button';
-import { Card, CardContent, /*CardDescription,*/ CardHeader, CardTitle } from '@/components/ui/layout/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Input } from '@/components/ui/base/input';
 import { Skeleton } from '@/components/ui/common/skeleton';
 
@@ -447,10 +447,6 @@ export const CronJobs = ({ jobs, loading, isApiReady = true, onJobsUpdate }: Cro
           </svg>
           Jobs
         </CardTitle>
-        {/* <CardDescription className="flex items-center">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          Schedule and Status columns are interactive and can be modified
-        </CardDescription> */}
       </CardHeader>
       <CardContent>
         {!isApiReady ? (
