@@ -14,6 +14,8 @@ import type { Repository } from '../../../types';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
+
 interface DashboardContentProps {
   stats: {
     all: number;
@@ -107,6 +109,9 @@ export const DashboardContent = ({
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
+  // Track unsaved changes in AI Settings tab
+  const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
+
   // Ordered tabs for swipe navigation (readonly tuple for type-safety)
   const orderedTabs = ['overview','repositories','automation','settings'] as const;
 
@@ -197,9 +202,22 @@ export const DashboardContent = ({
             <TabsTrigger value="automation" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
               Cron
             </TabsTrigger>
-            <TabsTrigger value="settings" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
-              AI Settings
-            </TabsTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1">
+                    <TabsTrigger value="settings" className="w-full whitespace-nowrap px-3 py-2 text-sm">
+                      AI Settings{hasUnsavedSettingsChanges && ' *'}
+                    </TabsTrigger>
+                  </div>
+                </TooltipTrigger>
+                {hasUnsavedSettingsChanges && (
+                  <TooltipContent>
+                    <p>You have unsaved changes</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </TabsList>
         </div>
 
@@ -214,9 +232,22 @@ export const DashboardContent = ({
           <TabsTrigger value="automation">
             Cron
           </TabsTrigger>
-          <TabsTrigger value="settings">
-            AI Settings
-          </TabsTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <TabsTrigger value="settings" className="w-full">
+                    AI Settings{hasUnsavedSettingsChanges && ' *'}
+                  </TabsTrigger>
+                </div>
+              </TooltipTrigger>
+              {hasUnsavedSettingsChanges && (
+                <TooltipContent>
+                  <p>You have unsaved changes</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </TabsList>
 
         <div
@@ -308,10 +339,15 @@ export const DashboardContent = ({
             )}
           </TabsContent>
 
-          {/* Settings Tab */}
-          <TabsContent value="settings">
+          {/* Settings Tab - forceMount to preserve state when switching tabs */}
+          <TabsContent
+            value="settings"
+            forceMount
+            className={activeTab !== 'settings' ? 'hidden' : ''}
+          >
             <PromptSettings
               isApiReady={isApiReady}
+              onUnsavedChangesChange={setHasUnsavedSettingsChanges}
             />
           </TabsContent>
         </div>
