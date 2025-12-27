@@ -4,13 +4,12 @@ import { usePromptSettings } from '@/hooks/usePromptSettings';
 import { toast } from '../common/toast-config';
 import { ConfirmDialog } from '../common/confirm-dialog';
 import { languageValidator, ValidationResult } from '@/utils/language-validation';
-import { Card, CardContent, /*CardDescription,*/ CardHeader, /*CardTitle*/ } from '../layout/card';
+import { Card, CardContent } from '../layout/card';
 import { Button } from '../base/button';
 import { Input } from '../base/input';
 import { Textarea } from '../base/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 import { Switch } from '../base/switch';
-import { Badge } from '../common/badge';
 import { Label } from '../base/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 
@@ -23,9 +22,10 @@ const LLM_PROVIDERS = [
 
 interface PromptSettingsProps {
   isApiReady?: boolean;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
 }
 
-export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
+export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: PromptSettingsProps) => {
   const { settings, loading, saving, fetchSettings, updateSettings, resetToDefaults } = usePromptSettings();
 
   // Initialize local state from cached settings (when available) to avoid UI flicker on mount/tab switch
@@ -101,6 +101,11 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
       fetchSettings();
     }
   }, [fetchSettings, isApiReady]);
+
+  // Notify parent component about unsaved changes
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   useEffect(() => {
     if (settings) {
@@ -308,26 +313,7 @@ export const PromptSettings = ({ isApiReady = true }: PromptSettingsProps) => {
   return (
     <TooltipProvider>
       <Card className="mb-8">
-      <CardHeader>
-        <div className="flex items-center">
-          {/* <Bot className="h-6 w-6 text-muted-foreground mr-2" /> */}
-          {/* <CardTitle>AI Settings</CardTitle> */}
-          {hasUnsavedChanges && (
-            <Badge
-              variant="outline"
-              className="ml-3 bg-orange-100 text-orange-800 border-orange-300 font-semibold dark:bg-orange-900 dark:text-orange-100 dark:border-orange-700"
-            >
-              Unsaved changes
-            </Badge>
-          )}
-        </div>
-        {/* <CardDescription className="flex items-center">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          Configure AI model settings for content generation
-        </CardDescription> */}
-      </CardHeader>
-
-      <CardContent>
+      <CardContent className="pt-6">
         {!isApiReady ? (
           <div className="text-muted-foreground text-sm text-center py-8">
             Data could not be loaded because API keys are not configured
