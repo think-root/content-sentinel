@@ -114,7 +114,7 @@
     
     /* Success and warning */
     --success: 142 60% 40%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 0 0% 0%;
     --warning: 48 80% 50%;
     --warning-foreground: 26 83% 14%;
     
