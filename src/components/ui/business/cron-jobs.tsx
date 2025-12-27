@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,  
 } from '@/components/ui/base/table';
+import { Switch } from '@/components/ui/base/switch';
 import { Button } from '@/components/ui/base/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Input } from '@/components/ui/base/input';
@@ -183,7 +184,7 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
           <TableHead className="w-1/6">Name</TableHead>
           <TableHead className="w-2/6">Last Updated</TableHead>
           <TableHead className="w-2/6">Schedule</TableHead>
-          <TableHead className="w-1/6">Status</TableHead>
+          <TableHead className="w-1/6 text-center">Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -268,15 +269,13 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
                   </div>
                 )}
               </TableCell>
-              <TableCell>
-                <Button
-                  variant={job.is_active ? "success" : "destructive"}
-                  size="xs"
-                  onClick={() => toggleJobStatus(job.name, job.is_active)}
+              <TableCell className="text-center">
+                <Switch
+                  checked={job.is_active}
+                  onCheckedChange={() => toggleJobStatus(job.name, job.is_active)}
+                  className="data-[state=checked]:bg-success mt-[5px]"
                   title={job.is_active ? 'Click to turn off' : 'Click to turn on'}
-                >
-                  {job.is_active ? 'Active' : 'Inactive'}
-                </Button>
+                />
               </TableCell>
             </TableRow>
           ))
@@ -384,14 +383,12 @@ export const CronJobs = ({ jobs, loading, isApiReady = true }: CronJobsProps) =>
               <div>
                 <div className="text-xs font-medium text-muted-foreground uppercase">Status</div>
                 <div>
-                  <Button
-                    variant={job.is_active ? "success" : "destructive"}
-                    size="sm"
-                    onClick={() => toggleJobStatus(job.name, job.is_active)}
+                  <Switch
+                    checked={job.is_active}
+                    onCheckedChange={() => toggleJobStatus(job.name, job.is_active)}
+                    className="data-[state=checked]:bg-success mt-[5px]"
                     title={job.is_active ? 'Click to turn off' : 'Click to turn on'}
-                  >
-                    {job.is_active ? 'Active' : 'Inactive'}
-                  </Button>
+                  />
                 </div>
               </div>
             </div>
