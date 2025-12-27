@@ -48,11 +48,11 @@ async function getAvailableLanguages(): Promise<string[]> {
 }
 
 // Helper function to handle language fallback
-async function handleLanguageFallback(
-  originalRequest: () => Promise<any>,
+async function handleLanguageFallback<T>(
+  originalRequest: () => Promise<T>,
   requestedLanguage: string,
-  createFallbackRequest?: (language: string) => Promise<any>
-): Promise<any> {
+  createFallbackRequest?: (language: string) => Promise<T>
+): Promise<T> {
   try {
     return await originalRequest();
   } catch (error) {
@@ -93,7 +93,7 @@ async function handleLanguageFallback(
               total_pages: 0,
               total_items: 0,
             }
-          };
+          } as T;
         }
       } else {
         console.warn(`[Language Fallback] No fallback available, same language "${requestedLanguage}" returned`);
