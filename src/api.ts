@@ -521,7 +521,7 @@ export async function updateCollectSettings(
   }
 
   const response = await fetch(
-    `${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings/update`,
+    `${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings`,
     {
       method: "PUT",
       headers: {
@@ -603,9 +603,9 @@ export async function updatePromptSettings(
   }
 
   const response = await fetch(
-    `${apiSettings.contentMaestro.apiBaseUrl}/api/prompt-settings/update`,
+    `${apiSettings.contentMaestro.apiBaseUrl}/api/prompt-settings`,
     {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
