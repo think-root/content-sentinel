@@ -1,3 +1,20 @@
+# [1.40.0](https://github.com/think-root/content-sentinel/compare/v1.39.0...v1.40.0) (2026-01-04)
+
+
+### Bug Fixes
+
+* **api:** update endpoint URLs and methods ([813efe4](https://github.com/think-root/content-sentinel/commit/813efe4320891871521a84f982bff622ae97df32))
+* update success-foreground color to black ([02347ab](https://github.com/think-root/content-sentinel/commit/02347ab7966026e5664b0bf27b15d7319b420f37))
+
+
+### Features
+
+* **api:** add generic type to handleLanguageFallback ([498da02](https://github.com/think-root/content-sentinel/commit/498da02d8df9e0d07529f936d7004bc9040141d2))
+* **cron-jobs:** add update functionality ([8797376](https://github.com/think-root/content-sentinel/commit/87973767514e9796c5149202a6c5dd7b81ab9adb))
+* **prompt-settings:** add unsaved changes notification ([30a55b6](https://github.com/think-root/content-sentinel/commit/30a55b688c7ecc63db714cfd49640259b5547d67))
+* **ui:** add switch component for job status ([ca3f4be](https://github.com/think-root/content-sentinel/commit/ca3f4be4d89606ea87c354d3446022820c3451fa))
+* **ui:** add unsaved changes indicator for AI Settings ([8a740b2](https://github.com/think-root/content-sentinel/commit/8a740b2e3b5a77080e58af86642ce69876647fb5))
+
 # [1.39.0](https://github.com/think-root/content-sentinel/compare/v1.38.0...v1.39.0) (2025-12-20)
 
 
