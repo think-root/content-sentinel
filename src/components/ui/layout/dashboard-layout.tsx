@@ -71,7 +71,7 @@ export const DashboardLayout = ({
         <CardFooter className="p-3 sm:p-4 text-muted-foreground justify-center">
           <div className="text-center w-full text-sm">
             Developed by{' '}
-            <a href="https://github.com/Sigmanor" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+            <a href="https://github.com/sigmanor" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
               sigmanor
             </a>{' '}
             with ❤️ and a bit of 🤖{' '}
