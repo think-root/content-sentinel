@@ -155,7 +155,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         setState(prev => ({ ...prev, loading: false }));
       }
     }
-  }, [setErrorWithScroll, isCacheBust]);
+  }, [setErrorWithScroll, isCacheBust, state]);
 
   // Initial fetch with saved filters
   useEffect(() => {
