@@ -1,3 +1,18 @@
+# [1.41.0](https://github.com/think-root/content-sentinel/compare/v1.40.0...v1.41.0) (2026-01-09)
+
+
+### Bug Fixes
+
+* **hooks:** update dependency array in useCronJobHistory ([267167f](https://github.com/think-root/content-sentinel/commit/267167fa7a9b433668c20ac55ee23dd9c37290ac))
+
+
+### Features
+
+* **api:** add new parameters to autoGenerate function ([ba81642](https://github.com/think-root/content-sentinel/commit/ba81642112732cb3c22ccd5f26582c9e57dd9437))
+* **dashboard:** update auto-generate function parameters ([53ea7a6](https://github.com/think-root/content-sentinel/commit/53ea7a60c4dbde9988e29922f1d6c900a5895f2f))
+* **ui:** enhance generate form with resource selection ([3442c46](https://github.com/think-root/content-sentinel/commit/3442c4618558c4e2a40076d5486b0613ec288c9b))
+* **useGenerateHandlers:** enhance autoGenerate function ([93b3557](https://github.com/think-root/content-sentinel/commit/93b3557070e90caf59ae7da381f094e204aec6fa))
+
 # [1.40.0](https://github.com/think-root/content-sentinel/compare/v1.39.0...v1.40.0) (2026-01-04)
 
 
