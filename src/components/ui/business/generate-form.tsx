@@ -28,7 +28,14 @@ const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELA
 
 interface GenerateFormProps {
   onManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
-  onAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<ManualGenerateResponse>;
+  onAutoGenerate: (
+    maxRepos: number,
+    resource: string,
+    since: string,
+    spokenLanguageCode: string,
+    period: string,
+    language: string
+  ) => Promise<ManualGenerateResponse>;
 }
 
 export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormProps) {
@@ -44,6 +51,18 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [spokenLanguageCode, setSpokenLanguageCode] = useState(() => {
     const saved = localStorage.getItem('dashboardSpokenLanguageCode');
     return saved || 'en';
+  });
+  const [resource, setResource] = useState(() => {
+    const saved = localStorage.getItem('dashboardResource');
+    return saved || 'github';
+  });
+  const [period, setPeriod] = useState(() => {
+    const saved = localStorage.getItem('dashboardPeriod');
+    return saved || 'past_24_hours';
+  });
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('dashboardLanguage');
+    return saved || 'All';
   });
   const [isManualLoading, setIsManualLoading] = useState(false);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -66,21 +85,33 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         setMaxRepos(settings.max_repos);
         setSince(settings.since);
         setSpokenLanguageCode(settings.spoken_language_code);
+        setResource(settings.resource || 'github');
+        setPeriod(settings.period || 'past_24_hours');
+        setLanguage(settings.language || 'All');
 
         localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
         localStorage.setItem('dashboardSince', settings.since);
         localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
+        localStorage.setItem('dashboardResource', settings.resource || 'github');
+        localStorage.setItem('dashboardPeriod', settings.period || 'past_24_hours');
+        localStorage.setItem('dashboardLanguage', settings.language || 'All');
       }
     } catch {
       console.error('Failed to load collect settings');
 
       const savedMaxRepos = localStorage.getItem('dashboardMaxRepos') || '5';
       const savedSince = localStorage.getItem('dashboardSince') || 'daily';
-      const savedLanguage = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
+      const savedLanguageCode = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
+      const savedResource = localStorage.getItem('dashboardResource') || 'github';
+      const savedPeriod = localStorage.getItem('dashboardPeriod') || 'past_24_hours';
+      const savedLanguage = localStorage.getItem('dashboardLanguage') || 'All';
 
       setMaxRepos(parseInt(savedMaxRepos, 10));
       setSince(savedSince);
-      setSpokenLanguageCode(savedLanguage);
+      setSpokenLanguageCode(savedLanguageCode);
+      setResource(savedResource);
+      setPeriod(savedPeriod);
+      setLanguage(savedLanguage);
 
       if (!localStorage.getItem('dashboardMaxRepos')) {
         localStorage.setItem('dashboardMaxRepos', '5');
@@ -90,6 +121,15 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       }
       if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
         localStorage.setItem('dashboardSpokenLanguageCode', 'en');
+      }
+      if (!localStorage.getItem('dashboardResource')) {
+        localStorage.setItem('dashboardResource', 'github');
+      }
+      if (!localStorage.getItem('dashboardPeriod')) {
+        localStorage.setItem('dashboardPeriod', 'past_24_hours');
+      }
+      if (!localStorage.getItem('dashboardLanguage')) {
+        localStorage.setItem('dashboardLanguage', 'All');
       }
     } finally {
       setIsLoaded(true);
@@ -105,8 +145,11 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await updateCollectSettings({
         max_repos: maxRepos,
+        resource,
         since,
-        spoken_language_code: spokenLanguageCode
+        spoken_language_code: spokenLanguageCode,
+        period,
+        language
       });
 
       if (response.status === 'success') {
@@ -115,6 +158,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         localStorage.setItem('dashboardMaxRepos', maxRepos.toString());
         localStorage.setItem('dashboardSince', since);
         localStorage.setItem('dashboardSpokenLanguageCode', spokenLanguageCode);
+        localStorage.setItem('dashboardResource', resource);
+        localStorage.setItem('dashboardPeriod', period);
+        localStorage.setItem('dashboardLanguage', language);
       } else {
         throw new Error(response.message || 'Failed to save settings');
       }
@@ -122,7 +168,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       console.error('Save settings error:', error);
       toast.error(error instanceof Error ? `Failed to save settings: ${error.message}` : 'Failed to save settings');
     }
-  }, [maxRepos, since, spokenLanguageCode]);
+  }, [maxRepos, resource, since, spokenLanguageCode, period, language]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -205,7 +251,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       try {
         setIsAutoLoading(true);
         await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
-        const response = await onAutoGenerate(maxRepos, since, spokenLanguageCode);
+        const response = await onAutoGenerate(maxRepos, resource, since, spokenLanguageCode, period, language);
 
         // Always set added and notAdded from the response
         const added = response.added || [];
@@ -375,55 +421,135 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   className="mt-1"
                 />
               </div>
+
               <div>
-                <Label htmlFor="since">
-                  Date range
+                <Label htmlFor="resource">
+                  Resource
                 </Label>
                 <Select
-                  value={since}
+                  value={resource}
                   onValueChange={(value: string) => {
-                    setSince(value);
-                    localStorage.setItem('dashboardSince', value);
+                    setResource(value);
+                    localStorage.setItem('dashboardResource', value);
                     localStorage.setItem('dashboardLastEdited', Date.now().toString());
                   }}
                   disabled={isAutoLoading}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select date range" />
+                    <SelectValue placeholder="Select resource" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="github">GitHub</SelectItem>
+                    <SelectItem value="ossinsight">OssInsight</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="language">
-                  Spoken Language
-                </Label>
-                <Select
-                  value={Object.entries(LANGUAGE_MAPPING).find(([, code]) => code === spokenLanguageCode)?.[0] || 'English'}
-                  onValueChange={(value: string) => {
-                    const languageCode = LANGUAGE_MAPPING[value as keyof typeof LANGUAGE_MAPPING];
-                    setSpokenLanguageCode(languageCode);
-                    localStorage.setItem('dashboardSpokenLanguageCode', languageCode);
-                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
-                  }}
-                  disabled={isAutoLoading}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(LANGUAGE_MAPPING).map((language) => (
-                      <SelectItem key={language} value={language}>
-                        {language}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
+              {resource === 'github' && (
+                <>
+                  <div>
+                    <Label htmlFor="since">
+                      Date range
+                    </Label>
+                    <Select
+                      value={since}
+                      onValueChange={(value: string) => {
+                        setSince(value);
+                        localStorage.setItem('dashboardSince', value);
+                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      }}
+                      disabled={isAutoLoading}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select date range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="language">
+                      Spoken Language
+                    </Label>
+                    <Select
+                      value={Object.entries(LANGUAGE_MAPPING).find(([, code]) => code === spokenLanguageCode)?.[0] || 'English'}
+                      onValueChange={(value: string) => {
+                        const languageCode = LANGUAGE_MAPPING[value as keyof typeof LANGUAGE_MAPPING];
+                        setSpokenLanguageCode(languageCode);
+                        localStorage.setItem('dashboardSpokenLanguageCode', languageCode);
+                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      }}
+                      disabled={isAutoLoading}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(LANGUAGE_MAPPING).map((language) => (
+                          <SelectItem key={language} value={language}>
+                            {language}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {resource === 'ossinsight' && (
+                <>
+                  <div>
+                    <Label htmlFor="period">
+                      Period
+                    </Label>
+                    <Select
+                      value={period}
+                      onValueChange={(value: string) => {
+                        setPeriod(value);
+                        localStorage.setItem('dashboardPeriod', value);
+                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      }}
+                      disabled={isAutoLoading}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select period" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="past_24_hours">Past 24 Hours</SelectItem>
+                        <SelectItem value="past_week">Past Week</SelectItem>
+                        <SelectItem value="past_month">Past Month</SelectItem>
+                        <SelectItem value="past_3_months">Past 3 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="progLanguage">
+                      Language
+                    </Label>
+                    <Input
+                      type="text"
+                      name="progLanguage"
+                      id="progLanguage"
+                      value={language}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setLanguage(value);
+                        localStorage.setItem('dashboardLanguage', value);
+                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      }}
+                      disabled={isAutoLoading}
+                      className="mt-1"
+                      placeholder="e.g. Python, JavaScript"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Programming language, separate multiple languages with commas (e.g. Go, Java). Use "All" for any language.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
             <div className="mt-4 flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0">
               <Button
