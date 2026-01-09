@@ -284,12 +284,21 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
   ).then(signature => queueRequest(fetchFunction, signature));
 }
 
-export async function autoGenerate(maxRepos: number, since: string, spokenLanguageCode: string) {
+export async function autoGenerate(
+  maxRepos: number,
+  resource: string,
+  since: string,
+  spokenLanguageCode: string,
+  period: string,
+  language: string
+): Promise<ManualGenerateResponse> {
   const { baseUrl, headers, isConfigured } = getApiConfig();
 
   if (!isConfigured) {
     return {
       status: "error",
+      added: [],
+      dont_added: [],
     };
   }
 
@@ -297,8 +306,11 @@ export async function autoGenerate(maxRepos: number, since: string, spokenLangua
 
   const requestBody = {
     max_repos: maxRepos,
+    resource,
     since,
     spoken_language_code: spokenLanguageCode,
+    period,
+    language,
     use_direct_url: promptSettings.use_direct_url,
     llm_provider: promptSettings.llm_provider,
     llm_output_language: promptSettings.llm_output_language,
@@ -476,8 +488,11 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
 
 export interface CollectSettings {
   max_repos: number;
+  resource: string;
   since: string;
   spoken_language_code: string;
+  period: string;
+  language: string;
 }
 
 export async function getCollectSettings(): Promise<CollectSettings> {
@@ -487,8 +502,11 @@ export async function getCollectSettings(): Promise<CollectSettings> {
   if (!isConfigured) {
     return {
       max_repos: 10,
+      resource: "github",
       since: "daily",
       spoken_language_code: "en",
+      period: "past_24_hours",
+      language: "All",
     };
   }
 
