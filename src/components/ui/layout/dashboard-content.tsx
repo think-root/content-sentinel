@@ -49,7 +49,14 @@ interface DashboardContentProps {
   ) => Promise<void>;
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   handleManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
-  handleAutoGenerate: (maxRepos: number, since: string, spokenLanguageCode: string) => Promise<{ status: string; added?: string[]; dont_added?: string[] }>;
+  handleAutoGenerate: (
+    maxRepos: number,
+    resource: string,
+    since: string,
+    spokenLanguageCode: string,
+    period: string,
+    language: string
+  ) => Promise<ManualGenerateResponse>;
   isApiReady: boolean;
   cronJobHistory?: CronJobHistoryType[];
   cronJobHistoryLoading?: boolean;
