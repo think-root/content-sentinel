@@ -394,8 +394,15 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>
-              Manage collect settings and manually generate new posts from GitHub{' '}
-              <a href="https://github.com/trending" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">trends</a>
+              Manage collect settings and manually generate new posts from {resource === 'github' ? 'GitHub' : 'OssInsight'}{' '}
+              <a
+                href={resource === 'github' ? "https://github.com/trending" : "https://ossinsight.io/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                trends
+              </a>
             </span>
           </p>
           <form onSubmit={handleAutoSubmit}>
