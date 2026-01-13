@@ -10,7 +10,7 @@ export interface CronJob {
 export interface CronJobHistory {
   name: string;
   timestamp: string;
-  success: boolean;
+  status: number;
   output?: string;
 }
 
@@ -53,7 +53,7 @@ export const getCronJobHistory = async (
   name?: string,
   page: number = 1,
   limit: number = 20,
-  success?: boolean,
+  status?: number,
   sort: "asc" | "desc" = "desc",
   start_date?: string,
   end_date?: string
@@ -79,7 +79,7 @@ export const getCronJobHistory = async (
   params.append("page", page.toString());
   params.append("limit", limit.toString());
   params.append("sort", sort);
-  if (success !== undefined) params.append("success", success.toString());
+  if (status !== undefined) params.append("status", status.toString());
   if (start_date && start_date.trim() !== '') params.append("start_date", start_date);
   if (end_date && end_date.trim() !== '') params.append("end_date", end_date);
 
