@@ -32,9 +32,9 @@ interface CronJobHistoryProps {
   history?: CronJobHistoryType[];
   loading?: boolean;
   nameFilter?: string;
-  successFilter?: boolean;
+  statusFilter?: number;
   setNameFilter?: (nameFilter?: string) => void;
-  setSuccessFilter?: (successFilter?: boolean) => void;
+  setStatusFilter?: (statusFilter?: number) => void;
   resetFilters?: () => void;
   isApiReady?: boolean;
   pageSize?: number;
@@ -55,9 +55,9 @@ export const CronJobHistory = ({
   history = [],
   loading = false,
   nameFilter,
-  successFilter,
+  statusFilter,
   setNameFilter,
-  setSuccessFilter,
+  setStatusFilter,
   resetFilters,
   isApiReady = true,
   pageSize = 10,
@@ -78,7 +78,7 @@ export const CronJobHistory = ({
     nameFilter || 'all'
   );
   const [selectedStatus, setSelectedStatus] = useState<string>(
-    successFilter === undefined ? 'all' : successFilter ? 'success' : 'failed'
+    statusFilter === undefined ? 'all' : statusFilter.toString()
   );
   const [selectedPageSize, setSelectedPageSize] = useState<number>(pageSize);
   const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>(sortOrder);
@@ -112,9 +112,9 @@ export const CronJobHistory = ({
 
   useEffect(() => {
     setSelectedStatus(
-      successFilter === undefined ? 'all' : successFilter ? 'success' : 'failed'
+      statusFilter === undefined ? 'all' : statusFilter.toString()
     );
-  }, [successFilter]);
+  }, [statusFilter]);
 
   useEffect(() => {
     setSelectedPageSize(pageSize);
@@ -143,18 +143,20 @@ export const CronJobHistory = ({
 
   const handleStatusFilterChange = (status: string) => {
     setSelectedStatus(status);
-    let filterValue: boolean | undefined;
+    let filterValue: number | undefined;
 
-    if (status === 'success') {
-      filterValue = true;
-    } else if (status === 'failed') {
-      filterValue = false;
+    if (status === '1') {
+      filterValue = 1;
+    } else if (status === '0') {
+      filterValue = 0;
+    } else if (status === '2') {
+      filterValue = 2;
     } else {
       filterValue = undefined;
     }
 
-    if (setSuccessFilter) {
-      setSuccessFilter(filterValue);
+    if (setStatusFilter) {
+      setStatusFilter(filterValue);
     }
   };
 
@@ -214,7 +216,7 @@ export const CronJobHistory = ({
 
   const displayHistory = history;
 
-  const hasActiveFilters = nameFilter || successFilter !== undefined || startDate || endDate;
+  const hasActiveFilters = nameFilter || statusFilter !== undefined || startDate || endDate;
 
   const renderDatePicker = (date: string, onChange: (date: string) => void, placeholder: string, isOpen: boolean, setIsOpen: (open: boolean) => void) => {
     const selectedDate = date ? new Date(date) : undefined;
@@ -286,7 +288,7 @@ export const CronJobHistory = ({
                   <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                   {hasActiveFilters && (
                     <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
-                      {[nameFilter, successFilter !== undefined, startDate, endDate].filter(Boolean).length}
+              {[nameFilter, statusFilter !== undefined, startDate, endDate].filter(Boolean).length}
                     </span>
                   )}
                 </Button>
@@ -331,8 +333,9 @@ export const CronJobHistory = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="success">Success</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="1">Success</SelectItem>
+                    <SelectItem value="0">Failed</SelectItem>
+                    <SelectItem value="2">Partial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -506,10 +509,10 @@ export const CronJobHistory = ({
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={entry.success ? "success" : "destructive"}
+                          variant={entry.status === 1 ? "success" : entry.status === 2 ? "warning" : "destructive"}
                           className="text-xs"
                         >
-                          {entry.success ? 'Success' : 'Failed'}
+                          {entry.status === 1 ? 'Success' : entry.status === 2 ? 'Partial' : 'Failed'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -555,10 +558,10 @@ export const CronJobHistory = ({
                       <span className="text-xs font-medium text-muted-foreground uppercase">Status</span>
                       <div className="mt-1">
                         <Badge
-                          variant={entry.success ? "success" : "destructive"}
+                          variant={entry.status === 1 ? "success" : entry.status === 2 ? "warning" : "destructive"}
                           className="text-xs"
                         >
-                          {entry.success ? 'Success' : 'Failed'}
+                          {entry.status === 1 ? 'Success' : entry.status === 2 ? 'Partial' : 'Failed'}
                         </Badge>
                       </div>
                     </div>
