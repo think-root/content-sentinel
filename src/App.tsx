@@ -79,14 +79,14 @@ function App() {
     totalItems: cronJobHistoryTotalItems,
     totalPages: cronJobHistoryTotalPages,
     nameFilter: cronJobHistoryNameFilter,
-    successFilter: cronJobHistorySuccessFilter,
+    statusFilter: cronJobHistoryStatusFilter,
     startDate: cronJobHistoryStartDate,
     endDate: cronJobHistoryEndDate,
     newDataAvailable: cronJobHistoryNewDataAvailable,
     fetchCronJobHistory,
     applyNewData: applyCronJobHistoryNewData,
     setNameFilter: cronJobHistorySetNameFilter,
-    setSuccessFilter: cronJobHistorySetSuccessFilter,
+    setStatusFilter: cronJobHistorySetStatusFilter,
     setSortOrder: cronJobHistorySetSortOrder,
     setStartDate: cronJobHistorySetStartDate,
     setEndDate: cronJobHistorySetEndDate,
@@ -204,11 +204,11 @@ function App() {
                   cronJobHistoryLoading={cronJobHistoryLoading}
                   cronJobHistoryPageSize={cronJobHistoryPageSize}
                   cronJobHistoryNameFilter={cronJobHistoryNameFilter}
-                  cronJobHistorySuccessFilter={cronJobHistorySuccessFilter}
+                  cronJobHistoryStatusFilter={cronJobHistoryStatusFilter}
                   cronJobHistoryStartDate={cronJobHistoryStartDate}
                   cronJobHistoryEndDate={cronJobHistoryEndDate}
                   cronJobHistorySetNameFilter={cronJobHistorySetNameFilter}
-                  cronJobHistorySetSuccessFilter={cronJobHistorySetSuccessFilter}
+                  cronJobHistorySetStatusFilter={cronJobHistorySetStatusFilter}
                   cronJobHistorySetStartDate={cronJobHistorySetStartDate}
                   cronJobHistorySetEndDate={cronJobHistorySetEndDate}
                   cronJobHistoryResetFilters={cronJobHistoryResetFilters}
