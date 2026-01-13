@@ -62,11 +62,11 @@ interface DashboardContentProps {
   cronJobHistoryLoading?: boolean;
   cronJobHistoryPageSize?: number;
   cronJobHistoryNameFilter?: string;
-  cronJobHistorySuccessFilter?: boolean;
+  cronJobHistoryStatusFilter?: number;
   cronJobHistoryStartDate?: string;
   cronJobHistoryEndDate?: string;
   cronJobHistorySetNameFilter?: (nameFilter?: string) => void;
-  cronJobHistorySetSuccessFilter?: (successFilter?: boolean) => void;
+  cronJobHistorySetStatusFilter?: (statusFilter?: number) => void;
   cronJobHistorySetStartDate?: (startDate?: string) => void;
   cronJobHistorySetEndDate?: (endDate?: string) => void;
   cronJobHistoryResetFilters?: () => void;
@@ -100,11 +100,11 @@ export const DashboardContent = ({
   cronJobHistoryLoading,
   cronJobHistoryPageSize,
   cronJobHistoryNameFilter,
-  cronJobHistorySuccessFilter,
+  cronJobHistoryStatusFilter,
   cronJobHistoryStartDate,
   cronJobHistoryEndDate,
   cronJobHistorySetNameFilter,
-  cronJobHistorySetSuccessFilter,
+  cronJobHistorySetStatusFilter,
   cronJobHistorySetStartDate,
   cronJobHistorySetEndDate,
   cronJobHistoryResetFilters,
@@ -329,11 +329,11 @@ export const DashboardContent = ({
                 loading={cronJobHistoryLoading || false}
                 pageSize={cronJobHistoryPageSize || 10}
                 nameFilter={cronJobHistoryNameFilter}
-                successFilter={cronJobHistorySuccessFilter}
+                statusFilter={cronJobHistoryStatusFilter}
                 startDate={cronJobHistoryStartDate}
                 endDate={cronJobHistoryEndDate}
                 setNameFilter={cronJobHistorySetNameFilter}
-                setSuccessFilter={cronJobHistorySetSuccessFilter}
+                setStatusFilter={cronJobHistorySetStatusFilter}
                 setStartDate={cronJobHistorySetStartDate}
                 setEndDate={cronJobHistorySetEndDate}
                 resetFilters={cronJobHistoryResetFilters}
