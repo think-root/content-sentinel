@@ -9,7 +9,7 @@ interface CronJobHistoryState {
   page: number;
   pageSize: number;
   nameFilter?: string;
-  successFilter?: boolean;
+  statusFilter?: number;
   sortOrder: 'asc' | 'desc';
   startDate?: string;
   endDate?: string;
@@ -49,10 +49,11 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     totalItems: cachedHistory?.total || 0,
     totalPages: cachedHistory ? Math.ceil(cachedHistory.total / parseInt(localStorage.getItem('cronHistoryPageSize') || '10', 10)) : 0,
     nameFilter: localStorage.getItem('cronHistoryJobFilter') === 'all' ? undefined : localStorage.getItem('cronHistoryJobFilter') || undefined,
-    successFilter: (() => {
+    statusFilter: (() => {
       const saved = localStorage.getItem('cronHistoryStatusFilter');
       if (!saved || saved === 'all') return undefined;
-      return saved === 'success';
+      const parsed = parseInt(saved, 10);
+      return isNaN(parsed) ? undefined : parsed;
     })()
   });
 
@@ -63,7 +64,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       startDate?: string | null;
       endDate?: string | null;
       nameFilter?: string | null;
-      successFilter?: boolean | null;
+      statusFilter?: number | null;
       sortOrder?: 'asc' | 'desc' | null;
       pageSize?: number | null;
       page?: number | null;
@@ -88,7 +89,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       const effectiveStartDate = overrides && 'startDate' in overrides ? overrides.startDate : state.startDate;
       const effectiveEndDate = overrides && 'endDate' in overrides ? overrides.endDate : state.endDate;
       const effectiveNameFilter = overrides && 'nameFilter' in overrides ? overrides.nameFilter : state.nameFilter;
-      const effectiveSuccessFilter = overrides && 'successFilter' in overrides ? overrides.successFilter : state.successFilter;
+      const effectiveStatusFilter = overrides && 'statusFilter' in overrides ? overrides.statusFilter : state.statusFilter;
       const effectiveSortOrder = overrides && 'sortOrder' in overrides ? (overrides.sortOrder ?? state.sortOrder) : state.sortOrder;
       const effectivePageSize = overrides && 'pageSize' in overrides ? (overrides.pageSize ?? state.pageSize) : state.pageSize;
 
@@ -96,7 +97,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
         effectiveNameFilter ?? undefined,
         currentPage,
         effectivePageSize,
-        effectiveSuccessFilter ?? undefined,
+        effectiveStatusFilter ?? undefined,
         effectiveSortOrder,
         effectiveStartDate ?? undefined,
         effectiveEndDate ?? undefined
@@ -195,7 +196,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     
     fetchCronJobHistory(true, false, {
       nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       sortOrder: state.sortOrder,
       startDate: state.startDate,
       endDate: state.endDate,
@@ -204,13 +205,13 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     });
   };
 
-  const setSuccessFilter = (successFilter?: boolean) => {
-    const filterValue = successFilter === undefined ? 'all' : successFilter ? 'success' : 'failed';
+  const setStatusFilter = (statusFilter?: number) => {
+    const filterValue = statusFilter === undefined ? 'all' : statusFilter.toString();
     localStorage.setItem('cronHistoryStatusFilter', filterValue);
     
     setState(prev => ({
       ...prev,
-      successFilter,
+      statusFilter,
       page: 1,
       history: [],
       hasMore: true,
@@ -219,7 +220,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     }));
     
     fetchCronJobHistory(true, false, {
-      successFilter,
+      statusFilter,
       nameFilter: state.nameFilter,
       sortOrder: state.sortOrder,
       startDate: state.startDate,
@@ -233,7 +234,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     if (state.hasMore && !state.loading) {
       fetchCronJobHistory(true, true, {
         nameFilter: state.nameFilter,
-        successFilter: state.successFilter,
+        statusFilter: state.statusFilter,
         sortOrder: state.sortOrder,
         startDate: state.startDate,
         endDate: state.endDate,
@@ -263,7 +264,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory(true, false, {
       startDate,
       nameFilter: state.nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       sortOrder: state.sortOrder,
       endDate: state.endDate,
       pageSize: state.pageSize,
@@ -291,7 +292,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory(true, false, {
       endDate,
       nameFilter: state.nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       sortOrder: state.sortOrder,
       startDate: state.startDate,
       pageSize: state.pageSize,
@@ -309,7 +310,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     setState(prev => ({
       ...prev,
       nameFilter: undefined,
-      successFilter: undefined,
+      statusFilter: undefined,
       sortOrder: 'desc',
       startDate: undefined,
       endDate: undefined,
@@ -322,7 +323,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     
     fetchCronJobHistory(true, false, {
       nameFilter: undefined,
-      successFilter: undefined,
+      statusFilter: undefined,
       sortOrder: 'desc',
       startDate: undefined,
       endDate: undefined,
@@ -346,7 +347,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory(true, false, {
       pageSize,
       nameFilter: state.nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       sortOrder: state.sortOrder,
       startDate: state.startDate,
       endDate: state.endDate,
@@ -365,7 +366,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory(true, false, {
       page,
       nameFilter: state.nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       sortOrder: state.sortOrder,
       startDate: state.startDate,
       endDate: state.endDate,
@@ -389,7 +390,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory(true, false, {
       sortOrder,
       nameFilter: state.nameFilter,
-      successFilter: state.successFilter,
+      statusFilter: state.statusFilter,
       startDate: state.startDate,
       endDate: state.endDate,
       pageSize: state.pageSize,
@@ -407,7 +408,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     totalItems: state.totalItems,
     totalPages: state.totalPages,
     nameFilter: state.nameFilter,
-    successFilter: state.successFilter,
+    statusFilter: state.statusFilter,
     startDate: state.startDate,
     endDate: state.endDate,
     newDataAvailable: state.newDataAvailable,
@@ -415,7 +416,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     fetchCronJobHistory,
     applyNewData,
     setNameFilter,
-    setSuccessFilter,
+    setStatusFilter,
     setSortOrder,
     setStartDate,
     setEndDate,
