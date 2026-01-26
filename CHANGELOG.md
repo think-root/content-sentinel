@@ -1,3 +1,17 @@
+# [1.42.0](https://github.com/think-root/content-sentinel/compare/v1.41.0...v1.42.0) (2026-01-26)
+
+
+### Bug Fixes
+
+* **ui:** align warning badge colors with tokens ([d6f8550](https://github.com/think-root/content-sentinel/commit/d6f8550a4d93f0ddc408784c771ad963dd422b2d))
+
+
+### Features
+
+* Implement detailed error reporting for repository additions and refine max repos input validation and persistence. ([c27f469](https://github.com/think-root/content-sentinel/commit/c27f4699b6c2a6470b11ec2e2195dec8b1e48f51))
+* **ui:** add warning variant to badge component ([a3f4b70](https://github.com/think-root/content-sentinel/commit/a3f4b701b52ab6c6a8d6771dd1a220575046947d))
+* **ui:** update resource link based on selection ([402df17](https://github.com/think-root/content-sentinel/commit/402df175fa5b8c38eb5f724d8a3c0d4cbd463563))
+
 # [1.41.0](https://github.com/think-root/content-sentinel/compare/v1.40.0...v1.41.0) (2026-01-09)
 
 
