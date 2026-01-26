@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, GitPullRequest, Play, X, AlertCircle, FolderDown, Zap } from 'lucide-react';
+import { Loader2, GitPullRequest, Play, AlertCircle, FolderDown, Zap } from 'lucide-react';
 import { ResultDialog } from '../common/result-dialog';
 import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '@/api';
 import { toast } from '../common/toast-config';
@@ -40,9 +40,11 @@ interface GenerateFormProps {
 
 export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormProps) {
   const [url, setUrl] = useState('');
-  const [maxRepos, setMaxRepos] = useState(() => {
+  const [maxRepos, setMaxRepos] = useState<number | undefined>(() => {
     const saved = localStorage.getItem('dashboardMaxRepos');
-    return saved ? parseInt(saved, 10) : 5;
+    if (!saved) return 5;
+    const parsed = parseInt(saved, 10);
+    return Number.isNaN(parsed) ? 5 : parsed;
   });
   const [since, setSince] = useState(() => {
     const saved = localStorage.getItem('dashboardSince');
@@ -106,7 +108,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       const savedPeriod = localStorage.getItem('dashboardPeriod') || 'past_24_hours';
       const savedLanguage = localStorage.getItem('dashboardLanguage') || 'All';
 
-      setMaxRepos(parseInt(savedMaxRepos, 10));
+      const parsedMaxRepos = parseInt(savedMaxRepos, 10);
+      setMaxRepos(Number.isNaN(parsedMaxRepos) ? 5 : parsedMaxRepos);
       setSince(savedSince);
       setSpokenLanguageCode(savedLanguageCode);
       setResource(savedResource);
@@ -142,6 +145,11 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
   const handleSaveSettings = useCallback(async () => {
     try {
+      // Don't save if maxRepos is undefined, NaN, or out of bounds
+      if (maxRepos === undefined || Number.isNaN(maxRepos) || maxRepos < 1 || maxRepos > 100) {
+        return;
+      }
+
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
       const response = await updateCollectSettings({
         max_repos: maxRepos,
@@ -173,12 +181,17 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   useEffect(() => {
     if (!isLoaded) return;
 
+    // Don't attempt to save if maxRepos is invalid
+    if (maxRepos === undefined || Number.isNaN(maxRepos) || maxRepos < 1 || maxRepos > 100) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       handleSaveSettings();
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [handleSaveSettings, isLoaded]);
+  }, [handleSaveSettings, isLoaded, maxRepos]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,11 +229,23 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           setNotAddedRepos(notAdded as string[]);
 
           const map: Record<string, string> = {};
-          if (response.error_message && response.error_message.trim() !== '') {
-            (response.dont_added || []).forEach(repo => {
-              map[repo] = response.error_message!;
+
+          // Map detailed errors if available
+          if (response.error_details) {
+            Object.entries(response.error_details).forEach(([repoUrl, detail]) => {
+              map[repoUrl] = detail.message;
             });
           }
+
+          // Fallback to error_message or default if detailed error missing
+          if (Object.keys(map).length === 0 && response.error_message && response.error_message.trim() !== '') {
+            (response.dont_added || []).forEach(repo => {
+              if (!map[repo]) {
+                map[repo] = response.error_message!;
+              }
+            });
+          }
+
           setErrorMessages(map);
 
           setDialogContext('manual');
@@ -251,7 +276,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       try {
         setIsAutoLoading(true);
         await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
-        const response = await onAutoGenerate(maxRepos, resource, since, spokenLanguageCode, period, language);
+        const response = await onAutoGenerate(maxRepos || 5, resource, since, spokenLanguageCode, period, language);
 
         // Always set added and notAdded from the response
         const added = response.added || [];
@@ -262,9 +287,19 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
         // Build errorMessages map and set it
         const map: Record<string, string> = {};
+
+        // Map detailed errors if available
+        if (response.error_details) {
+          Object.entries(response.error_details).forEach(([repoUrl, detail]) => {
+            map[repoUrl] = detail.message;
+          });
+        }
+
         if (response.error_message && response.error_message.trim() !== '') {
           (response.dont_added || []).forEach(repo => {
-            map[repo] = response.error_message!;
+            if (!map[repo]) {
+              map[repo] = response.error_message!;
+            }
           });
         }
         setErrorMessages(map);
@@ -318,7 +353,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   name="url"
                   id="url"
                   value={url}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setUrl(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setUrl(e.target.value);
+                  }}
                   disabled={isManualLoading}
                   rows={1}
                   style={{
@@ -328,7 +365,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     overflow: 'auto',
                     height: 'auto'
                   }}
-                  className={`flex-1 min-w-0 block w-full pr-8 ${isManualLoading ? 'bg-muted cursor-not-allowed' : 'bg-background'}`}
+                  className={`flex-1 min-w-0 block w-full pr-2 ${isManualLoading ? 'bg-muted cursor-not-allowed' : 'bg-background'}`}
                   placeholder="https://github.com/user/repo1"
                   onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -342,25 +379,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     }
                   }}
                 />
-                {url && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setUrl('');
-                      const textarea = document.getElementById('url') as HTMLTextAreaElement;
-                      if (textarea) {
-                        textarea.style.height = '38px';
-                      }
-                    }}
-                    className="absolute right-0 top-0 h-full px-2 flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                    title="Clear input"
-                    disabled={isManualLoading}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+
               </div>
             </div>
             <div className="space-y-2">
@@ -381,6 +400,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           </form>
         </CardContent>
       </Card>
+
 
       {/* Collect Posts Card */}
       <Card>
@@ -415,12 +435,23 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   type="number"
                   name="maxRepos"
                   id="maxRepos"
-                  value={maxRepos}
+                  value={maxRepos || ''}
                   onChange={(e) => {
-                    const value = Number(e.target.value);
-                    setMaxRepos(value);
-                    localStorage.setItem('dashboardMaxRepos', value.toString());
-                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                    const numValue = e.target.valueAsNumber;
+                    if (!Number.isNaN(numValue) && numValue >= 1 && numValue <= 100) {
+                      // Valid number - set state and persist to localStorage
+                      setMaxRepos(numValue);
+                      localStorage.setItem('dashboardMaxRepos', numValue.toString());
+                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                    } else if (e.target.value === '') {
+                      // Empty field - set to undefined, don't persist
+                      setMaxRepos(undefined);
+                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                    } else {
+                      // Invalid input (NaN or out of bounds) - set to undefined, don't persist
+                      setMaxRepos(undefined);
+                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                    }
                   }}
                   min="1"
                   max="100"

@@ -56,14 +56,14 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
               <ul className="space-y-1 text-sm">
                 {added.map((repo: string, index: number) => (
                   <li 
-                  key={index} 
-                    className="bg-success/20 text-success p-2 rounded-md"
+                    key={index} 
+                    className="bg-success/20 text-success p-2 rounded-md mr-1"
                   >
                   <a 
                     href={repo} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="hover:underline"
+                      className="hover:underline break-all"
                   >
                     {repo.replace('https://github.com/', '')}
                   </a>
@@ -85,19 +85,21 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
                 {notAdded.map((repo, index) => (
                   <li 
                     key={index} 
-                    className="bg-destructive/20 text-destructive p-2 rounded-md"
+                    className="bg-destructive/10 p-3 rounded-md mr-1 flex flex-col gap-1 border border-destructive/20"
                   >
-                    <a
-                      href={repo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline"
-                    >
-                      {repo.replace('https://github.com/', '')}
-                    </a>
-                    <span className="text-xs ml-2">
-                      ({errorMessages?.[repo] || "Repository already exists in database"})
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <a
+                        href={repo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline break-all font-medium text-foreground"
+                      >
+                        {repo.replace('https://github.com/', '')}
+                      </a>
+                    </div>
+                    <div className="text-sm dark:text-red-400 text-red-600 flex items-start gap-2">
+                      <span>({errorMessages?.[repo] || "Repository already exists in database"})</span>
+                    </div>
                   </li>
                 ))}
               </ul>
