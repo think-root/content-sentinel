@@ -84,23 +84,21 @@ export function OverviewCharts({
   
   // 1. Job Performance (Horizontal Bar)
   const jobPerformanceData = useMemo(() => {
-    const stats: Record<string, { name: string; success: number; failed: number }> = {};
+    const stats: Record<string, { name: string; success: number; failed: number; partial: number }> = {};
     historyData.forEach(job => {
-      if (!stats[job.name]) stats[job.name] = { name: job.name, success: 0, failed: 0 };
+      if (!stats[job.name]) stats[job.name] = { name: job.name, success: 0, failed: 0, partial: 0 };
       if (job.status === 1) stats[job.name].success++;
       else if (job.status === 0) stats[job.name].failed++;
-      // Treat partial (2) as success for simple graph or ignore? Let's count as success for now or add extra category
-      else if (job.status === 2) stats[job.name].success++; 
+      else if (job.status === 2) stats[job.name].partial++; 
     });
     return Object.values(stats);
   }, [historyData]);
 
   // 2. Timeline Activity (Area Chart)
   const timelineData = useMemo(() => {
-    const groupedDetails: Record<string, { date: string; success: number; failed: number }> = {};
+    const groupedDetails: Record<string, { date: string; success: number; failed: number; partial: number }> = {};
     
     // Fill in gaps if needed, but for now lets just group existing data
-    // For a smoother chart, we should ideally pre-fill all time slots
     
     historyData.forEach(job => {
       const dateObj = new Date(job.timestamp);
@@ -118,22 +116,28 @@ export function OverviewCharts({
         displayDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       }
 
-      if (!groupedDetails[key]) groupedDetails[key] = { date: displayDate, success: 0, failed: 0 };
+      if (!groupedDetails[key]) groupedDetails[key] = { date: displayDate, success: 0, failed: 0, partial: 0 };
       
-      if (job.status === 1 || job.status === 2) groupedDetails[key].success++;
-      else groupedDetails[key].failed++;
+      if (job.status === 1) groupedDetails[key].success++;
+      else if (job.status === 0) groupedDetails[key].failed++;
+      else if (job.status === 2) groupedDetails[key].partial++;
     });
 
-    return Object.values(groupedDetails); // Recharts handles sorting if array is sorted, but our object keys iteration order isn't guaranteed. 
-    // Since we fetched ASC from API, usually it's fine, but better sort by timestamp implied by key/date? 
-    // Simpler: Just rely on API order for now.
+    return Object.values(groupedDetails);
   }, [historyData, timeRange]);
 
   // 3. KPI Calculations based on History Range
   const periodStats = useMemo(() => {
     const total = historyData.length;
-    const success = historyData.filter(h => h.status === 1 || h.status === 2).length;
+    const success = historyData.filter(h => h.status === 1).length;
     const failed = historyData.filter(h => h.status === 0).length;
+    const partial = historyData.filter(h => h.status === 2).length;
+
+    // Success rate usually counts full success, but depends on business logic. 
+    // Let's count partial as 0.5 or just exclude?
+    // Usually rate = (success + partial) / total is optimistic, success / total is strict.
+    // User wants to see partials, let's keep strict success rate but maybe tooltip explains?
+    // Let's stick to strict success for the big number.
     const rate = total > 0 ? (success / total) * 100 : 0;
     
     // Parse logs for business metrics
@@ -141,19 +145,16 @@ export function OverviewCharts({
     let postedCount = 0;
 
     historyData.forEach(h => {
+      // Allow partials to count for metrics if they did something
       if (h.status !== 1 && h.status !== 2) return;
 
       if (h.name === 'collect') {
-        // Try to parse "collected X repositories" or similar patterns
         const match = h.output?.match(/collected\s+(\d+)/i) || h.output?.match(/(\d+)\s+repo/i);
         if (match && match[1]) {
           collectedCount += parseInt(match[1], 10);
-        } else {
-          // If no number found but success, assume at least something happened? 
-          // Or strictly rely on parsing. Let's assume 0 if not parsed to be safe.
         }
       } else if (h.name === 'message') {
-        // For message, assuming each success run is a post action
+        // For message, assuming each success/partial run is a post action
         postedCount++;
       }
     });
@@ -162,6 +163,7 @@ export function OverviewCharts({
       total,
       success,
       failed,
+      partial,
       rate: rate.toFixed(1),
       collected: collectedCount,
       posted: postedCount
@@ -273,7 +275,9 @@ export function OverviewCharts({
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-xs text-muted-foreground">
-                  <span className="text-success font-medium">{periodStats.success}</span>&nbsp;successful
+                    <span className="text-success font-medium">{periodStats.success}</span>&nbsp;success
+                    <span className="mx-1">/</span>
+                    <span className="text-warning font-medium">{periodStats.partial}</span>&nbsp;partial
                   <span className="mx-1">/</span>
                   <span className="text-destructive font-medium">{periodStats.failed}</span>&nbsp;failed
                 </div>
@@ -347,6 +351,10 @@ export function OverviewCharts({
                           <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0}/>
                         </linearGradient>
+                          <linearGradient id="colorPartial" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0} />
+                          </linearGradient>
                         <linearGradient id="colorFailed" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
@@ -380,6 +388,15 @@ export function OverviewCharts({
                       />
                       <Area 
                         type="monotone" 
+                          dataKey="partial"
+                          stroke="hsl(var(--warning))"
+                          fillOpacity={1}
+                          fill="url(#colorPartial)"
+                          name="Partial"
+                          strokeWidth={2}
+                        />
+                        <Area
+                          type="monotone" 
                         dataKey="failed" 
                         stroke="hsl(var(--destructive))" 
                         fillOpacity={1} 
@@ -426,6 +443,12 @@ export function OverviewCharts({
                           name="Success" 
                         />
                         <Bar 
+                            dataKey="partial"
+                            stackId="a"
+                            fill="hsl(var(--warning))"
+                            name="Partial"
+                          />
+                          <Bar 
                           dataKey="failed" 
                           stackId="a" 
                           fill="hsl(var(--destructive))" 
