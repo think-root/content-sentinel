@@ -1,3 +1,21 @@
+# [1.43.0](https://github.com/think-root/content-sentinel/compare/v1.42.0...v1.43.0) (2026-02-01)
+
+
+### Bug Fixes
+
+* Correct string interpolation for hourly chart keys and display dates. ([0bc75ca](https://github.com/think-root/content-sentinel/commit/0bc75cadcdb9eebb2e81fc91c4ad19c1b41f6950))
+
+
+### Features
+
+* Add sorting for API configurations, prioritizing enabled configs alphabetically, then disabled configs alphabetically. ([2f5f97d](https://github.com/think-root/content-sentinel/commit/2f5f97d375c8846f495357ae69d74db353085933))
+* Add system overview charts to visualize cron job history and performance metrics. ([52eca6e](https://github.com/think-root/content-sentinel/commit/52eca6eac6d502ad647b30b2edc865ea047f13bf))
+* Implement API configuration caching using localStorage in `useApiConfigs` to improve performance and reduce redundant fetches. ([a9704b2](https://github.com/think-root/content-sentinel/commit/a9704b22ff7f0494e74919328bd97deacf00f426))
+* Implement UI for managing API integrations including add, edit, delete, and toggle functionality. ([844964f](https://github.com/think-root/content-sentinel/commit/844964f339bce4a401141b76b6d123ac17b616ee))
+* Integrate overview history refresh into the data refresh hook. ([0895af0](https://github.com/think-root/content-sentinel/commit/0895af08acc5f582d130fa84ce4b0cba56d0c062))
+* Introduce `useOverviewHistory` hook to centralize overview chart data fetching, state management, and caching. ([f08791e](https://github.com/think-root/content-sentinel/commit/f08791e66c2d21ef85d7bc7efa22f0d203ab1c2b))
+* Introduce and visualize a distinct 'partial' job status across overview charts and KPI calculations. ([23b4416](https://github.com/think-root/content-sentinel/commit/23b4416380d56d4de0ee1a8a1282beba7c094c2e))
+
 # [1.42.0](https://github.com/think-root/content-sentinel/compare/v1.41.0...v1.42.0) (2026-01-26)
 
 
