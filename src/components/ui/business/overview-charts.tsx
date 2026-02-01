@@ -75,8 +75,8 @@ export function OverviewCharts({
 
       if (timeRange === '24h') {
         // Hourly
-        key = `\${dateObj.getFullYear()}-\${dateObj.getMonth()}-\${dateObj.getDate()}-\${dateObj.getHours()}`;
-        displayDate = `\${dateObj.getHours()}:00`;
+        key = `${dateObj.getFullYear()}-${dateObj.getMonth()}-${dateObj.getDate()}-${dateObj.getHours()}`;
+        displayDate = `${dateObj.getHours()}:00`;
       } else {
         // Daily
         key = dateObj.toLocaleDateString();
