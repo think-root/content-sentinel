@@ -4,6 +4,7 @@ import { RepositoryList } from '../business/repository-list';
 import { GenerateForm } from '../business/generate-form';
 import { PromptSettings } from '../business/prompt-settings';
 import { CronJobs } from '../business/cron-jobs';
+import { ApiConfigs } from '../business/api-configs';
 import { CronJobHistory } from '../business/cron-job-history';
 import { RepositoryPreview } from '../business/repository-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base/tabs';
@@ -13,6 +14,7 @@ import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import type { Repository } from '../../../types';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
+import { useApiConfigs } from '../../../hooks/useApiConfigs';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 
@@ -118,11 +120,22 @@ export const DashboardContent = ({
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
+  // API Configs hook for Integrations tab
+  const {
+    configs: apiConfigs,
+    loading: apiConfigsLoading,
+    saving: apiConfigsSaving,
+    deleting: apiConfigsDeleting,
+    addConfig: addApiConfig,
+    editConfig: editApiConfig,
+    removeConfig: removeApiConfig,
+  } = useApiConfigs({ setErrorWithScroll: () => { } });
+
   // Track unsaved changes in AI Settings tab
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
   // Ordered tabs for swipe navigation (readonly tuple for type-safety)
-  const orderedTabs = ['overview','repositories','automation','settings'] as const;
+  const orderedTabs = ['overview', 'repositories', 'automation', 'integrations', 'settings'] as const;
 
   // Mobile detection flag
   const [isMobile, setIsMobile] = useState(false);
@@ -211,6 +224,9 @@ export const DashboardContent = ({
             <TabsTrigger value="automation" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
               Cron
             </TabsTrigger>
+            <TabsTrigger value="integrations" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
+              APIs
+            </TabsTrigger>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -231,7 +247,7 @@ export const DashboardContent = ({
         </div>
 
         {/* Desktop Tab Navigation - Grid Layout */}
-        <TabsList className="hidden md:grid w-full grid-cols-4 gap-2 mb-4 sm:mb-6">
+        <TabsList className="hidden md:grid w-full grid-cols-5 gap-2 mb-4 sm:mb-6">
           <TabsTrigger value="overview">
             Overview
           </TabsTrigger>
@@ -240,6 +256,9 @@ export const DashboardContent = ({
           </TabsTrigger>
           <TabsTrigger value="automation">
             Cron
+          </TabsTrigger>
+          <TabsTrigger value="integrations">
+            Integrations
           </TabsTrigger>
           <TooltipProvider>
             <Tooltip>
@@ -347,6 +366,20 @@ export const DashboardContent = ({
                 isApiReady={isApiReady}
               />
             )}
+          </TabsContent>
+
+          {/* Integrations Tab */}
+          <TabsContent value="integrations" className="space-y-6">
+            <ApiConfigs
+              configs={apiConfigs}
+              loading={apiConfigsLoading}
+              saving={apiConfigsSaving}
+              deleting={apiConfigsDeleting}
+              isApiReady={isApiReady}
+              onAdd={addApiConfig}
+              onEdit={editApiConfig}
+              onDelete={removeApiConfig}
+            />
           </TabsContent>
 
           {/* Settings Tab - forceMount to preserve state when switching tabs */}

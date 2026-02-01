@@ -6,7 +6,7 @@ interface UseTabPersistenceReturn {
 }
 
 const TAB_STORAGE_KEY = 'dashboardActiveTab';
-const VALID_TABS = ['overview', 'repositories', 'automation', 'settings'] as const;
+const VALID_TABS = ['overview', 'repositories', 'automation', 'integrations', 'settings'] as const;
 
 // Helper function to get initial tab synchronously
 const getInitialTab = (defaultTab: string): string => {
