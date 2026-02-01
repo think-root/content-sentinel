@@ -1,5 +1,6 @@
 import type { Repository } from '../types';
 import type { CronJob, CronJobHistory } from '../api/index';
+import type { ApiConfig } from '../api/api-configs';
 
 interface RepositoriesCache {
   repositories: Repository[];
@@ -32,6 +33,11 @@ interface CronJobsCache {
 interface CronJobHistoryCache {
   history: CronJobHistory[];
   total: number;
+  timestamp: number;
+}
+
+interface ApiConfigsCache {
+  configs: ApiConfig[];
   timestamp: number;
 }
 
@@ -146,6 +152,30 @@ export const getCronJobHistoryFromCache = (): CacheResult<CronJobHistoryCache> |
   }
 };
 
+export const saveApiConfigsToCache = (data: ApiConfigsCache) => {
+  localStorage.setItem('cache_api_configs', JSON.stringify({
+    ...data,
+    timestamp: Date.now()
+  }));
+};
+
+export const getApiConfigsFromCache = (): CacheResult<ApiConfigsCache> | null => {
+  const cachedData = localStorage.getItem('cache_api_configs');
+  if (!cachedData) return null;
+
+  try {
+    const data = JSON.parse(cachedData) as ApiConfigsCache;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+
+    return {
+      data,
+      isStale
+    };
+  } catch {
+    return null;
+  }
+};
+
 export const clearAllCaches = () => {
   const clearedCaches: string[] = [];
   const cacheKeys = [
@@ -153,6 +183,7 @@ export const clearAllCaches = () => {
     'cache_previews',
     'cache_cron_jobs',
     'cache_cron_job_history',
+    'cache_api_configs',
     'cache_repositories_key',
     'promptSettings',
     'language_validation_cache'

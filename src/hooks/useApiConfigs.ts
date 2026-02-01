@@ -9,6 +9,7 @@ import {
   deleteApiConfig,
 } from '@/api/api-configs';
 import { isApiConfigured } from '@/utils/api-settings';
+import { saveApiConfigsToCache, getApiConfigsFromCache } from '@/utils/cache-utils';
 
 interface UseApiConfigsOptions {
   isCacheBust?: boolean;
@@ -29,12 +30,18 @@ interface UseApiConfigsReturn {
 export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigsReturn => {
   const { isCacheBust = false, setErrorWithScroll } = options;
   
-  const [configs, setConfigs] = useState<ApiConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Get cached data on initial load
+  const cachedResult = isCacheBust ? null : getApiConfigsFromCache();
+  const cachedConfigs = cachedResult?.data?.configs;
+
+  const [configs, setConfigs] = useState<ApiConfig[]>(cachedConfigs || []);
+  // Only show loading if there's no cached data
+  const [loading, setLoading] = useState(!cachedConfigs || cachedConfigs.length === 0);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   
   const hasFetched = useRef(false);
+  const isFetching = useRef(false);
 
   const fetchConfigs = useCallback(async (forceFetch = false) => {
     const isConfigured = isApiConfigured();
@@ -44,20 +51,46 @@ export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigs
       return;
     }
 
+    // Prevent concurrent fetches
+    if (isFetching.current) {
+      return;
+    }
+
     // Skip if already fetched unless force fetch
     if (hasFetched.current && !forceFetch && !isCacheBust) {
       return;
     }
 
-    setLoading(true);
+    // Determine if this is a background fetch (has cached data)
+    const cachedData = getApiConfigsFromCache();
+    const isBackgroundFetch = !!cachedData?.data?.configs && !forceFetch;
+
+    // Only set loading true if no cache
+    if (!isBackgroundFetch) {
+      setLoading(true);
+    }
+
+    isFetching.current = true;
     try {
       const data = await getApiConfigs();
+
+      // Update state with new data
       setConfigs(data);
       hasFetched.current = true;
+
+      // Save to cache
+      saveApiConfigsToCache({
+        configs: data,
+        timestamp: Date.now()
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch API configs';
-      setErrorWithScroll?.(errorMessage, 'api-configs-fetch-error');
+      // Only show error if not a background fetch
+      if (!isBackgroundFetch) {
+        setErrorWithScroll?.(errorMessage, 'api-configs-fetch-error');
+      }
     } finally {
+      isFetching.current = false;
       setLoading(false);
     }
   }, [isCacheBust, setErrorWithScroll]);
@@ -66,7 +99,11 @@ export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigs
     setSaving(true);
     try {
       const newConfig = await createApiConfig(config);
-      setConfigs(prev => [...prev, newConfig]);
+      setConfigs(prev => {
+        const updated = [...prev, newConfig];
+        saveApiConfigsToCache({ configs: updated, timestamp: Date.now() });
+        return updated;
+      });
       return newConfig;
     } finally {
       setSaving(false);
@@ -80,7 +117,11 @@ export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigs
     setSaving(true);
     try {
       const updatedConfig = await updateApiConfig(name, updates);
-      setConfigs(prev => prev.map(c => c.name === name ? updatedConfig : c));
+      setConfigs(prev => {
+        const updated = prev.map(c => c.name === name ? updatedConfig : c);
+        saveApiConfigsToCache({ configs: updated, timestamp: Date.now() });
+        return updated;
+      });
       return updatedConfig;
     } finally {
       setSaving(false);
@@ -91,7 +132,11 @@ export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigs
     setDeleting(true);
     try {
       await deleteApiConfig(name);
-      setConfigs(prev => prev.filter(c => c.name !== name));
+      setConfigs(prev => {
+        const updated = prev.filter(c => c.name !== name);
+        saveApiConfigsToCache({ configs: updated, timestamp: Date.now() });
+        return updated;
+      });
     } finally {
       setDeleting(false);
     }
