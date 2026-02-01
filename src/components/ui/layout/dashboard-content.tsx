@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stats } from '../business/stats';
+import { OverviewCharts } from '../business/overview-charts';
 import { RepositoryList } from '../business/repository-list';
 import { GenerateForm } from '../business/generate-form';
 import { PromptSettings } from '../business/prompt-settings';
@@ -288,15 +288,7 @@ export const DashboardContent = ({
         >
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Repository Statistics */}
-            <Stats
-              total={stats.all}
-              posted={stats.posted}
-              unposted={stats.unposted}
-              loading={statsLoading}
-            />
-
-            {/* Repository Previews */}
+            {/* Repository Previews - Next/Latest post FIRST */}
             <div className="grid md:grid-cols-2 gap-6">
               <RepositoryPreview
                 title="Next post"
@@ -311,6 +303,17 @@ export const DashboardContent = ({
                 isApiReady={isApiReady}
               />
             </div>
+
+            {/* Comprehensive Dashboard Charts */}
+            <OverviewCharts
+              posted={stats.posted}
+              unposted={stats.unposted}
+              statsLoading={statsLoading}
+              cronJobs={cronJobs}
+              cronJobsLoading={cronJobsLoading}
+              apiConfigs={apiConfigs}
+              apiConfigsLoading={apiConfigsLoading}
+            />
           </TabsContent>
 
           {/* Repositories Tab */}
