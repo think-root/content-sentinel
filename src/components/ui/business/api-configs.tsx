@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/date-format';
 import { toast } from '../common/toast-config';
@@ -45,6 +45,18 @@ export const ApiConfigs = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [configToDelete, setConfigToDelete] = useState<string | null>(null);
   const [togglingStatus, setTogglingStatus] = useState<string | null>(null);
+
+  // Sort configs: enabled first (alphabetically), then disabled (alphabetically)
+  const sortedConfigs = useMemo(() => {
+    return [...configs].sort((a, b) => {
+      // First, sort by enabled status (enabled first)
+      if (a.enabled !== b.enabled) {
+        return a.enabled ? -1 : 1;
+      }
+      // Then sort alphabetically by name
+      return a.name.localeCompare(b.name);
+    });
+  }, [configs]);
 
   const handleAddClick = () => {
     setEditingConfig(null);
@@ -120,8 +132,8 @@ export const ApiConfigs = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {configs.length > 0 ? (
-          configs.map((config) => (
+        {sortedConfigs.length > 0 ? (
+          sortedConfigs.map((config) => (
             <TableRow key={config.name} className="group">
               <TableCell className="font-medium">
                 {config.name}
@@ -193,11 +205,11 @@ export const ApiConfigs = ({
 
   const renderMobileView = () => (
     <div className="space-y-4">
-      {configs.length > 0 ? (
-        configs.map((config, index) => (
+      {sortedConfigs.length > 0 ? (
+        sortedConfigs.map((config, index) => (
           <div
             key={config.name}
-            className={`bg-card border ${index !== configs.length - 1 ? 'border-b' : ''} p-4 rounded-lg`}
+            className={`bg-card border ${index !== sortedConfigs.length - 1 ? 'border-b' : ''} p-4 rounded-lg`}
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
