@@ -111,17 +111,6 @@ For successful use, you must fill in some settings that can be found in the site
 
 All settings are automatically saved and persisted in your browser's local storage.
 
-## Development
-
-1. Install the development dependencies and start the development server:
-
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-2. Access the application at http://localhost:5173/dashboard/
-
 ## License
 
 This project is licensed under the terms found in the [LICENSE](LICENSE) file in the repository root.
