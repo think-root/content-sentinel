@@ -100,7 +100,8 @@ function App() {
     timeRange: overviewTimeRange,
     setTimeRange: setOverviewTimeRange,
     historyData: overviewHistoryData,
-    loading: overviewLoading
+    loading: overviewLoading,
+    refresh: refreshOverviewHistory
   } = useOverviewHistory({ isApiReady });
 
   const {
@@ -114,6 +115,7 @@ function App() {
     fetchPreviews,
     fetchCronJobs,
     fetchCronJobHistory,
+    refreshOverviewHistory,
     setLoading,
     setErrorWithScroll,
     applyRepoNewData,

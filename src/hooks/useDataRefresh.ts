@@ -16,6 +16,7 @@ interface UseDataRefreshProps {
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   fetchCronJobs?: (forceFetch?: boolean) => Promise<void>;
   fetchCronJobHistory?: (forceFetch?: boolean) => Promise<void>;
+  refreshOverviewHistory?: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   setErrorWithScroll: (errorMessage: string, toastId?: string) => void;
   applyRepoNewData?: () => void;
@@ -33,6 +34,7 @@ export const useDataRefresh = ({
   fetchPreviews,
   fetchCronJobs,
   fetchCronJobHistory,
+  refreshOverviewHistory,
   setLoading,
   setErrorWithScroll,
   applyRepoNewData,
@@ -144,7 +146,17 @@ export const useDataRefresh = ({
           }
         })() : null;
 
-        const tasks = [repoTask, previewsTask, cronJobsTask, cronHistoryTask].filter(Boolean) as Promise<void>[];
+        const overviewHistoryTask = refreshOverviewHistory ? (async () => {
+          try {
+            await refreshOverviewHistory();
+          } catch (error: any) {
+            if (!(error?.status === 429 || error?.statusCode === 429)) {
+              throw error;
+            }
+          }
+        })() : null;
+
+        const tasks = [repoTask, previewsTask, cronJobsTask, cronHistoryTask, overviewHistoryTask].filter(Boolean) as Promise<void>[];
 
         const results = await Promise.allSettled(tasks);
 
@@ -208,6 +220,7 @@ export const useDataRefresh = ({
       fetchPreviews,
       fetchCronJobs,
       fetchCronJobHistory,
+      refreshOverviewHistory,
       setErrorWithScroll,
       setLoading,
     ]
