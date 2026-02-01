@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { 
   ResponsiveContainer, Tooltip as RechartsTooltip, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend 
@@ -8,8 +8,9 @@ import { Skeleton } from '../common/skeleton';
 import { 
   Activity, Clock, Server, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
-import { getCronJobHistory, type CronJob, type CronJobHistory } from '../../../api/index'; // Ensure path is correct
+import { type CronJob, type CronJobHistory } from '../../../api/index';
 import type { ApiConfig } from '../../../api/api-configs';
+import type { TimeRange } from '../../../hooks/useOverviewHistory';
 
 interface OverviewChartsProps {
   posted: number;
@@ -19,9 +20,11 @@ interface OverviewChartsProps {
   cronJobsLoading?: boolean;
   apiConfigs?: ApiConfig[];
   apiConfigsLoading?: boolean;
+  timeRange: TimeRange;
+  setTimeRange: (range: TimeRange) => void;
+  historyData: CronJobHistory[];
+  historyLoading: boolean;
 }
-
-type TimeRange = '24h' | '7d' | '30d' | '90d';
 
 export function OverviewCharts({
   posted,
@@ -31,48 +34,12 @@ export function OverviewCharts({
   cronJobsLoading = false,
   apiConfigs = [],
   apiConfigsLoading = false,
+  timeRange,
+  setTimeRange,
+  historyData,
+  historyLoading
 }: OverviewChartsProps) {
-  const [timeRange, setTimeRange] = useState<TimeRange>('7d');
-  const [historyData, setHistoryData] = useState<CronJobHistory[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
-  // Fetch history based on time range
-  useEffect(() => {
-    const fetchData = async () => {
-      setHistoryLoading(true);
-      try {
-        const now = new Date();
-        const startDate = new Date();
-        
-        switch (timeRange) {
-          case '24h': startDate.setDate(now.getDate() - 1); break;
-          case '7d': startDate.setDate(now.getDate() - 7); break;
-          case '30d': startDate.setDate(now.getDate() - 30); break;
-          case '90d': startDate.setDate(now.getDate() - 90); break;
-        }
-
-        // Fetch mostly more data than we strictly need to ensure good graphs, 
-        // using the specific API filter
-        const response = await getCronJobHistory(
-          undefined, // name
-          1, // page
-          500, // limit - create a larger limit for charts
-          undefined, // status
-          'asc', // sort asc for charts
-          startDate.toISOString(), // start_date
-          now.toISOString() // end_date
-        );
-        
-        setHistoryData(response.data);
-      } catch (error) {
-        console.error("Failed to fetch chart data:", error);
-      } finally {
-        setHistoryLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [timeRange]);
+  // Local state removed, using props from parent hook
 
   // --- Derived Stats (Memoized) ---
 

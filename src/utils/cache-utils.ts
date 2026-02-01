@@ -41,6 +41,12 @@ interface ApiConfigsCache {
   timestamp: number;
 }
 
+interface OverviewHistoryCache {
+  history: CronJobHistory[];
+  timeRange: string;
+  timestamp: number;
+}
+
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
 // Check if cache is expired without deleting the data
@@ -176,6 +182,38 @@ export const getApiConfigsFromCache = (): CacheResult<ApiConfigsCache> | null =>
   }
 };
 
+export const saveOverviewHistoryToCache = (data: OverviewHistoryCache) => {
+  localStorage.setItem('cache_overview_history', JSON.stringify({
+    ...data,
+    timestamp: Date.now()
+  }));
+};
+
+export const getOverviewHistoryFromCache = (): CacheResult<OverviewHistoryCache> | null => {
+  const cachedData = localStorage.getItem('cache_overview_history');
+  if (!cachedData) return null;
+
+  try {
+    const data = JSON.parse(cachedData) as OverviewHistoryCache;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+
+    return {
+      data,
+      isStale
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const saveOverviewTimeRangePreference = (range: string) => {
+  localStorage.setItem('pref_overview_time_range', range);
+};
+
+export const getOverviewTimeRangePreference = (): string | null => {
+  return localStorage.getItem('pref_overview_time_range');
+};
+
 export const clearAllCaches = () => {
   const clearedCaches: string[] = [];
   const cacheKeys = [
@@ -183,7 +221,9 @@ export const clearAllCaches = () => {
     'cache_previews',
     'cache_cron_jobs',
     'cache_cron_job_history',
+    'cache_cron_job_history',
     'cache_api_configs',
+    'cache_overview_history',
     'cache_repositories_key',
     'promptSettings',
     'language_validation_cache'

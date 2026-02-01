@@ -15,6 +15,7 @@ import type { Repository } from '../../../types';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
+import type { TimeRange } from '../../../hooks/useOverviewHistory';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 
@@ -79,6 +80,10 @@ interface DashboardContentProps {
   cronJobHistoryTotalPages?: number;
   cronJobHistoryCurrentPage?: number;
   cronJobHistorySetPage?: (page: number) => void;
+  overviewTimeRange: TimeRange;
+  setOverviewTimeRange: (range: TimeRange) => void;
+  overviewHistoryData: CronJobHistoryType[];
+  overviewLoading: boolean;
 }
 
 export const DashboardContent = ({
@@ -116,7 +121,11 @@ export const DashboardContent = ({
   cronJobHistoryTotalItems,
   cronJobHistoryTotalPages,
   cronJobHistoryCurrentPage,
-  cronJobHistorySetPage
+  cronJobHistorySetPage,
+  overviewTimeRange,
+  setOverviewTimeRange,
+  overviewHistoryData,
+  overviewLoading
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
@@ -313,6 +322,10 @@ export const DashboardContent = ({
               cronJobsLoading={cronJobsLoading}
               apiConfigs={apiConfigs}
               apiConfigsLoading={apiConfigsLoading}
+              timeRange={overviewTimeRange}
+              setTimeRange={setOverviewTimeRange}
+              historyData={overviewHistoryData}
+              historyLoading={overviewLoading}
             />
           </TabsContent>
 

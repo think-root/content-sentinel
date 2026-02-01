@@ -12,6 +12,7 @@ import { useCache } from './hooks/useCache';
 import { useDataRefresh } from './hooks/useDataRefresh';
 import { useGenerateHandlers } from './hooks/useGenerateHandlers';
 import { ToastConfig } from './components/ui/common/toast-config';
+import { useOverviewHistory } from './hooks/useOverviewHistory';
 import { DashboardLayout } from './components/ui/layout/dashboard-layout';
 import { DashboardContent } from './components/ui/layout/dashboard-content';
 import { SettingsModal } from './components/ui/common/settings-modal';
@@ -96,6 +97,13 @@ function App() {
   } = useCronJobHistory({ isCacheBust, setErrorWithScroll });
 
   const {
+    timeRange: overviewTimeRange,
+    setTimeRange: setOverviewTimeRange,
+    historyData: overviewHistoryData,
+    loading: overviewLoading
+  } = useOverviewHistory({ isApiReady });
+
+  const {
     fetchSettings: fetchPromptSettings
   } = usePromptSettings();
 
@@ -118,6 +126,28 @@ function App() {
     cronJobHistoryNewDataAvailable
   });
 
+  // Background refresh for Overview when it's active is handled by internal useEffect in the hook 
+  // or we can add it to useDataRefresh if we want global refresh button to trigger it.
+  // For now, let's just let it be persistent.
+  // Actually, handleManualRefresh calls fetch functions. We should probably add refreshOverview to it.
+  
+  // Update useDataRefresh to accept refreshOverview? Or just wrap it here?
+  // useDataRefresh takes a list of fetchers.
+  // fetchRepositories, fetchPreviews, etc return Promise<void>.
+  // refreshOverview returns Promise<void>.
+  // So we can pass it if we update useDataRefresh signature, or just manually call it in handleManualRefresh wrapper?
+  // useDataRefresh returns handleManualRefresh.
+  
+  // Let's keep it simple for now and not hook into manual refresh button yet perfectly, 
+  // or I can manually trigger it if needed.
+  // But wait, the user wants "checks for updates in background".
+  // My hook useOverviewHistory fetches on mount (when App mounts? No, when isApiReady).
+  // And it manages its own state.
+  // If I want global refresh to work, I should pass it to useDataRefresh maybe?
+  // But useDataRefresh expects specific new data flags.
+  
+  // Let's just focus on fixing the *loading state* first.
+  
   const { handleManualGenerate, handleAutoGenerate } = useGenerateHandlers({
     fetchRepositories,
     setErrorWithScroll
@@ -219,6 +249,10 @@ function App() {
                   cronJobHistoryTotalPages={cronJobHistoryTotalPages}
                   cronJobHistoryCurrentPage={cronJobHistoryCurrentPage}
                   cronJobHistorySetPage={cronJobHistorySetPage}
+                  overviewTimeRange={overviewTimeRange}
+                  setOverviewTimeRange={setOverviewTimeRange}
+                  overviewHistoryData={overviewHistoryData}
+                  overviewLoading={overviewLoading}
                 />
               </DashboardLayout>
               <SettingsModal isOpen={isSettingsOpen} onClose={onSettingsClose} />
