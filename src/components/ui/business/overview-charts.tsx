@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, Tooltip as RechartsTooltip, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend 
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, /*CardDescription*/ } from '../layout/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../layout/card';
 import { Skeleton } from '../common/skeleton';
 import { 
   Activity, ArrowUpRight, ArrowDownRight
@@ -254,8 +254,8 @@ export function OverviewCharts({
             {/* Main Trend Chart */}
             <Card className="lg:col-span-2 h-full flex flex-col">
               <CardHeader>
-                <CardTitle className="text-base font-medium">Activity Trends</CardTitle>
-                {/* <CardDescription>Job executions over the last {timeRange}</CardDescription> */}
+                <CardTitle className="text-base font-medium">Cron Trends</CardTitle>
+                <CardDescription>Job execution trends over time</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 min-h-[300px]">
                 <div className="h-full w-full">
@@ -330,7 +330,8 @@ export function OverviewCharts({
               {/* Job Performance Breakdown */}
               <Card className="flex-1 flex flex-col">
                 <CardHeader>
-                  <CardTitle className="text-base font-medium">Job Health</CardTitle>
+                    <CardTitle className="text-base font-medium">Cron Health</CardTitle>
+                    <CardDescription>Job performance breakdown by status</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-[300px]">
                    <div className="h-full w-full">
@@ -382,7 +383,7 @@ export function OverviewCharts({
             <Card className="flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
-                {/* <CardDescription>Top technologies in descriptions ({timeRange})</CardDescription> */}
+                <CardDescription>Top technologies by date added to the DB</CardDescription> 
               </CardHeader>
               <CardContent className="min-h-[300px]">
                 {trendsLoading && trends.length === 0 ? (
