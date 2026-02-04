@@ -6,7 +6,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../layout/card';
 import { Skeleton } from '../common/skeleton';
 import { 
-  Activity, Clock, Server, ArrowUpRight, ArrowDownRight
+  Activity, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { type CronJob, type CronJobHistory } from '../../../api/index';
 import type { ApiConfig } from '../../../api/api-configs';
@@ -30,22 +30,17 @@ export function OverviewCharts({
   posted,
   unposted,
   statsLoading = false,
-  cronJobs = [],
-  cronJobsLoading = false,
-  apiConfigs = [],
-  apiConfigsLoading = false,
-  timeRange,
-  setTimeRange,
   historyData,
-  historyLoading
+  historyLoading,
+  timeRange,
+  setTimeRange
 }: OverviewChartsProps) {
   // Local state removed, using props from parent hook
 
   // --- Derived Stats (Memoized) ---
 
   const totalRepos = posted + unposted;
-  const activeCronJobs = cronJobs.filter(j => j.is_active).length;
-  const enabledApis = apiConfigs.filter(c => c.enabled).length;
+
 
   // Chart Data Preparation
   
@@ -137,7 +132,7 @@ export function OverviewCharts({
     };
   }, [historyData]);
 
-  const isLoading = statsLoading || cronJobsLoading || apiConfigsLoading || historyLoading;
+  const isLoading = statsLoading || historyLoading;
 
   // Render Helpers
   const CustomTooltip = ({ active, payload, label }: any) => { // Type 'any' for quick recharts tooltip props
@@ -161,12 +156,8 @@ export function OverviewCharts({
   return (
     <div className="space-y-6">
       
-      {/* Header & Filter */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
-          <p className="text-muted-foreground text-sm">Monitoring metrics and performance indicators</p>
-        </div>
+      {/* Time Range Filter - Moved to top right, no header */}
+      <div className="flex justify-end pb-2">
         <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
           {(['24h', '7d', '30d', '90d'] as TimeRange[]).map((range) => (
             <button
@@ -186,15 +177,15 @@ export function OverviewCharts({
 
       {isLoading && historyData.length === 0 ? (
         <div className="space-y-6">
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
           </div>
           <Skeleton className="h-[300px] w-full rounded-xl" />
         </div>
       ) : (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* KPI Cards - Only Dynamic Ones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Total Repos */}
             <Card>
               <CardContent className="p-6">
@@ -249,55 +240,7 @@ export function OverviewCharts({
                   <span className="text-destructive font-medium">{periodStats.failed}</span>&nbsp;failed
                 </div>
               </CardContent>
-            </Card>
-
-            {/* Cron Jobs Status */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Cron Jobs</p>
-                    <h3 className="text-3xl font-bold mt-2">{activeCronJobs}<span className="text-muted-foreground text-lg font-normal">/{cronJobs.length}</span></h3>
-                  </div>
-                  <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                   {cronJobs.slice(0, 3).map(job => (
-                     <span key={job.name} className={`text-[10px] px-1.5 py-0.5 rounded border ${job.is_active ? 'border-transparent bg-primary text-primary-foreground' : 'border-border bg-muted text-muted-foreground'}`}>
-                       {job.name}
-                     </span>
-                   ))}
-                   {cronJobs.length > 3 && (
-                     <span className="text-[10px] px-1.5 py-0.5 text-muted-foreground">+{cronJobs.length - 3} more</span>
-                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Integrations */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Integrations</p>
-                    <h3 className="text-3xl font-bold mt-2">{enabledApis}<span className="text-muted-foreground text-lg font-normal">/{apiConfigs.length}</span></h3>
-                  </div>
-                  <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
-                    <Server className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-4 text-xs text-muted-foreground flex flex-wrap gap-1">
-                  {apiConfigs.filter(a => a.enabled).slice(0, 3).map(api => (
-                    <span key={api.id} className="inline-flex items-center px-1.5 py-0.5 rounded border border-border bg-muted/50">
-                      {api.name}
-                    </span>
-                  ))}
-                  {enabledApis > 3 && <span>+{enabledApis - 3} more</span>}
-                </div>
-              </CardContent>
-            </Card>
+              </Card>
           </div>
 
           {/* Charts Row */}

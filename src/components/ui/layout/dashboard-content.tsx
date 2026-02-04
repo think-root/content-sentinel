@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OverviewCharts } from '../business/overview-charts';
+import { Card, CardContent } from '../layout/card';
+import { Clock, Server } from 'lucide-react';
 import { RepositoryList } from '../business/repository-list';
 import { GenerateForm } from '../business/generate-form';
 import { PromptSettings } from '../business/prompt-settings';
@@ -297,8 +299,8 @@ export const DashboardContent = ({
         >
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Repository Previews - Next/Latest post FIRST */}
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* Top Grid: Previews & Static Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RepositoryPreview
                 title="Next post"
                 repository={nextPost}
@@ -311,6 +313,76 @@ export const DashboardContent = ({
                 loading={previewsLoading}
                 isApiReady={isApiReady}
               />
+
+              {/* Active Cron Jobs */}
+              <Card className="h-full">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active Cron Jobs</p>
+                      <h3 className="text-3xl font-bold mt-2">{cronJobs.filter(j => j.is_active).length}<span className="text-muted-foreground text-lg font-normal">/{cronJobs.length}</span></h3>
+                    </div>
+                    <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {cronJobs.slice(0, 3).map((job, idx) => {
+                      const colors = [
+                        'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                        'bg-green-500/10 text-green-500 border-green-500/20',
+                        'bg-orange-500/10 text-orange-500 border-orange-500/20',
+                        'bg-purple-500/10 text-purple-500 border-purple-500/20',
+                        'bg-pink-500/10 text-pink-500 border-pink-500/20',
+                      ];
+                      const colorClass = job.is_active
+                        ? colors[idx % colors.length]
+                        : 'bg-muted text-muted-foreground border-border';
+
+                      return (
+                        <span key={job.name} className={`text-[10px] px-2 py-1 rounded border ${colorClass}`}>
+                          {job.name}
+                        </span>
+                      );
+                    })}
+                    {cronJobs.length > 3 && (
+                      <span className="text-[10px] px-1.5 py-0.5 text-muted-foreground">+{cronJobs.length - 3} more</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Active Integrations */}
+              <Card className="h-full">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active Integrations</p>
+                      <h3 className="text-3xl font-bold mt-2">{apiConfigs.filter(c => c.enabled).length}<span className="text-muted-foreground text-lg font-normal">/{apiConfigs.length}</span></h3>
+                    </div>
+                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
+                      <Server className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground flex flex-wrap gap-1">
+                    {apiConfigs.filter(a => a.enabled).slice(0, 3).map((api, idx) => {
+                      const colors = [
+                        'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
+                        'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+                        'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                        'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                        'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                      ];
+                      return (
+                        <span key={api.id} className={`inline-flex items-center px-2 py-1 text-xs rounded border ${colors[idx % colors.length]}`}>
+                          {api.name}
+                        </span>
+                      );
+                    })}
+                    {apiConfigs.filter(a => a.enabled).length > 3 && <span>+{apiConfigs.filter(a => a.enabled).length - 3} more</span>}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Comprehensive Dashboard Charts */}
