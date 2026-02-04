@@ -275,8 +275,8 @@ export function OverviewCharts({
                           <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                         </linearGradient>
                           <linearGradient id="colorTrend" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                           </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -432,8 +432,8 @@ export function OverviewCharts({
                                 <div className="bg-popover border border-border rounded-md shadow-md p-2 text-xs">
                                   <p className="font-semibold mb-1">{label}</p>
                                   <div className="flex items-center gap-2">
-                                    <span className="capitalize text-primary">Count:</span>
-                                    <span className="font-mono font-bold">{payload[0].value}</span>
+                                    <span className="text-muted-foreground">Count:</span>
+                                    <span className="font-mono font-bold text-foreground">{payload[0].value}</span>
                                   </div>
                                 </div>
                               );
