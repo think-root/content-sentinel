@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { IntegrationIcon, getLanguageFlag } from './integration-icons';
 import { formatDate } from '@/utils/date-format';
 import { toast } from '../common/toast-config';
 import { ConfirmDialog } from '../common/confirm-dialog';
@@ -18,6 +19,7 @@ import { Button } from '../base/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/card';
 import { Skeleton } from '../common/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
+
 
 interface ApiConfigsProps {
   configs: ApiConfig[];
@@ -136,7 +138,10 @@ export const ApiConfigs = ({
           sortedConfigs.map((config) => (
             <TableRow key={config.name} className="group">
               <TableCell className="font-medium">
-                {config.name}
+                <div className="flex items-center gap-2">
+                  <IntegrationIcon name={config.name} className="h-4 w-4 shrink-0" />
+                  <span>{config.name}</span>
+                </div>
               </TableCell>
               <TableCell>
                 <TooltipProvider>
@@ -157,7 +162,11 @@ export const ApiConfigs = ({
                   {config.method}
                 </span>
               </TableCell>
-              <TableCell>{config.text_language || '-'}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl leading-none" title={config.text_language}>{getLanguageFlag(config.text_language) || <span className="text-sm">{config.text_language || '-'}</span>}</span>
+                </div>
+              </TableCell>
               <TableCell>{formatDate(config.updated_at)}</TableCell>
               <TableCell>
                 <div className="flex items-center justify-center gap-1">
@@ -214,6 +223,8 @@ export const ApiConfigs = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+
+                  <IntegrationIcon name={config.name} className="h-4 w-4 shrink-0" />
                   <span className="font-medium">{config.name}</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted">
                     {config.method}
@@ -235,7 +246,9 @@ export const ApiConfigs = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-xs font-medium text-muted-foreground uppercase">Language</div>
-                  <div className="text-sm">{config.text_language || '-'}</div>
+                  <div className="text-sm flex items-center gap-2">
+                    <span className="text-xl leading-none" title={config.text_language}>{getLanguageFlag(config.text_language) || <span className="text-sm">{config.text_language || '-'}</span>}</span>
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs font-medium text-muted-foreground uppercase">Updated</div>
