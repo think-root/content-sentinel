@@ -1,3 +1,17 @@
+# [1.44.0](https://github.com/think-root/content-sentinel/compare/v1.43.0...v1.44.0) (2026-02-04)
+
+
+### Bug Fixes
+
+* **ui:** strip environment variables from displayed api urls ([a62f3ac](https://github.com/think-root/content-sentinel/commit/a62f3ac879a42eb3769b6f3781904ddaf3a6ad6f))
+
+
+### Features
+
+* **trends:** implement multi-word tech name extraction ([05a8c1a](https://github.com/think-root/content-sentinel/commit/05a8c1a8e62c3529f28cb97a859df17208c3d20b))
+* **ui:** add integration icons and language flags to api configs ([24aac77](https://github.com/think-root/content-sentinel/commit/24aac778fc87e3312a83119cd641a6b583961741))
+* **ui:** add repository tech trends chart to overview ([cb531c8](https://github.com/think-root/content-sentinel/commit/cb531c8699ae1b04185360895a64ef4426934c99))
+
 # [1.43.0](https://github.com/think-root/content-sentinel/compare/v1.42.0...v1.43.0) (2026-02-01)
 
 
