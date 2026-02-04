@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { 
   ResponsiveContainer, Tooltip as RechartsTooltip, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend 
@@ -6,7 +6,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../layout/card';
 import { Skeleton } from '../common/skeleton';
 import { 
-  Activity, ArrowUpRight, ArrowDownRight
+  Activity, ArrowUpRight, ArrowDownRight, CalendarPlus, CalendarClock
 } from 'lucide-react';
 import { type CronJob, type CronJobHistory } from '../../../api/index';
 import type { ApiConfig } from '../../../api/api-configs';
@@ -39,6 +39,15 @@ export function OverviewCharts({
   // Local state removed, using props from parent hook
 
   // --- Derived Stats (Memoized) ---
+
+  const [trendSortBy, setTrendSortBy] = useState<'date_added' | 'date_posted'>(() => {
+    const saved = localStorage.getItem('repository_trends_sort');
+    return (saved === 'date_added' || saved === 'date_posted') ? saved : 'date_added';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('repository_trends_sort', trendSortBy);
+  }, [trendSortBy]);
 
   const totalRepos = posted + unposted;
 
@@ -134,7 +143,7 @@ export function OverviewCharts({
   }, [historyData]);
 
   // 4. Repository Tech Trends
-  const { trends, loading: trendsLoading, error: trendsError } = useRepositoryTrends(timeRange, true);
+  const { trends, loading: trendsLoading, error: trendsError } = useRepositoryTrends(timeRange, true, trendSortBy);
 
   const isLoading = statsLoading || historyLoading; 
 
@@ -381,9 +390,37 @@ export function OverviewCharts({
 
             {/* Repository Tech Trends */}
             <Card className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
-                <CardDescription>Top technologies by date added to the DB</CardDescription> 
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
+                  <CardDescription>
+                    Top technologies by {trendSortBy === 'date_added' ? 'date added' : 'date posted'}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center bg-muted/50 p-0.5 rounded-lg border border-border">
+                  <button
+                    onClick={() => setTrendSortBy('date_added')}
+                    className={`p-1.5 rounded-md transition-all ${trendSortBy === 'date_added'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      }`}
+                    title="Sort by Date Added"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    <span className="sr-only">Date Added</span>
+                  </button>
+                  <button
+                    onClick={() => setTrendSortBy('date_posted')}
+                    className={`p-1.5 rounded-md transition-all ${trendSortBy === 'date_posted'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      }`}
+                    title="Sort by Date Posted"
+                  >
+                    <CalendarClock className="h-4 w-4" />
+                    <span className="sr-only">Date Posted</span>
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="min-h-[300px]">
                 {trendsLoading && trends.length === 0 ? (

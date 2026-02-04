@@ -13,7 +13,7 @@ interface UseRepositoryTrendsResult {
   error: string | null;
 }
 
-export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): UseRepositoryTrendsResult => {
+export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean, sortBy: 'date_added' | 'date_posted' = 'date_added'): UseRepositoryTrendsResult => {
   const [trends, setTrends] = useState<TrendMetric[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,26 +144,11 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): 
           pageSize,
           undefined, // posted filter (undefined = all)
           false, // fetchAll
-          'date_added',
+          sortBy,
           'DESC', // Newest first to allow early exit
           page,
           pageSize
         );
-
-        // API signatures checks:
-        // getRepositories signature: (limit, posted, fetchAll, sortBy, sortOrder, page, pageSize)
-        // In previous files I saw usage: getRepositories(..., 'date_added', 'ASC', ...)
-        // Let's check api.ts again carefully.
-        // It passes sort_order to backend. The backend likely respects SQL standard.
-        // So we want DESC to get recent items first.
-        
-        // CORRECTION: In the hook call above I passed 'ASC'. I need 'DESC'.
-        // Wait, I can't overwrite the previous logic in the loop immediately. 
-        // I will fix this in the actual call below carefully.
-
-        // Re-declaring for clarity in this thought process:
-        // We need NEWEST repositories first.
-        // If the API defaults to ASC (Oldest first), we must explicitly send DESC.
 
         if (!response || !response.data || response.data.items.length === 0) {
           keepFetching = false;
@@ -174,15 +159,12 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): 
         
         // Process items
         for (const repo of items) {
-          const dateAdded = new Date(repo.date_added || new Date()); // Fallback if missing
-          
-          if (dateAdded < cutoffDate) {
+          const dateStr = sortBy === 'date_posted' ? repo.date_posted : repo.date_added;
+          const dateValue = dateStr ? new Date(dateStr) : (sortBy === 'date_added' ? new Date() : null);
+          if (!dateValue) continue;
+
+          if (dateValue < cutoffDate) {
             keepFetching = false; 
-            // We can break the inner loop, but we also want to stop fetching pages.
-             // But wait, if the sort order is *truly* DESC, then all subsequent items are older.
-             // If sort order is ASC, we started with oldest.
-             
-             // Let's assume we request DESC.
              break; 
           }
 
@@ -223,7 +205,7 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): 
         setLoading(false);
       }
     }
-  }, [timeRange, isApiReady, extractKeywords]);
+  }, [timeRange, isApiReady, extractKeywords, sortBy]);
 
   useEffect(() => {
     fetchTrends();
