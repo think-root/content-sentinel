@@ -21,7 +21,7 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): 
 
   // Helper to extract keywords from text
   const extractKeywords = useCallback((text: string): string[] => {
-    // 1. Common stop words to exclude (expanded list)
+    // 1. Common stop words to exclude
     const stopWords = new Set([
       'the', 'and', 'or', 'of', 'to', 'in', 'a', 'an', 'is', 'for', 'on', 'with', 'by', 'as', 
       'at', 'from', 'it', 'that', 'this', 'which', 'be', 'are', 'was', 'were', 'has', 'have', 
@@ -32,66 +32,77 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean): 
       'got', 'make', 'made', 'see', 'saw', 'seen', 'use', 'used', 'using', 'new', 'old', 
       'good', 'bad', 'high', 'low', 'great', 'small', 'big', 'large', 'long', 'short', 
       'best', 'better', 'top', 'simple', 'complex', 'easy', 'hard', 'real', 'virtual',
-      'api', 'app', 'web', 'data', 'code', 'file', 'user', 'system', 'tool' // Generic tech terms to maybe exclude? User asked for technologies
-      // We will keep 'API', 'CLI' etc if they are capitalized properly
+      'api', 'app', 'web', 'data', 'code', 'file', 'user', 'system', 'tool', 'agent', 'sdk', 'router'
+      // Note: 'agent', 'sdk', 'router' might be part of specific names perfectly valid (e.g. Claude Agent SDK)
+      // but "Agent" alone might be too generic. Let's exclude common generic IT terms if they appear alone?
+      // For now, let's keep them in exclusion if single, but multi-word logic won't check stoplist for parts except start/end.
     ]);
 
     const keywords: string[] = [];
     
-    // Regex explaination:
-    // 1. Acronyms (2+ Uppercase): \b[A-Z]{2,}\b (e.g., AI, CLI, SVGs, ASCII)
-    // 2. Mixed/Camel/Pascal (with at least one uppercase): \b[a-zA-Z]*[A-Z][a-zA-Z]*\b
-    //    This is broad, so we refine it.
-    
-    // Strategy: Split by non-word chars, then analyze each token
-    const tokens = text.replace(/[^\w\s-]/g, ' ').split(/\s+/);
+    // Normalize text: Replace slashes with spaces to handle "OpenAI/Gemini" -> "OpenAI Gemini"
+    // Also handle other separators if needed, but keeping hyphen usage.
+    let processedText = text.replace(/\//g, ' / ');
+
+    // 1. Extract Multi-word Tech Names (Consecutive Capitalized Words)
+    // e.g. "Claude Code", "Composio Tool Router", "Claude Agent SDK"
+    // Regex: Match word starting with Uppercase, followed by space, followed by another Capitalized word.
+    // Allow hyphens inside words.
+    const multiWordRegex = /\b([A-Z][a-zA-Z0-9-]*\s+(?:[A-Z][a-zA-Z0-9-]*\s*)+)\b/g;
+
+    let match;
+    while ((match = multiWordRegex.exec(processedText)) !== null) {
+      const phrase = match[0].trim();
+      // Heuristic: check if the first word is a stop word (e.g. "The OpenAI")
+      const parts = phrase.split(/\s+/);
+
+      // If phrase is just "Start Word that is capitalized", ignore
+      if (parts.length < 2) continue;
+
+      // Filter: if first word is 'The' or similar common word, remove it or skip?
+      // "The Claude Code" -> "Claude Code"
+      if (stopWords.has(parts[0].toLowerCase())) {
+        if (parts.length > 2) {
+          keywords.push(parts.slice(1).join(' ')); // "The Claude Code" -> "Claude Code"
+        }
+        // If "The AI", "AI" will be caught by single word logic later if we don't consume it here.
+        // Let's NOT consume invalid phrases so single-word logic can handle parts?
+        // No, if we consume "Claude Code", we don't want "Claude" and "Code" again.
+        // So we should capture valid things and remove them or mark them.
+      } else {
+        keywords.push(phrase);
+      }
+    }
+
+    // Remove the found multi-word phrases from text to avoid double counting single words?
+    // Or simpler: Just run single word logic on the whole text, but maybe that inflates counts or adds partial noise.
+    // User wants "Claude Code" as ONE entity. If we also count "Claude", then "Claude" gets +1.
+    // Usually that's fine (Hierarchy), but user specifically said "treat as one name".
+    // So let's replace matches with whitespace.
+    processedText = processedText.replace(multiWordRegex, ' ');
+
+    // 2. Extract Single Tech Words
+    const tokens = processedText.replace(/[^\w\s-]/g, ' ').split(/\s+/);
 
     tokens.forEach(token => {
-       // Trim punctuation just in case
        const cleanToken = token.replace(/^[-_]+|[-_]+$/g, '');
        if (cleanToken.length < 2) return;
 
-       // Check specific patterns requested by user
-       
-       // 1. Acronyms: 2+ Uppercase letters (AI, CLI, SVGs)
-       // allowing 's' at the end for plural like SVGs
+      // 2a. Acronyms (AI, CLI, SVGs)
        if (/^[A-Z]{2,}s?$/.test(cleanToken)) {
          keywords.push(cleanToken);
          return;
        }
 
-       // 2. PascalCase / MixedCase (Polymarket, CPython, qBittorrent, iOS)
-       // Must contain at least one uppercase letter
-       // Must not be all uppercase (handled above)
-       // Exclude simple capitalized stop words (The, And)
-       if (/[A-Z]/.test(cleanToken)) {
-          // Check if it's just a capitalized regular word at start of sentence
-          // We can't strictly know if it's start of sentence here easily without context,
-          // but we can check against stop words.
-          
+      // 2b. PascalCase / MixedCase / Hyphenated (Polymarket, CPython, DAW-like)
+      // Minimum one uppercase letter required.
+      if (/[A-Z]/.test(cleanToken)) {
           const lower = cleanToken.toLowerCase();
+         // Strict stop word check
           if (stopWords.has(lower)) return;
 
-          // Additional heuristic: 
-          // If it starts with Uppercase and rest is lowercase, it might be a proper noun or just a word.
-          // User asked specifically for "Polymarket" (Pascal) and "qBittorrent" (camel).
-          
-          // Let's include it if it passes stopWord filter.
-          // Optimisation: Exclude very common english words even if capitalized?
-          // For now, rely on frequency. "The" is in stopWords. "Python" is not.
-
-          keywords.push(cleanToken);
-          return;
-       }
-
-       // 3. Hyphenated specific Tech (DAW-like)
-       // Contains a hyphen and has some uppercase or specific structure?
-       // User example: "DAW-like". 
-       if (cleanToken.includes('-') && /[A-Z]/.test(cleanToken)) {
          keywords.push(cleanToken);
-         return;
        }
-
     });
 
     return keywords;
