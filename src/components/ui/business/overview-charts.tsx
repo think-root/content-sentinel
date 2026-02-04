@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, Tooltip as RechartsTooltip, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend 
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../layout/card';
+import { Card, CardContent, CardHeader, CardTitle, /*CardDescription*/ } from '../layout/card';
 import { Skeleton } from '../common/skeleton';
 import { 
   Activity, ArrowUpRight, ArrowDownRight
@@ -255,7 +255,7 @@ export function OverviewCharts({
             <Card className="lg:col-span-2 h-full flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base font-medium">Activity Trends</CardTitle>
-                <CardDescription>Job executions over the last {timeRange}</CardDescription>
+                {/* <CardDescription>Job executions over the last {timeRange}</CardDescription> */}
               </CardHeader>
               <CardContent className="flex-1 min-h-[300px]">
                 <div className="h-full w-full">
@@ -382,7 +382,7 @@ export function OverviewCharts({
             <Card className="flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
-                <CardDescription>Top technologies in descriptions ({timeRange})</CardDescription>
+                {/* <CardDescription>Top technologies in descriptions ({timeRange})</CardDescription> */}
               </CardHeader>
               <CardContent className="min-h-[300px]">
                 {trendsLoading && trends.length === 0 ? (
