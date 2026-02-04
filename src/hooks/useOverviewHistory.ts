@@ -56,14 +56,23 @@ export const useOverviewHistory = ({ isApiReady }: UseOverviewHistoryProps) => {
       const startDate = new Date();
       
       switch (timeRange) {
-        case '24h': startDate.setDate(now.getDate() - 1); break;
-        case '7d': startDate.setDate(now.getDate() - 7); break;
-        case '30d': startDate.setDate(now.getDate() - 30); break;
-        case '90d': startDate.setDate(now.getDate() - 90); break;
+        case '24h':
+          startDate.setTime(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          startDate.setHours(0, 0, 0, 0);
+          break;
       }
 
-      // Fetch mostly more data than we strictly need to ensure good graphs, 
-      // using the specific API filter
       const response = await getCronJobHistory(
         undefined, // name
         1, // page
