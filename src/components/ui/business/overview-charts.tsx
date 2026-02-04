@@ -12,6 +12,7 @@ import { type CronJob, type CronJobHistory } from '../../../api/index';
 import type { ApiConfig } from '../../../api/api-configs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
 import { useRepositoryTrends } from '../../../hooks/useRepositoryTrends';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface OverviewChartsProps {
   posted: number;
@@ -50,6 +51,7 @@ export function OverviewCharts({
   }, [trendSortBy]);
 
   const totalRepos = posted + unposted;
+  const isMobile = useIsMobile();
 
 
   // Chart Data Preparation
@@ -439,7 +441,7 @@ export function OverviewCharts({
                       <BarChart
                         data={trends.slice(0, 15)}
                         layout="vertical"
-                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                              margin={{ top: 5, right: 30, left: isMobile ? 10 : 40, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                         <XAxis
@@ -456,7 +458,7 @@ export function OverviewCharts({
                           fontSize={12}
                           tickLine={false}
                           axisLine={false}
-                          width={100}
+                                width={isMobile ? 80 : 100}
                         />
                         <RechartsTooltip
                           cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
