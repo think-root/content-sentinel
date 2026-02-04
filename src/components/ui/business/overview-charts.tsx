@@ -11,6 +11,7 @@ import {
 import { type CronJob, type CronJobHistory } from '../../../api/index';
 import type { ApiConfig } from '../../../api/api-configs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
+import { useRepositoryTrends } from '../../../hooks/useRepositoryTrends';
 
 interface OverviewChartsProps {
   posted: number;
@@ -132,7 +133,11 @@ export function OverviewCharts({
     };
   }, [historyData]);
 
-  const isLoading = statsLoading || historyLoading;
+  // 4. Repository Tech Trends
+  const { trends, loading: trendsLoading, error: trendsError } = useRepositoryTrends(timeRange, true);
+
+  const isLoading = statsLoading || historyLoading; 
+
 
   // Render Helpers
   const CustomTooltip = ({ active, payload, label }: any) => { // Type 'any' for quick recharts tooltip props
@@ -269,6 +274,10 @@ export function OverviewCharts({
                           <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                         </linearGradient>
+                          <linearGradient id="colorTrend" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                          </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis 
@@ -287,12 +296,12 @@ export function OverviewCharts({
                       />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Area 
-                        type="monotone" 
-                        dataKey="success" 
-                        stroke="hsl(var(--success))" 
-                        fillOpacity={1} 
-                        fill="url(#colorSuccess)" 
+                        <Area
+                          type="monotone"
+                          dataKey="success"
+                          stroke="hsl(var(--success))"
+                          fillOpacity={1}
+                          fill="url(#colorSuccess)"
                         name="Success"
                         strokeWidth={2}
                       />
@@ -372,6 +381,79 @@ export function OverviewCharts({
               </Card>
             </div>
           </div>
+
+            {/* Repository Tech Trends */}
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
+                <CardDescription>Top technologies in descriptions ({timeRange})</CardDescription>
+              </CardHeader>
+              <CardContent className="min-h-[300px]">
+                {trendsLoading && trends.length === 0 ? (
+                  <Skeleton className="h-full w-full rounded-xl" />
+                ) : trendsError ? (
+                  <div className="h-full w-full flex items-center justify-center text-destructive">
+                    <p className="text-sm font-medium">Failed to load trends</p>
+                  </div>
+                ) : trends.length === 0 ? (
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">No technology trends found for this period</p>
+                  </div>
+                ) : (
+                  <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={trends.slice(0, 15)}
+                        layout="vertical"
+                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                        <XAxis
+                          type="number"
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          dataKey="keyword"
+                          type="category"
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          width={100}
+                        />
+                        <RechartsTooltip
+                          cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-popover border border-border rounded-md shadow-md p-2 text-xs">
+                                  <p className="font-semibold mb-1">{label}</p>
+                                  <div className="flex items-center gap-2">
+                                    <span className="capitalize text-primary">Count:</span>
+                                    <span className="font-mono font-bold">{payload[0].value}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="url(#colorTrend)"
+                          radius={[0, 4, 4, 0]}
+                          barSize={20}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
         </>
       )}
     </div>
