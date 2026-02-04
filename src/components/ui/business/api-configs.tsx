@@ -143,7 +143,7 @@ export const ApiConfigs = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="font-mono text-xs truncate block max-w-[250px]">
-                        {config.url}
+                        {config.url.replace(/\{env\.[^}]+\}/, '')}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[400px]">
@@ -229,7 +229,7 @@ export const ApiConfigs = ({
 
               <div>
                 <div className="text-xs font-medium text-muted-foreground uppercase">URL</div>
-                <div className="text-sm font-mono truncate">{config.url}</div>
+                <div className="text-sm font-mono truncate">{config.url.replace(/\{env\.[^}]+\}/, '')}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
