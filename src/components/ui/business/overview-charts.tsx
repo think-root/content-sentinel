@@ -263,13 +263,13 @@ export function OverviewCharts({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             
             {/* Main Trend Chart */}
-            <Card className="lg:col-span-2 h-full flex flex-col">
+            <Card className="lg:col-span-2 h-full flex flex-col focus:outline-none focus-visible:outline-none">
               <CardHeader>
                 <CardTitle className="text-base font-medium">Cron Trends</CardTitle>
                 <CardDescription>Job execution trends over time</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 min-h-[300px]">
-                <div className="h-full w-full">
+                <div className="h-full w-full outline-none [&_*]:outline-none [&_*]:focus:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={timelineData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                       <defs>
@@ -339,13 +339,13 @@ export function OverviewCharts({
             {/* Distribution Charts */}
             <div className="flex flex-col h-full">
               {/* Job Performance Breakdown */}
-              <Card className="flex-1 flex flex-col">
+              <Card className="flex-1 flex flex-col focus:outline-none focus-visible:outline-none">
                 <CardHeader>
                     <CardTitle className="text-base font-medium">Cron Health</CardTitle>
                     <CardDescription>Job performance breakdown by status</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-[300px]">
-                   <div className="h-full w-full">
+                   <div className="h-full w-full outline-none [&_*]:outline-none [&_*]:focus:outline-none">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={jobPerformanceData} layout="vertical" barSize={24} margin={{ left: 0, right: 20 }}>
                         <XAxis type="number" hide />
@@ -391,7 +391,7 @@ export function OverviewCharts({
           </div>
 
             {/* Repository Tech Trends */}
-            <Card className="flex flex-col">
+            <Card className="flex flex-col focus:outline-none focus-visible:outline-none">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="space-y-1">
                   <CardTitle className="text-base font-medium">Repository Tech Trends</CardTitle>
@@ -436,7 +436,7 @@ export function OverviewCharts({
                     <p className="text-sm">No technology trends found for this period</p>
                   </div>
                 ) : (
-                  <div className="h-[400px] w-full">
+                  <div className="h-[400px] w-full outline-none [&_*]:outline-none [&_*]:focus:outline-none">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={trends.slice(0, 15)}
