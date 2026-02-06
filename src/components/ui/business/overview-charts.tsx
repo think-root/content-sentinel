@@ -173,7 +173,7 @@ export function OverviewCharts({
     <div className="space-y-6">
       
       {/* Time Range Filter - Moved to top right, no header */}
-      <div className="flex justify-center sm:justify-end pb-2">
+      <div className="flex justify-center sm:justify-end">
         <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
           {(['24h', '7d', '30d', '90d'] as TimeRange[]).map((range) => (
             <button
