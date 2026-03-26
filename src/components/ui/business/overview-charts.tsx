@@ -53,6 +53,17 @@ export function OverviewCharts({
   const totalRepos = posted + unposted;
   const isMobile = useIsMobile();
 
+  const formatTechLabel = (label: string): string => {
+    const words = label.split(/\s+/);
+    if (words.length > 2) {
+      return words.slice(0, 2).join(' ') + '...';
+    }
+    if (label.length > 15) {
+      return label.slice(0, 15) + '...';
+    }
+    return label;
+  };
+
 
   // Chart Data Preparation
   
@@ -458,7 +469,8 @@ export function OverviewCharts({
                           fontSize={12}
                           tickLine={false}
                           axisLine={false}
-                                width={isMobile ? 80 : 100}
+                          tickFormatter={formatTechLabel}
+                                width={isMobile ? 90 : 120}
                         />
                         <RechartsTooltip
                           cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
