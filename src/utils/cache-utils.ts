@@ -221,11 +221,8 @@ export const clearAllCaches = () => {
     'cache_previews',
     'cache_cron_jobs',
     'cache_cron_job_history',
-    'cache_cron_job_history',
     'cache_api_configs',
     'cache_overview_history',
-    'cache_repositories_key',
-    'promptSettings',
     'language_validation_cache'
   ];
   
