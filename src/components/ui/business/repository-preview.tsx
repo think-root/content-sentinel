@@ -1,9 +1,9 @@
 import { Repository } from '@/types';
 import { formatDate } from '@/utils/date-format';
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/card';
-import { Button } from '../base/button';
 import { Badge } from '../common/badge';
 import { Skeleton } from '../common/skeleton';
+import { RepositoryLink } from '../common/repository-link';
 
 interface RepositoryPreviewProps {
   title: string;
@@ -71,19 +71,7 @@ export function RepositoryPreview({ title, repository, loading, isApiReady = tru
           </div>
         ) : repository ? (
           <div className="space-y-3">
-            <Button
-              variant="link"
-              className="p-0 h-auto text-primary hover:text-primary/80 text-sm font-normal no-underline hover:no-underline underline-offset-0"
-              asChild
-            >
-              <a 
-                href={repository.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {repository.url.replace('https://github.com/', '')}
-              </a>
-            </Button>
+            <RepositoryLink url={repository.url} className="font-normal no-underline hover:no-underline" />
             
             <p className="text-sm text-muted-foreground leading-relaxed">
               {repository.text}

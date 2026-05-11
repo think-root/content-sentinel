@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/base/tooltip";
 import { Button } from "@/components/ui/base/button";
 import { Skeleton } from "@/components/ui/common/skeleton";
+import { RepositoryLink } from "@/components/ui/common/repository-link";
 
 const toastOptions = {
   duration: 4000,
@@ -234,15 +235,8 @@ export function RepositoryTable({
         <TableCell className="font-medium">
           {repo.id}
         </TableCell>
-        <TableCell>
-          <a
-            href={repo.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:text-primary/80"
-          >
-            {repo.url.replace('https://github.com/', '')}
-          </a>
+        <TableCell className="min-w-0">
+          <RepositoryLink url={repo.url} />
         </TableCell>
         <TableCell>
           {editingText?.id === repo.id ? (

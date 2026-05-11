@@ -7,6 +7,7 @@ import { deleteRepository, updateRepositoryText } from '@/api';
 import { Pencil, Check, X, Trash2, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/common/toast-config';
 import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
+import { RepositoryLink } from '@/components/ui/common/repository-link';
 import { Button } from '../base/button';
 import { Label } from '../base/label';
 
@@ -192,15 +193,8 @@ export function RepositoryMobileView({
 
             <div>
               <Label className="text-xs font-medium uppercase text-muted-foreground">Url</Label>
-              <div className="mt-1">
-                <a
-                  href={repo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:text-primary/80 text-sm underline"
-                >
-                  {repo.url.replace('https://github.com/', '')}
-                </a>
+              <div className="mt-1 min-w-0">
+                <RepositoryLink url={repo.url} className="underline" />
               </div>
             </div>
           
