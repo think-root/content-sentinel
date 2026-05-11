@@ -1,3 +1,21 @@
+# [1.45.0](https://github.com/think-root/content-sentinel/compare/v1.44.0...v1.45.0) (2026-05-11)
+
+
+### Bug Fixes
+
+* **ui:** prevent repository link overflow ([4b044ec](https://github.com/think-root/content-sentinel/commit/4b044ec5a43e54bcc3c1c73d7cbd2cad8e49f106))
+* **ui:** refine date range calculations in overview history ([063872d](https://github.com/think-root/content-sentinel/commit/063872dbac991f018963a6757c55ffc0f2668777))
+
+
+### Features
+
+* **queue:** add publish-next repository action ([e0e947b](https://github.com/think-root/content-sentinel/commit/e0e947b55bf07a6ab0284919282f7752ef2b806a))
+* **ui:** add label formatting for technology charts ([63c7252](https://github.com/think-root/content-sentinel/commit/63c725212df42ac63959c80357308e7ef74e6482))
+* **ui:** add mobile responsiveness to overview charts ([3701946](https://github.com/think-root/content-sentinel/commit/3701946bc9580faa237d58129267ad6240e02043))
+* **ui:** add sort toggle for tech trends ([9b3efbd](https://github.com/think-root/content-sentinel/commit/9b3efbdbc61ea584648ac674c2abde92989a91a9))
+* **ui:** remove focus outlines from charts for cleaner visuals ([fd8ece1](https://github.com/think-root/content-sentinel/commit/fd8ece16982aa7507df46aef52e8d68751fcdc42))
+* **ui:** restore and update card descriptions in overview charts ([c117a6d](https://github.com/think-root/content-sentinel/commit/c117a6db120524b02b417cc65f1b965629dadbfe))
+
 # [1.44.0](https://github.com/think-root/content-sentinel/compare/v1.43.0...v1.44.0) (2026-02-04)
 
 
