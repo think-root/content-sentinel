@@ -41,6 +41,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
   const cachedRepositoriesResult = isCacheBust ? null : getRepositoriesFromCache();
   const cachedRepositories = cachedRepositoriesResult?.data;
   const isFetching = useRef<boolean>(false);
+  const latestRequestIdRef = useRef<number>(0);
   const pageSizeRef = useRef<number>(getStoredValue('dashboardItemsPerPage', 10));
   const loadingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
@@ -70,12 +71,16 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     sortBy?: 'id' | 'date_added' | 'date_posted',
     sortOrder?: 'ASC' | 'DESC',
     page?: number,
-    isBackgroundFetch: boolean = false
+    isBackgroundFetch: boolean = false,
+    forceFetch: boolean = false
   ) => {
     // Guard against concurrent calls
-    if (isFetching.current) {
+    if (isFetching.current && !forceFetch) {
       return;
     }
+
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
 
     try {
       isFetching.current = true;
@@ -93,6 +98,9 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       );
 
       if (response && response.data && response.data.items) {
+        if (requestId !== latestRequestIdRef.current) {
+          return;
+        }
 
         const processedItems = response.data.items.map((item: Repository) => ({
           ...item,
@@ -209,8 +217,10 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         throw error;
       }
     } finally {
-      isFetching.current = false;
-      setState(prev => ({ ...prev, loading: false, statsLoading: false }));
+      if (requestId === latestRequestIdRef.current) {
+        isFetching.current = false;
+        setState(prev => ({ ...prev, loading: false, statsLoading: false }));
+      }
     }
   };
 
@@ -263,7 +273,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         sortBy,
         sortOrder,
         page,
-        isBackgroundFetch
+        isBackgroundFetch,
+        forceFetch
       );
     } catch (error: any) {
       if (!isApiConfigured()) {

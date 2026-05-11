@@ -5,7 +5,7 @@ import { UseRepositoryFiltersReturn } from '../types/repositoryList';
 export function useRepositoryFilters(
   initialPageSize: number,
   initialPage: number,
-  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number) => Promise<void>,
+  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number, forceFetch?: boolean) => Promise<void>,
   loading: boolean
 ): UseRepositoryFiltersReturn {
   const { getStoredValue, setStoredValue, removeStoredValue } = useRepositoryLocalStorage();
@@ -67,7 +67,8 @@ export function useRepositoryFilters(
       itemsPerPage,
       sortBy,
       sortOrder,
-      1
+      1,
+      true
     );
   };
 
@@ -86,7 +87,8 @@ export function useRepositoryFilters(
       value,
       sortBy,
       sortOrder,
-      1
+      1,
+      true
     );
   };
 
@@ -98,7 +100,7 @@ export function useRepositoryFilters(
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder, 1);
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, sortOrder, 1, true);
   };
 
   const handleSortOrderChange = (value: 'ASC' | 'DESC') => {
@@ -109,7 +111,7 @@ export function useRepositoryFilters(
     setCurrentPage(1);
     
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1);
+    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1, true);
   };
 
   const handlePageChange = (page: number) => {
@@ -117,7 +119,7 @@ export function useRepositoryFilters(
     
     setCurrentPage(page);
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page);
+    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page, true);
   };
 
   const handleClearFilters = () => {
@@ -134,7 +136,7 @@ export function useRepositoryFilters(
     setStoredValue('dashboardSortOrder', 'DESC');
     setStoredValue('dashboardItemsPerPage', initialPageSize);
     
-    fetchRepositories(undefined, false, initialPageSize === 0, initialPageSize, 'date_added', 'DESC', 1);
+    fetchRepositories(undefined, false, initialPageSize === 0, initialPageSize, 'date_added', 'DESC', 1, true);
   };
 
   return {
