@@ -1,3 +1,10 @@
+## [1.45.1](https://github.com/think-root/content-sentinel/compare/v1.45.0...v1.45.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **posts:** force fetch on repository filter changes ([fa941f6](https://github.com/think-root/content-sentinel/commit/fa941f67dccc54166bf0640b3248e7658fd3422f))
+
 # [1.45.0](https://github.com/think-root/content-sentinel/compare/v1.44.0...v1.45.0) (2026-05-11)
 
 
