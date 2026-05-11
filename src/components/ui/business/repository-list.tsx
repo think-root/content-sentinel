@@ -14,7 +14,9 @@ import { RepositoryFilters } from './repository-filters';
 
 interface RepositoryListProps {
   repositories: Repository[];
-  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number) => Promise<void>;
+  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number, forceFetch?: boolean) => Promise<void>;
+  fetchPreviews: (forceFetch?: boolean) => Promise<void>;
+  nextPostId?: number;
   totalItems: number;
   totalPages: number;
   currentPage: number;
@@ -26,6 +28,8 @@ interface RepositoryListProps {
 export function RepositoryList({ 
   repositories, 
   fetchRepositories, 
+  fetchPreviews,
+  nextPostId,
   totalItems, 
   totalPages, 
   currentPage: initialPage, 
@@ -62,10 +66,13 @@ export function RepositoryList({
     initialPageSize
   );
 
-  const handleRepositoryUpdate = () => {
+  const handleRepositoryUpdate = async () => {
     // Refresh repositories with current filters
     const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, sortOrder, currentPage);
+    await Promise.all([
+      fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, sortOrder, currentPage, true),
+      fetchPreviews(true)
+    ]);
   };
 
   return (
@@ -129,6 +136,7 @@ export function RepositoryList({
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
+              nextPostId={nextPostId}
               onRepositoryUpdate={handleRepositoryUpdate}
             />
           </div>
@@ -141,6 +149,7 @@ export function RepositoryList({
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
+              nextPostId={nextPostId}
               onRepositoryUpdate={handleRepositoryUpdate}
             />
           </div>

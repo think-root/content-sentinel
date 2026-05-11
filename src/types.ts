@@ -5,6 +5,7 @@ export interface Repository {
   text: string;
   date_added?: string;
   date_posted?: string;
+  publish_priority?: number | null;
 }
 
 export interface RepositoriesResponse {

@@ -29,7 +29,8 @@ export interface RepositoryTableProps {
   totalItems: number;
   itemsPerPage: number;
   searchTerm: string;
-  onRepositoryUpdate?: () => void;
+  nextPostId?: number;
+  onRepositoryUpdate?: () => void | Promise<void>;
 }
 
 export interface RepositoryMobileViewProps {
@@ -39,7 +40,8 @@ export interface RepositoryMobileViewProps {
   totalItems: number;
   itemsPerPage: number;
   searchTerm: string;
-  onRepositoryUpdate?: () => void;
+  nextPostId?: number;
+  onRepositoryUpdate?: () => void | Promise<void>;
 }
 
 export interface RepositoryPaginationProps {

@@ -121,7 +121,7 @@ function getApiConfig() {
 interface GetRepositoryRequest {
   limit: number;
   posted?: boolean;
-  sort_by?: "id" | "date_added" | "date_posted";
+  sort_by?: "id" | "date_added" | "date_posted" | "publication_queue";
   sort_order?: "ASC" | "DESC";
   page?: number;
   page_size?: number;
@@ -445,8 +445,8 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
     const requestBody = {
       limit: 1,
       posted: false,
-      sort_by: "date_added",
-      sort_order: "ASC", // Show oldest first
+      sort_by: "publication_queue",
+      sort_order: "ASC", // Show promoted items first, then oldest unposted
       text_language: language,
     };
 
@@ -661,6 +661,37 @@ export async function deleteRepository(identifier: { id?: number; url?: string }
   }
 
   return response.json();
+}
+
+export async function promoteRepositoryToNext(identifier: { id?: number; url?: string }): Promise<{ status: string; message: string; data?: Repository }> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+
+  if (!isConfigured) {
+    return { status: "error", message: "API not configured" };
+  }
+
+  const response = await fetch(`${baseUrl}/promote-repository/`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(identifier),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    if (response.status === 409) {
+      throw new Error(result.message || "Repository is already posted");
+    }
+    if (response.status === 404) {
+      throw new Error(result.message || "Repository not found");
+    }
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    throw new Error(result.message || `Failed to promote repository: ${response.status}`);
+  }
+
+  return result;
 }
 
 export async function updateRepositoryText(identifier: { id?: number; url?: string }, text: string): Promise<{ status: string; message: string; data?: { id: number; url: string; text: string; updated_at: string } }> {

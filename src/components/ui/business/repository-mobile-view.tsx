@@ -3,8 +3,8 @@ import { RepositoryMobileViewProps } from '@/types/repositoryList';
 import { Repository } from '@/types';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
 import { formatDate } from '@/utils/date-format';
-import { deleteRepository, updateRepositoryText } from '@/api';
-import { Pencil, Check, X, Trash2, AlertCircle } from 'lucide-react';
+import { deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api';
+import { Pencil, Check, X, Trash2, AlertCircle, Send } from 'lucide-react';
 import { toast } from '@/components/ui/common/toast-config';
 import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
 import { RepositoryLink } from '@/components/ui/common/repository-link';
@@ -22,6 +22,7 @@ export function RepositoryMobileView({
   totalItems,
   itemsPerPage,
   searchTerm,
+  nextPostId,
   onRepositoryUpdate
 }: RepositoryMobileViewProps) {
   const [localRepositories, setLocalRepositories] = useState<Repository[]>(repositories);
@@ -29,6 +30,7 @@ export function RepositoryMobileView({
   const [textInput, setTextInput] = useState('');
   const [textError, setTextError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Repository | null>(null);
+  const [promotingId, setPromotingId] = useState<number | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -140,6 +142,32 @@ export function RepositoryMobileView({
         ...toastOptions,
         id: 'content-alchemist-error'
       });
+    }
+  };
+
+  const handlePromoteRepository = async (repo: Repository) => {
+    if (repo.posted || repo.id === nextPostId || promotingId !== null) return;
+
+    try {
+      setPromotingId(repo.id);
+      await promoteRepositoryToNext({ id: repo.id });
+
+      toast.success(`Repository will be published next`, {
+        ...toastOptions,
+        id: `promote-${repo.id}`
+      });
+
+      if (onRepositoryUpdate) {
+        await onRepositoryUpdate();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to promote repository';
+      toast.error(message || 'Failed to promote repository', {
+        ...toastOptions,
+        id: `promote-error-${repo.id}`
+      });
+    } finally {
+      setPromotingId(null);
     }
   };
 
@@ -261,7 +289,20 @@ export function RepositoryMobileView({
                     <div className="flex-1 text-sm text-foreground mr-2">
                       <TruncatedText text={repo.text} maxChars={150} />
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1">
+                      {!repo.posted && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePromoteRepository(repo)}
+                          disabled={repo.id === nextPostId || promotingId !== null}
+                          aria-label={repo.id === nextPostId ? 'Already next' : 'Publish next'}
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                          title={repo.id === nextPostId ? 'Already next' : 'Publish next'}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"

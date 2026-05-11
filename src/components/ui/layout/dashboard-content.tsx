@@ -412,6 +412,8 @@ export const DashboardContent = ({
             <RepositoryList
               repositories={repositories}
               fetchRepositories={fetchRepositories}
+              fetchPreviews={fetchPreviews}
+              nextPostId={nextPost?.id}
               currentPage={pagination.currentPage}
               pageSize={pagination.pageSize}
               totalPages={pagination.totalPages}

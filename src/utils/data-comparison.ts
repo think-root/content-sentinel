@@ -34,6 +34,7 @@ export const compareRepositories = (
         newRepo.posted !== cachedRepo.posted ||
         newRepo.date_posted !== cachedRepo.date_posted ||
         newRepo.date_added !== cachedRepo.date_added ||
+        newRepo.publish_priority !== cachedRepo.publish_priority ||
         newRepo.text !== cachedRepo.text ||
         newRepo.url !== cachedRepo.url;
 
@@ -79,7 +80,8 @@ const areRepositoriesEqual = (
     repo1.url === repo2.url &&
     repo1.posted === repo2.posted &&
     repo1.date_added === repo2.date_added &&
-    repo1.date_posted === repo2.date_posted
+    repo1.date_posted === repo2.date_posted &&
+    repo1.publish_priority === repo2.publish_priority
   );
 };
 
