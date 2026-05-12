@@ -1,3 +1,11 @@
+# [1.46.0](https://github.com/think-root/content-sentinel/compare/v1.45.1...v1.46.0) (2026-05-12)
+
+
+### Features
+
+* **ui:** add clipboard paste functionality for repository URLs ([41d781e](https://github.com/think-root/content-sentinel/commit/41d781e13ecfb5ede02be82be61a65f12a8636bd))
+* **ui:** add publication queue sorting option ([38a3aed](https://github.com/think-root/content-sentinel/commit/38a3aedf273cfe3fe6fdf1b7266ea86c73d4e408))
+
 ## [1.45.1](https://github.com/think-root/content-sentinel/compare/v1.45.0...v1.45.1) (2026-05-11)
 
 
