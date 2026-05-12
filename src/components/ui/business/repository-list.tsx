@@ -1,6 +1,6 @@
 // React imports
 // (no state needed since the Posts section is no longer collapsible)
-import { Repository } from '@/types';
+import type { Repository, RepositorySortBy, RepositorySortOrder } from '@/types';
 import { Filter, ChevronDown } from 'lucide-react';
 import { filterRepositories, countActiveFilters } from '@/utils/repositoryListUtils';
 import { useRepositoryFilters } from '@/hooks/useRepositoryFilters';
@@ -14,7 +14,7 @@ import { RepositoryFilters } from './repository-filters';
 
 interface RepositoryListProps {
   repositories: Repository[];
-  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: 'id' | 'date_added' | 'date_posted', sortOrder?: 'ASC' | 'DESC', page?: number, forceFetch?: boolean) => Promise<void>;
+  fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: RepositorySortBy, sortOrder?: RepositorySortOrder, page?: number, forceFetch?: boolean) => Promise<void>;
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   nextPostId?: number;
   totalItems: number;

@@ -1,4 +1,11 @@
 import { useCallback } from 'react';
+import {
+  DEFAULT_REPOSITORY_SORT_BY,
+  DEFAULT_REPOSITORY_SORT_ORDER,
+  normalizeRepositorySortBy,
+  normalizeRepositorySortOrder,
+  PUBLICATION_QUEUE_SORT_BY,
+} from '../utils/repositoryListUtils';
 
 /**
  * Typed storage keys used by repository dashboard
@@ -65,12 +72,23 @@ export function useRepositoryLocalStorage() {
    * - dashboardItemsPerPage: 10
    */
   const initializeFromStorage = useCallback(() => {
+    const dashboardSortBy = normalizeRepositorySortBy(
+      getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY)
+    );
+    const dashboardSortOrder = normalizeRepositorySortOrder(
+      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER),
+      dashboardSortBy
+    );
+    const dashboardStatusFilter = dashboardSortBy === PUBLICATION_QUEUE_SORT_BY
+      ? 'unposted'
+      : getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted');
+
     return {
       postsShowFilters: getStoredValue('postsShowFilters', false),
       dashboardSearchTerm: getStoredValue('dashboardSearchTerm', ''),
-      dashboardStatusFilter: getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted'),
-      dashboardSortBy: getStoredValue('dashboardSortBy', 'date_added' as 'id' | 'date_added' | 'date_posted'),
-      dashboardSortOrder: getStoredValue('dashboardSortOrder', 'DESC' as 'ASC' | 'DESC'),
+      dashboardStatusFilter,
+      dashboardSortBy,
+      dashboardSortOrder,
       dashboardItemsPerPage: getStoredValue('dashboardItemsPerPage', 10)
     };
   }, [getStoredValue]);

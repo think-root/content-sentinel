@@ -1,5 +1,13 @@
 import { useCallback } from 'react';
 import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api';
+import type { RepositorySortBy, RepositorySortOrder } from '../types';
+import {
+  DEFAULT_REPOSITORY_SORT_BY,
+  DEFAULT_REPOSITORY_SORT_ORDER,
+  normalizeRepositorySortBy,
+  normalizeRepositorySortOrder,
+  PUBLICATION_QUEUE_SORT_BY,
+} from '../utils/repositoryListUtils';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -9,8 +17,8 @@ interface UseGenerateHandlersProps {
     append?: boolean,
     fetchAll?: boolean,
     itemsPerPage?: number,
-    sortBy?: 'id' | 'date_added' | 'date_posted',
-    sortOrder?: 'ASC' | 'DESC',
+    sortBy?: RepositorySortBy,
+    sortOrder?: RepositorySortOrder,
     page?: number,
     forceFetch?: boolean
   ) => Promise<void>;
@@ -30,13 +38,18 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
 
           // Read current filters from localStorage
           const savedStatusFilter = (localStorage.getItem('dashboardStatusFilter') || 'all') as 'all' | 'posted' | 'unposted';
-          const savedSortBy = (localStorage.getItem('dashboardSortBy') || 'date_added') as 'id' | 'date_added' | 'date_posted';
-          const savedSortOrder = (localStorage.getItem('dashboardSortOrder') || 'DESC') as 'ASC' | 'DESC';
+          const savedSortBy = normalizeRepositorySortBy(localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY);
+          const savedSortOrder = normalizeRepositorySortOrder(
+            localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER,
+            savedSortBy
+          );
           const itemsStr = localStorage.getItem('dashboardItemsPerPage');
           const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
 
           // Compute posted filter
-          const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+          const posted = savedSortBy === PUBLICATION_QUEUE_SORT_BY
+            ? false
+            : savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
 
           // Foreground fetch with current filters and forceFetch=true; use page=1
           await fetchRepositories(
@@ -44,8 +57,8 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
             false,
             savedItemsPerPage === 0,
             savedItemsPerPage,
-            savedSortBy || 'date_added',
-            savedSortOrder || 'DESC',
+            savedSortBy,
+            savedSortOrder,
             1,
             true
           );
@@ -75,13 +88,18 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
       if (response.status === 'ok') {
         // Read current filters from localStorage
         const savedStatusFilter = (localStorage.getItem('dashboardStatusFilter') || 'all') as 'all' | 'posted' | 'unposted';
-        const savedSortBy = (localStorage.getItem('dashboardSortBy') || 'date_added') as 'id' | 'date_added' | 'date_posted';
-        const savedSortOrder = (localStorage.getItem('dashboardSortOrder') || 'DESC') as 'ASC' | 'DESC';
+        const savedSortBy = normalizeRepositorySortBy(localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY);
+        const savedSortOrder = normalizeRepositorySortOrder(
+          localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER,
+          savedSortBy
+        );
         const itemsStr = localStorage.getItem('dashboardItemsPerPage');
         const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
 
         // Compute posted filter
-        const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+        const posted = savedSortBy === PUBLICATION_QUEUE_SORT_BY
+          ? false
+          : savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
 
         // Foreground fetch with current filters and forceFetch=true; use page=1
         await fetchRepositories(
@@ -89,8 +107,8 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
           false,
           savedItemsPerPage === 0,
           savedItemsPerPage,
-          savedSortBy || 'date_added',
-          savedSortOrder || 'DESC',
+          savedSortBy,
+          savedSortOrder,
           1,
           true
         );

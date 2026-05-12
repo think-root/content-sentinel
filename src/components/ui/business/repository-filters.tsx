@@ -1,6 +1,7 @@
 import { Search, X } from 'lucide-react';
 import { RepositoryListFiltersProps } from '@/types/repositoryList';
-import { hasActiveFilters } from '@/utils/repositoryListUtils';
+import type { RepositorySortBy, RepositorySortOrder } from '@/types';
+import { hasActiveFilters, PUBLICATION_QUEUE_SORT_BY } from '@/utils/repositoryListUtils';
 import { Card } from '../layout/card';
 import { Input } from '../base/input';
 import { Button } from '../base/button';
@@ -30,6 +31,7 @@ export function RepositoryFilters({
     itemsPerPage,
     initialPageSize
   );
+  const isPublicationQueueSort = sortBy === PUBLICATION_QUEUE_SORT_BY;
 
   return (
     <Card className="mb-6 p-4">
@@ -88,7 +90,7 @@ export function RepositoryFilters({
             <Label className="mb-2">Sort By</Label>
             <Select
               value={sortBy}
-              onValueChange={(value) => onSortByChange(value as 'id' | 'date_added' | 'date_posted')}
+              onValueChange={(value) => onSortByChange(value as RepositorySortBy)}
               disabled={loading}
             >
               <SelectTrigger>
@@ -98,6 +100,7 @@ export function RepositoryFilters({
                 <SelectItem value="id">ID</SelectItem>
                 <SelectItem value="date_added">Date Added</SelectItem>
                 <SelectItem value="date_posted">Date Posted</SelectItem>
+                <SelectItem value="publication_queue">Publication Order</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -127,16 +130,22 @@ export function RepositoryFilters({
           <div className="flex-1">
             <Label className="mb-2">Sort Order</Label>
             <Select
-              value={sortOrder}
-              onValueChange={(value) => onSortOrderChange(value as 'ASC' | 'DESC')}
-              disabled={loading}
+              value={isPublicationQueueSort ? 'ASC' : sortOrder}
+              onValueChange={(value) => onSortOrderChange(value as RepositorySortOrder)}
+              disabled={loading || isPublicationQueueSort}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sort order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="DESC">Newest First</SelectItem>
-                <SelectItem value="ASC">Oldest First</SelectItem>
+                {isPublicationQueueSort ? (
+                  <SelectItem value="ASC">Queue First</SelectItem>
+                ) : (
+                  <>
+                    <SelectItem value="DESC">Newest First</SelectItem>
+                    <SelectItem value="ASC">Oldest First</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

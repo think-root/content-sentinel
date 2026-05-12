@@ -1,5 +1,28 @@
-import { Repository } from '../types';
+import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
 import { formatDate } from './date-format';
+
+export const DEFAULT_REPOSITORY_SORT_BY: RepositorySortBy = 'date_added';
+export const DEFAULT_REPOSITORY_SORT_ORDER: RepositorySortOrder = 'DESC';
+export const PUBLICATION_QUEUE_SORT_BY: RepositorySortBy = 'publication_queue';
+
+export const isRepositorySortBy = (value: string | null | undefined): value is RepositorySortBy => {
+  return value === 'id' || value === 'date_added' || value === 'date_posted' || value === 'publication_queue';
+};
+
+export const normalizeRepositorySortBy = (value: string | null | undefined): RepositorySortBy => {
+  return isRepositorySortBy(value) ? value : DEFAULT_REPOSITORY_SORT_BY;
+};
+
+export const normalizeRepositorySortOrder = (
+  value: string | null | undefined,
+  sortBy?: RepositorySortBy
+): RepositorySortOrder => {
+  if (sortBy === PUBLICATION_QUEUE_SORT_BY) {
+    return 'ASC';
+  }
+
+  return value === 'ASC' || value === 'DESC' ? value : DEFAULT_REPOSITORY_SORT_ORDER;
+};
 
 export const filterRepositories = (repositories: Repository[], searchTerm: string): Repository[] => {
   if (!searchTerm) return repositories;
@@ -47,8 +70,8 @@ export const calculatePaginationInfo = (
 export const hasActiveFilters = (
   searchTerm: string,
   statusFilter: 'all' | 'posted' | 'unposted',
-  sortBy: 'id' | 'date_added' | 'date_posted',
-  sortOrder: 'ASC' | 'DESC',
+  sortBy: RepositorySortBy,
+  sortOrder: RepositorySortOrder,
   itemsPerPage: number,
   initialPageSize: number
 ): boolean => {
@@ -64,8 +87,8 @@ export const hasActiveFilters = (
 export const countActiveFilters = (
   searchTerm: string,
   statusFilter: 'all' | 'posted' | 'unposted',
-  sortBy: 'id' | 'date_added' | 'date_posted',
-  sortOrder: 'ASC' | 'DESC',
+  sortBy: RepositorySortBy,
+  sortOrder: RepositorySortOrder,
   itemsPerPage: number,
   initialPageSize: number
 ): number => {

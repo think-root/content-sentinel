@@ -1,6 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 import { toast } from '../components/ui/common/toast-config';
 import { isRateLimited } from '../lib/requestQueue';
+import type { RepositorySortBy, RepositorySortOrder } from '../types';
+import {
+  DEFAULT_REPOSITORY_SORT_BY,
+  DEFAULT_REPOSITORY_SORT_ORDER,
+  normalizeRepositorySortBy,
+  normalizeRepositorySortOrder,
+  PUBLICATION_QUEUE_SORT_BY,
+} from '../utils/repositoryListUtils';
 
 interface UseDataRefreshProps {
   fetchRepositories: (
@@ -8,8 +16,8 @@ interface UseDataRefreshProps {
     append?: boolean,
     fetchAll?: boolean,
     itemsPerPage?: number,
-    sortBy?: "id" | "date_added" | "date_posted",
-    sortOrder?: "ASC" | "DESC",
+    sortBy?: RepositorySortBy,
+    sortOrder?: RepositorySortOrder,
     page?: number,
     forceFetch?: boolean
   ) => Promise<void>;
@@ -83,17 +91,20 @@ export const useDataRefresh = ({
           | "posted"
           | "unposted"
           | null;
-        const savedSortBy = localStorage.getItem("dashboardSortBy") as
-          | "id"
-          | "date_added"
-          | "date_posted"
-          | null;
-        const savedSortOrder = localStorage.getItem("dashboardSortOrder") as "ASC" | "DESC" | null;
+        const savedSortBy = normalizeRepositorySortBy(
+          localStorage.getItem("dashboardSortBy") || DEFAULT_REPOSITORY_SORT_BY
+        );
+        const savedSortOrder = normalizeRepositorySortOrder(
+          localStorage.getItem("dashboardSortOrder") || DEFAULT_REPOSITORY_SORT_ORDER,
+          savedSortBy
+        );
         const savedItemsPerPage = parseInt(
           localStorage.getItem("dashboardItemsPerPage") || "10",
           10
         );
-        const posted = savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
+        const posted = savedSortBy === PUBLICATION_QUEUE_SORT_BY
+          ? false
+          : savedStatusFilter === "all" ? undefined : savedStatusFilter === "posted";
 
         // Execute API calls concurrently without artificial delays.
         // Each task swallows 429 (rate limit) errors locally; non-429 errors bubble up.
@@ -104,8 +115,8 @@ export const useDataRefresh = ({
               false,
               savedItemsPerPage === 0,
               savedItemsPerPage,
-              savedSortBy || "date_added",
-              savedSortOrder || "DESC",
+              savedSortBy,
+              savedSortOrder,
               1,
               false
             );

@@ -1,4 +1,4 @@
-import { Repository } from './types';
+import type { Repository, RepositorySortBy, RepositorySortOrder } from './types';
 import { getApiSettings, isApiConfigured } from "./utils/api-settings";
 import { queueRequest, createRequestSignature } from "./lib/requestQueue";
 
@@ -121,8 +121,8 @@ function getApiConfig() {
 interface GetRepositoryRequest {
   limit: number;
   posted?: boolean;
-  sort_by?: "id" | "date_added" | "date_posted" | "publication_queue";
-  sort_order?: "ASC" | "DESC";
+  sort_by?: RepositorySortBy;
+  sort_order?: RepositorySortOrder;
   page?: number;
   page_size?: number;
   text_language?: string;
@@ -146,8 +146,8 @@ export async function getRepositories(
   limit: number = 0,
   posted?: boolean,
   fetchAll: boolean = false,
-  sortBy?: "id" | "date_added" | "date_posted",
-  sortOrder?: "ASC" | "DESC",
+  sortBy?: RepositorySortBy,
+  sortOrder?: RepositorySortOrder,
   page?: number,
   pageSize?: number
 ): Promise<RepositoryResponse> {

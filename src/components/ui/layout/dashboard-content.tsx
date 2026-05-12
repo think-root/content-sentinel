@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base/tabs';
 import { useTabPersistence } from '../../../hooks/useTabPersistence';
 import { useSwipeable } from 'react-swipeable';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
-import type { Repository } from '../../../types';
+import type { Repository, RepositorySortBy, RepositorySortOrder } from '../../../types';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
@@ -47,8 +47,8 @@ interface DashboardContentProps {
     append?: boolean,
     fetchAll?: boolean,
     itemsPerPage?: number,
-    sortBy?: 'id' | 'date_added' | 'date_posted',
-    sortOrder?: 'ASC' | 'DESC',
+    sortBy?: RepositorySortBy,
+    sortOrder?: RepositorySortOrder,
     page?: number,
     forceFetch?: boolean
   ) => Promise<void>;

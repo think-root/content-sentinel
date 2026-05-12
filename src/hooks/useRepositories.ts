@@ -1,10 +1,17 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getRepositories } from '../api';
-import type { Repository } from '../types';
+import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
 import { isApiConfigured, getApiSettings } from "../utils/api-settings";
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
+import {
+  DEFAULT_REPOSITORY_SORT_BY,
+  DEFAULT_REPOSITORY_SORT_ORDER,
+  normalizeRepositorySortBy,
+  normalizeRepositorySortOrder,
+  PUBLICATION_QUEUE_SORT_BY,
+} from '../utils/repositoryListUtils';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -68,8 +75,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     statusFilter?: boolean,
     fetchAll: boolean = false,
     itemsPerPage: number = state.pagination.pageSize,
-    sortBy?: 'id' | 'date_added' | 'date_posted',
-    sortOrder?: 'ASC' | 'DESC',
+    sortBy?: RepositorySortBy,
+    sortOrder?: RepositorySortOrder,
     page?: number,
     isBackgroundFetch: boolean = false,
     forceFetch: boolean = false
@@ -86,13 +93,15 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       isFetching.current = true;
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
 
+      const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? false : statusFilter;
+      const effectiveSortOrder = normalizeRepositorySortOrder(sortOrder, sortBy);
 
       const response = await getRepositories(
         itemsPerPage,
-        statusFilter,
+        effectiveStatusFilter,
         fetchAll,
         sortBy,
-        sortOrder,
+        effectiveSortOrder,
         fetchAll ? undefined : page,
         fetchAll ? 0 : itemsPerPage
       );
@@ -109,7 +118,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
 
         const settings = getApiSettings();
         const textLanguage = settings.displayLanguage || 'uk';
-        const cacheKey = JSON.stringify({ statusFilter, fetchAll, itemsPerPage, sortBy, sortOrder, page, textLanguage });
+        const cacheKey = JSON.stringify({ statusFilter: effectiveStatusFilter, fetchAll, itemsPerPage, sortBy, sortOrder: effectiveSortOrder, page, textLanguage });
         localStorage.setItem('cache_repositories_key', cacheKey);
 
         const newData = {
@@ -229,8 +238,8 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     append: boolean = false,
     fetchAll: boolean = false,
     itemsPerPage: number = pageSizeRef.current,
-    sortBy?: 'id' | 'date_added' | 'date_posted',
-    sortOrder?: 'ASC' | 'DESC',
+    sortBy?: RepositorySortBy,
+    sortOrder?: RepositorySortOrder,
     page?: number,
     forceFetch: boolean = false
   ) => {
@@ -241,12 +250,14 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     try {
       const settings = getApiSettings();
       const textLanguage = settings.displayLanguage || 'uk';
+      const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? false : statusFilter;
+      const effectiveSortOrder = normalizeRepositorySortOrder(sortOrder, sortBy);
       const cacheKey = JSON.stringify({
-        statusFilter,
+        statusFilter: effectiveStatusFilter,
         fetchAll,
         itemsPerPage,
         sortBy,
-        sortOrder,
+        sortOrder: effectiveSortOrder,
         page,
         textLanguage,
       });
@@ -267,11 +278,11 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       const isBackgroundFetch = hasCache && currentCacheKey === cacheKey && !forceFetch;
       
       await fetchRepositoriesFromAPI(
-        statusFilter,
+        effectiveStatusFilter,
         fetchAll,
         itemsPerPage,
         sortBy,
-        sortOrder,
+        effectiveSortOrder,
         page,
         isBackgroundFetch,
         forceFetch
@@ -351,12 +362,22 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
 
   useEffect(() => {
     // Load initial data with saved filter values using centralized storage utilities
-    const savedSortBy = getStoredValue('dashboardSortBy', 'date_added' as 'id' | 'date_added' | 'date_posted');
-    const savedSortOrder = getStoredValue('dashboardSortOrder', 'DESC' as 'ASC' | 'DESC');
+    const savedSortBy = normalizeRepositorySortBy(getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY));
+    const savedSortOrder = normalizeRepositorySortOrder(
+      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER),
+      savedSortBy
+    );
     const savedStatusFilter = getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted');
     const savedItemsPerPage = getStoredValue('dashboardItemsPerPage', 10);
     
-    const posted = savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+    const posted = savedSortBy === PUBLICATION_QUEUE_SORT_BY
+      ? false
+      : savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
+
+    if (savedSortBy === PUBLICATION_QUEUE_SORT_BY) {
+      localStorage.setItem('dashboardStatusFilter', 'unposted');
+      localStorage.setItem('dashboardSortOrder', 'ASC');
+    }
     
     // Validate cache key against current parameters
     const settings = getApiSettings();
