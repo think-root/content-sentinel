@@ -402,23 +402,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           </p>
           <form onSubmit={handleManualSubmit}>
             <div className="mb-4">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="url">
-                  Repository URLs
-                </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={handlePasteRepositoryUrls}
-                  disabled={isManualLoading}
-                  className="md:hidden"
-                  title="Paste from clipboard"
-                >
-                  <Clipboard className="h-3.5 w-3.5" />
-                  Paste
-                </Button>
-              </div>
+              <Label htmlFor="url">
+                Repository URLs
+              </Label>
               <div className="mt-1 flex rounded-md shadow-sm relative">
                 <Textarea
                   name="url"
@@ -436,14 +422,27 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     overflow: 'auto',
                     height: 'auto'
                   }}
-                  className={`flex-1 min-w-0 block w-full pr-2 ${isManualLoading ? 'bg-muted cursor-not-allowed' : 'bg-background'}`}
+                  className={`flex-1 min-w-0 block w-full ${!url.trim() ? 'pr-11' : 'pr-2'} ${isManualLoading ? 'bg-muted cursor-not-allowed' : 'bg-background'}`}
                   placeholder="https://github.com/user/repo1"
                   ref={urlTextareaRef}
                   onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
                     resizeUrlTextarea(e.target as HTMLTextAreaElement);
                   }}
                 />
-
+                {!url.trim() && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePasteRepositoryUrls}
+                    disabled={isManualLoading}
+                    className="absolute right-1.5 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground md:hidden"
+                    title="Paste from clipboard"
+                    aria-label="Paste from clipboard"
+                  >
+                    <Clipboard className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
             <div className="space-y-2">
