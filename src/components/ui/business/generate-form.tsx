@@ -25,6 +25,51 @@ const LANGUAGE_MAPPING = {
 };
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
+const CLIPBOARD_TEXT_MIME_TYPES = ['text/plain', 'text/uri-list'] as const;
+
+type StandaloneNavigator = Navigator & {
+  standalone?: boolean;
+};
+
+const isIOSLikePlatform = () => {
+  const platform = navigator.platform || '';
+  const userAgent = navigator.userAgent || '';
+
+  return /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const isStandalonePwa = () => {
+  const standaloneNavigator = navigator as StandaloneNavigator;
+  const isDisplayModeStandalone =
+    typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches;
+
+  return isDisplayModeStandalone || standaloneNavigator.standalone === true;
+};
+
+const isIOSStandalonePwa = () => isIOSLikePlatform() && isStandalonePwa();
+
+const readClipboardItemText = async () => {
+  if (!navigator.clipboard?.read) {
+    return '';
+  }
+
+  const clipboardItems = await navigator.clipboard.read();
+
+  for (const mimeType of CLIPBOARD_TEXT_MIME_TYPES) {
+    for (const item of clipboardItems) {
+      if (!item.types.includes(mimeType)) continue;
+
+      const blob = await item.getType(mimeType);
+      const text = (await blob.text()).trim();
+
+      if (text) {
+        return text;
+      }
+    }
+  }
+
+  return '';
+};
 
 interface GenerateFormProps {
   onManualGenerate: (url: string) => Promise<ManualGenerateResponse>;
@@ -161,17 +206,34 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
     const textarea = urlTextareaRef.current;
 
+    const focusTextareaForNativePaste = () => {
+      if (!textarea) return;
+
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const caretPosition = textarea.value.length;
+        textarea.setSelectionRange(caretPosition, caretPosition);
+        resizeUrlTextarea(textarea);
+      });
+    };
+
+    if (isIOSStandalonePwa()) {
+      focusTextareaForNativePaste();
+      toast.info('Use the iOS Paste action in the field', { duration: 3000 });
+      return;
+    }
+
     if (!navigator.clipboard?.readText) {
-      textarea?.focus();
-      toast.error('Clipboard access is unavailable. Use native paste.');
+      focusTextareaForNativePaste();
+      toast.info('Use native paste', { duration: 3000 });
       return;
     }
 
     try {
-      const clipboardText = (await navigator.clipboard.readText()).trim();
+      const clipboardText = (await navigator.clipboard.readText()).trim() || (await readClipboardItemText());
 
       if (!clipboardText) {
-        textarea?.focus();
+        focusTextareaForNativePaste();
         toast.error('Clipboard is empty');
         return;
       }
@@ -196,10 +258,18 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         resizeUrlTextarea(urlTextareaRef.current);
       });
     } catch {
-      textarea?.focus();
-      toast.error('Clipboard permission denied. Use native paste.');
+      focusTextareaForNativePaste();
+      toast.info('Use native paste', { duration: 3000 });
     }
   }, [isManualLoading, resizeUrlTextarea, url]);
+
+  const handleUrlTextareaPaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+
+    requestAnimationFrame(() => {
+      resizeUrlTextarea(textarea);
+    });
+  }, [resizeUrlTextarea]);
 
   const handleSaveSettings = useCallback(async () => {
     try {
@@ -428,6 +498,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
                     resizeUrlTextarea(e.target as HTMLTextAreaElement);
                   }}
+                  onPaste={handleUrlTextareaPaste}
                 />
                 {!url.trim() && (
                   <Button
