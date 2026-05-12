@@ -1,5 +1,6 @@
 export type RepositorySortBy = 'id' | 'date_added' | 'date_posted' | 'publication_queue';
 export type RepositorySortOrder = 'ASC' | 'DESC';
+export type RepositoryStatusFilter = 'all' | 'posted' | 'unposted';
 
 export interface Repository {
   id: number;

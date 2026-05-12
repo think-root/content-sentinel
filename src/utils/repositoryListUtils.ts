@@ -1,9 +1,24 @@
-import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
+import type { Repository, RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '../types';
 import { formatDate } from './date-format';
 
+export const DEFAULT_REPOSITORY_STATUS_FILTER: RepositoryStatusFilter = 'all';
 export const DEFAULT_REPOSITORY_SORT_BY: RepositorySortBy = 'date_added';
 export const DEFAULT_REPOSITORY_SORT_ORDER: RepositorySortOrder = 'DESC';
 export const PUBLICATION_QUEUE_SORT_BY: RepositorySortBy = 'publication_queue';
+
+export const REPOSITORY_SORT_OPTIONS_BY_STATUS: Record<RepositoryStatusFilter, RepositorySortBy[]> = {
+  all: ['id', 'date_added'],
+  posted: ['id', 'date_added', 'date_posted'],
+  unposted: ['id', 'date_added', PUBLICATION_QUEUE_SORT_BY],
+};
+
+export const isRepositoryStatusFilter = (value: string | null | undefined): value is RepositoryStatusFilter => {
+  return value === 'all' || value === 'posted' || value === 'unposted';
+};
+
+export const normalizeRepositoryStatusFilter = (value: string | null | undefined): RepositoryStatusFilter => {
+  return isRepositoryStatusFilter(value) ? value : DEFAULT_REPOSITORY_STATUS_FILTER;
+};
 
 export const isRepositorySortBy = (value: string | null | undefined): value is RepositorySortBy => {
   return value === 'id' || value === 'date_added' || value === 'date_posted' || value === 'publication_queue';
@@ -22,6 +37,69 @@ export const normalizeRepositorySortOrder = (
   }
 
   return value === 'ASC' || value === 'DESC' ? value : DEFAULT_REPOSITORY_SORT_ORDER;
+};
+
+export const getRepositoryStatusFilterFromPosted = (posted?: boolean): RepositoryStatusFilter => {
+  if (posted === undefined) return 'all';
+  return posted ? 'posted' : 'unposted';
+};
+
+export const getPostedFilterFromRepositoryStatus = (statusFilter: RepositoryStatusFilter): boolean | undefined => {
+  if (statusFilter === 'all') return undefined;
+  return statusFilter === 'posted';
+};
+
+export const getRepositorySortOptionsForStatus = (statusFilter: RepositoryStatusFilter): RepositorySortBy[] => {
+  return REPOSITORY_SORT_OPTIONS_BY_STATUS[statusFilter];
+};
+
+export const isRepositorySortCompatibleWithStatus = (
+  statusFilter: RepositoryStatusFilter,
+  sortBy: RepositorySortBy
+): boolean => {
+  return REPOSITORY_SORT_OPTIONS_BY_STATUS[statusFilter].includes(sortBy);
+};
+
+export const getFallbackRepositorySortBy = (
+  statusFilter: RepositoryStatusFilter,
+  sortBy: RepositorySortBy
+): RepositorySortBy => {
+  if (isRepositorySortCompatibleWithStatus(statusFilter, sortBy)) {
+    return sortBy;
+  }
+
+  if (statusFilter === 'posted') {
+    return 'date_posted';
+  }
+
+  if (statusFilter === 'unposted') {
+    return PUBLICATION_QUEUE_SORT_BY;
+  }
+
+  return DEFAULT_REPOSITORY_SORT_BY;
+};
+
+export const normalizeRepositoryFilterState = (
+  statusFilterValue: string | null | undefined,
+  sortByValue: string | null | undefined,
+  sortOrderValue: string | null | undefined
+): {
+  statusFilter: RepositoryStatusFilter;
+  posted: boolean | undefined;
+  sortBy: RepositorySortBy;
+  sortOrder: RepositorySortOrder;
+} => {
+  const statusFilter = normalizeRepositoryStatusFilter(statusFilterValue);
+  const requestedSortBy = normalizeRepositorySortBy(sortByValue);
+  const sortBy = getFallbackRepositorySortBy(statusFilter, requestedSortBy);
+  const sortOrder = normalizeRepositorySortOrder(sortOrderValue, sortBy);
+
+  return {
+    statusFilter,
+    posted: getPostedFilterFromRepositoryStatus(statusFilter),
+    sortBy,
+    sortOrder,
+  };
 };
 
 export const filterRepositories = (repositories: Repository[], searchTerm: string): Repository[] => {
@@ -69,7 +147,7 @@ export const calculatePaginationInfo = (
 
 export const hasActiveFilters = (
   searchTerm: string,
-  statusFilter: 'all' | 'posted' | 'unposted',
+  statusFilter: RepositoryStatusFilter,
   sortBy: RepositorySortBy,
   sortOrder: RepositorySortOrder,
   itemsPerPage: number,
@@ -86,7 +164,7 @@ export const hasActiveFilters = (
 
 export const countActiveFilters = (
   searchTerm: string,
-  statusFilter: 'all' | 'posted' | 'unposted',
+  statusFilter: RepositoryStatusFilter,
   sortBy: RepositorySortBy,
   sortOrder: RepositorySortOrder,
   itemsPerPage: number,

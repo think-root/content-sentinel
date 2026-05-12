@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import { UseRepositoryFiltersReturn } from '../types/repositoryList';
-import type { RepositorySortBy, RepositorySortOrder } from '../types';
+import type { RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '../types';
 import {
   DEFAULT_REPOSITORY_SORT_BY,
   DEFAULT_REPOSITORY_SORT_ORDER,
-  normalizeRepositorySortBy,
-  normalizeRepositorySortOrder,
+  DEFAULT_REPOSITORY_STATUS_FILTER,
+  getPostedFilterFromRepositoryStatus,
+  normalizeRepositoryFilterState,
   PUBLICATION_QUEUE_SORT_BY,
 } from '../utils/repositoryListUtils';
 
@@ -17,6 +18,11 @@ export function useRepositoryFilters(
   loading: boolean
 ): UseRepositoryFiltersReturn {
   const { getStoredValue, setStoredValue, removeStoredValue } = useRepositoryLocalStorage();
+  const getStoredFilterState = () => normalizeRepositoryFilterState(
+    getStoredValue('dashboardStatusFilter', DEFAULT_REPOSITORY_STATUS_FILTER),
+    getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY),
+    getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER)
+  );
 
   const [showFilters, setShowFilters] = useState<boolean>(() => 
     getStoredValue('postsShowFilters', false)
@@ -26,10 +32,8 @@ export function useRepositoryFilters(
     getStoredValue('dashboardSearchTerm', '')
   );
   
-  const [statusFilter, setStatusFilter] = useState<'all' | 'posted' | 'unposted'>(() => 
-    normalizeRepositorySortBy(getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY)) === PUBLICATION_QUEUE_SORT_BY
-      ? 'unposted'
-      : getStoredValue('dashboardStatusFilter', 'all')
+  const [statusFilter, setStatusFilter] = useState<RepositoryStatusFilter>(() =>
+    getStoredFilterState().statusFilter
   );
   
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -39,14 +43,11 @@ export function useRepositoryFilters(
   );
   
   const [sortBy, setSortBy] = useState<RepositorySortBy>(() =>
-    normalizeRepositorySortBy(getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY))
+    getStoredFilterState().sortBy
   );
 
   const [sortOrder, setSortOrder] = useState<RepositorySortOrder>(() =>
-    normalizeRepositorySortOrder(
-      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER),
-      normalizeRepositorySortBy(getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY))
-    )
+    getStoredFilterState().sortOrder
   );
 
   useEffect(() => {
@@ -64,33 +65,33 @@ export function useRepositoryFilters(
     setStoredValue('dashboardSearchTerm', value);
   };
 
-  const handleStatusFilterChange = (value: 'all' | 'posted' | 'unposted') => {
-    if (loading) return;
-    
-    const nextSortBy = value !== 'unposted' && sortBy === PUBLICATION_QUEUE_SORT_BY
-      ? DEFAULT_REPOSITORY_SORT_BY
-      : sortBy;
-    const nextSortOrder = value !== 'unposted' && sortBy === PUBLICATION_QUEUE_SORT_BY
-      ? DEFAULT_REPOSITORY_SORT_ORDER
-      : sortOrder;
-
-    setStatusFilter(value);
-    setStoredValue('dashboardStatusFilter', value);
+  const persistFilterState = (
+    nextStatusFilter: RepositoryStatusFilter,
+    nextSortBy: RepositorySortBy,
+    nextSortOrder: RepositorySortOrder
+  ) => {
+    setStatusFilter(nextStatusFilter);
+    setStoredValue('dashboardStatusFilter', nextStatusFilter);
     setSortBy(nextSortBy);
     setStoredValue('dashboardSortBy', nextSortBy);
     setSortOrder(nextSortOrder);
     setStoredValue('dashboardSortOrder', nextSortOrder);
+  };
+
+  const handleStatusFilterChange = (value: RepositoryStatusFilter) => {
+    if (loading) return;
+
+    const nextFilters = normalizeRepositoryFilterState(value, sortBy, sortOrder);
+    persistFilterState(nextFilters.statusFilter, nextFilters.sortBy, nextFilters.sortOrder);
     setCurrentPage(1);
-    
-    const posted = value === 'all' ? undefined : value === 'posted';
 
     fetchRepositories(
-      posted,
+      nextFilters.posted,
       false,
       itemsPerPage === 0,
       itemsPerPage,
-      nextSortBy,
-      nextSortOrder,
+      nextFilters.sortBy,
+      nextFilters.sortOrder,
       1,
       true
     );
@@ -103,15 +104,14 @@ export function useRepositoryFilters(
     setStoredValue('dashboardItemsPerPage', value);
     setCurrentPage(1);
     
-    const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? 'unposted' : statusFilter;
-    const posted = effectiveStatusFilter === 'all' ? undefined : effectiveStatusFilter === 'posted';
+    const nextFilters = normalizeRepositoryFilterState(statusFilter, sortBy, sortOrder);
     fetchRepositories(
-      posted,
+      nextFilters.posted,
       false,
       value === 0,
       value,
-      sortBy,
-      sortOrder,
+      nextFilters.sortBy,
+      nextFilters.sortOrder,
       1,
       true
     );
@@ -120,41 +120,47 @@ export function useRepositoryFilters(
   const handleSortByChange = (value: RepositorySortBy) => {
     if (loading) return;
     
-    const nextStatusFilter = value === PUBLICATION_QUEUE_SORT_BY ? 'unposted' : statusFilter;
-    const nextSortOrder = value === PUBLICATION_QUEUE_SORT_BY
-      ? 'ASC'
-      : sortBy === PUBLICATION_QUEUE_SORT_BY ? DEFAULT_REPOSITORY_SORT_ORDER : sortOrder;
-
-    setSortBy(value);
-    setStoredValue('dashboardSortBy', value);
-    setStatusFilter(nextStatusFilter);
-    setStoredValue('dashboardStatusFilter', nextStatusFilter);
-    setSortOrder(nextSortOrder);
-    setStoredValue('dashboardSortOrder', nextSortOrder);
+    const nextFilters = normalizeRepositoryFilterState(statusFilter, value, sortOrder);
+    persistFilterState(nextFilters.statusFilter, nextFilters.sortBy, nextFilters.sortOrder);
     setCurrentPage(1);
-    
-    const posted = nextStatusFilter === 'all' ? undefined : nextStatusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, value, nextSortOrder, 1, true);
+
+    fetchRepositories(
+      nextFilters.posted,
+      false,
+      itemsPerPage === 0,
+      itemsPerPage,
+      nextFilters.sortBy,
+      nextFilters.sortOrder,
+      1,
+      true
+    );
   };
 
   const handleSortOrderChange = (value: RepositorySortOrder) => {
     if (loading || sortBy === PUBLICATION_QUEUE_SORT_BY) return;
     
-    setSortOrder(value);
-    setStoredValue('dashboardSortOrder', value);
+    const nextFilters = normalizeRepositoryFilterState(statusFilter, sortBy, value);
+    persistFilterState(nextFilters.statusFilter, nextFilters.sortBy, nextFilters.sortOrder);
     setCurrentPage(1);
-    
-    const posted = statusFilter === 'all' ? undefined : statusFilter === 'posted';
-    fetchRepositories(posted, false, itemsPerPage === 0, itemsPerPage, sortBy, value, 1, true);
+
+    fetchRepositories(
+      nextFilters.posted,
+      false,
+      itemsPerPage === 0,
+      itemsPerPage,
+      nextFilters.sortBy,
+      nextFilters.sortOrder,
+      1,
+      true
+    );
   };
 
   const handlePageChange = (page: number) => {
     if (loading) return;
     
     setCurrentPage(page);
-    const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? 'unposted' : statusFilter;
-    const posted = effectiveStatusFilter === 'all' ? undefined : effectiveStatusFilter === 'posted';
-    fetchRepositories(posted, false, false, itemsPerPage, sortBy, sortOrder, page, true);
+    const nextFilters = normalizeRepositoryFilterState(statusFilter, sortBy, sortOrder);
+    fetchRepositories(nextFilters.posted, false, false, itemsPerPage, nextFilters.sortBy, nextFilters.sortOrder, page, true);
   };
 
   const handleClearFilters = () => {
@@ -171,7 +177,16 @@ export function useRepositoryFilters(
     setStoredValue('dashboardSortOrder', 'DESC');
     setStoredValue('dashboardItemsPerPage', initialPageSize);
     
-    fetchRepositories(undefined, false, initialPageSize === 0, initialPageSize, 'date_added', 'DESC', 1, true);
+    fetchRepositories(
+      getPostedFilterFromRepositoryStatus('all'),
+      false,
+      initialPageSize === 0,
+      initialPageSize,
+      'date_added',
+      'DESC',
+      1,
+      true
+    );
   };
 
   return {

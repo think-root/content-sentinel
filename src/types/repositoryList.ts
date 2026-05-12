@@ -1,4 +1,4 @@
-import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
+import type { Repository, RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '../types';
 
 export interface TruncatedTextProps {
   text: string;
@@ -7,7 +7,7 @@ export interface TruncatedTextProps {
 
 export interface RepositoryListFiltersProps {
   searchTerm: string;
-  statusFilter: 'all' | 'posted' | 'unposted';
+  statusFilter: RepositoryStatusFilter;
   sortBy: RepositorySortBy;
   sortOrder: RepositorySortOrder;
   itemsPerPage: number;
@@ -15,7 +15,7 @@ export interface RepositoryListFiltersProps {
   loading: boolean;
   initialPageSize: number;
   onSearchTermChange: (value: string) => void;
-  onStatusFilterChange: (value: 'all' | 'posted' | 'unposted') => void;
+  onStatusFilterChange: (value: RepositoryStatusFilter) => void;
   onSortByChange: (value: RepositorySortBy) => void;
   onSortOrderChange: (value: RepositorySortOrder) => void;
   onItemsPerPageChange: (value: number) => void;
@@ -57,14 +57,14 @@ export interface RepositoryPaginationProps {
 
 export interface UseRepositoryFiltersReturn {
   searchTerm: string;
-  statusFilter: 'all' | 'posted' | 'unposted';
+  statusFilter: RepositoryStatusFilter;
   sortBy: RepositorySortBy;
   sortOrder: RepositorySortOrder;
   itemsPerPage: number;
   currentPage: number;
   showFilters: boolean;
   handleSearchTermChange: (value: string) => void;
-  handleStatusFilterChange: (value: 'all' | 'posted' | 'unposted') => void;
+  handleStatusFilterChange: (value: RepositoryStatusFilter) => void;
   handleSortByChange: (value: RepositorySortBy) => void;
   handleSortOrderChange: (value: RepositorySortOrder) => void;
   handleItemsPerPageChange: (value: number) => void;

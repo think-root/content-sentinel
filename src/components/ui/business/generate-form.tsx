@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Loader2, GitPullRequest, Play, AlertCircle, FolderDown, Zap } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, GitPullRequest, Play, AlertCircle, FolderDown, Zap, Clipboard } from 'lucide-react';
 import { ResultDialog } from '../common/result-dialog';
 import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '@/api';
 import { toast } from '../common/toast-config';
@@ -40,6 +40,7 @@ interface GenerateFormProps {
 
 export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormProps) {
   const [url, setUrl] = useState('');
+  const urlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [maxRepos, setMaxRepos] = useState<number | undefined>(() => {
     const saved = localStorage.getItem('dashboardMaxRepos');
     if (!saved) return 5;
@@ -142,6 +143,63 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  const resizeUrlTextarea = useCallback((textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+
+    if (textarea.value.trim() === '') {
+      textarea.style.height = '38px';
+      return;
+    }
+
+    const newHeight = Math.min(textarea.scrollHeight, 300);
+    textarea.style.height = `${newHeight}px`;
+  }, []);
+
+  const handlePasteRepositoryUrls = useCallback(async () => {
+    if (isManualLoading) return;
+
+    const textarea = urlTextareaRef.current;
+
+    if (!navigator.clipboard?.readText) {
+      textarea?.focus();
+      toast.error('Clipboard access is unavailable. Use native paste.');
+      return;
+    }
+
+    try {
+      const clipboardText = (await navigator.clipboard.readText()).trim();
+
+      if (!clipboardText) {
+        textarea?.focus();
+        toast.error('Clipboard is empty');
+        return;
+      }
+
+      const currentValue = url;
+      const selectionStart = textarea?.selectionStart ?? currentValue.length;
+      const selectionEnd = textarea?.selectionEnd ?? currentValue.length;
+      const before = currentValue.slice(0, selectionStart);
+      const after = currentValue.slice(selectionEnd);
+      const prefix = before && !/\s$/.test(before) ? ' ' : '';
+      const suffix = after && !/^\s/.test(after) ? ' ' : '';
+      const nextValue = `${before}${prefix}${clipboardText}${suffix}${after}`;
+      const nextCursor = before.length + prefix.length + clipboardText.length;
+
+      setUrl(nextValue);
+
+      requestAnimationFrame(() => {
+        if (!urlTextareaRef.current) return;
+
+        urlTextareaRef.current.focus();
+        urlTextareaRef.current.setSelectionRange(nextCursor, nextCursor);
+        resizeUrlTextarea(urlTextareaRef.current);
+      });
+    } catch {
+      textarea?.focus();
+      toast.error('Clipboard permission denied. Use native paste.');
+    }
+  }, [isManualLoading, resizeUrlTextarea, url]);
 
   const handleSaveSettings = useCallback(async () => {
     try {
@@ -254,9 +312,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
 
         setUrl('');
 
-        const textarea = document.getElementById('url') as HTMLTextAreaElement;
-        if (textarea) {
-          textarea.style.height = '38px';
+        if (urlTextareaRef.current) {
+          urlTextareaRef.current.style.height = '38px';
         }
       } catch (error) {
         console.error(error);
@@ -345,9 +402,23 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           </p>
           <form onSubmit={handleManualSubmit}>
             <div className="mb-4">
-              <Label htmlFor="url">
-                Repository URLs
-              </Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="url">
+                  Repository URLs
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={handlePasteRepositoryUrls}
+                  disabled={isManualLoading}
+                  className="md:hidden"
+                  title="Paste from clipboard"
+                >
+                  <Clipboard className="h-3.5 w-3.5" />
+                  Paste
+                </Button>
+              </div>
               <div className="mt-1 flex rounded-md shadow-sm relative">
                 <Textarea
                   name="url"
@@ -367,16 +438,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   }}
                   className={`flex-1 min-w-0 block w-full pr-2 ${isManualLoading ? 'bg-muted cursor-not-allowed' : 'bg-background'}`}
                   placeholder="https://github.com/user/repo1"
+                  ref={urlTextareaRef}
                   onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = 'auto';
-
-                    if (target.value.trim() === '') {
-                      target.style.height = '38px';
-                    } else {
-                      const newHeight = Math.min(target.scrollHeight, 300);
-                      target.style.height = `${newHeight}px`;
-                    }
+                    resizeUrlTextarea(e.target as HTMLTextAreaElement);
                   }}
                 />
 

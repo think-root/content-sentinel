@@ -1,7 +1,11 @@
 import { Search, X } from 'lucide-react';
 import { RepositoryListFiltersProps } from '@/types/repositoryList';
-import type { RepositorySortBy, RepositorySortOrder } from '@/types';
-import { hasActiveFilters, PUBLICATION_QUEUE_SORT_BY } from '@/utils/repositoryListUtils';
+import type { RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '@/types';
+import {
+  getRepositorySortOptionsForStatus,
+  hasActiveFilters,
+  PUBLICATION_QUEUE_SORT_BY,
+} from '@/utils/repositoryListUtils';
 import { Card } from '../layout/card';
 import { Input } from '../base/input';
 import { Button } from '../base/button';
@@ -23,6 +27,7 @@ export function RepositoryFilters({
   onItemsPerPageChange,
   onClearFilters
 }: RepositoryListFiltersProps) {
+  const sortOptions = getRepositorySortOptionsForStatus(statusFilter);
   const hasFilters = hasActiveFilters(
     searchTerm,
     statusFilter,
@@ -32,6 +37,12 @@ export function RepositoryFilters({
     initialPageSize
   );
   const isPublicationQueueSort = sortBy === PUBLICATION_QUEUE_SORT_BY;
+  const sortByLabels: Record<RepositorySortBy, string> = {
+    id: 'ID',
+    date_added: 'Date Added',
+    date_posted: 'Date Posted',
+    publication_queue: 'Publication Order',
+  };
 
   return (
     <Card className="mb-6 p-4">
@@ -71,7 +82,7 @@ export function RepositoryFilters({
             <Label className="mb-2">Status</Label>
             <Select
               value={statusFilter}
-              onValueChange={(value) => onStatusFilterChange(value as 'all' | 'posted' | 'unposted')}
+              onValueChange={(value) => onStatusFilterChange(value as RepositoryStatusFilter)}
               disabled={loading}
             >
               <SelectTrigger>
@@ -97,10 +108,11 @@ export function RepositoryFilters({
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="id">ID</SelectItem>
-                <SelectItem value="date_added">Date Added</SelectItem>
-                <SelectItem value="date_posted">Date Posted</SelectItem>
-                <SelectItem value="publication_queue">Publication Order</SelectItem>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {sortByLabels[option]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

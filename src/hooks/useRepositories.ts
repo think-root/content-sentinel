@@ -8,9 +8,9 @@ import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import {
   DEFAULT_REPOSITORY_SORT_BY,
   DEFAULT_REPOSITORY_SORT_ORDER,
-  normalizeRepositorySortBy,
-  normalizeRepositorySortOrder,
-  PUBLICATION_QUEUE_SORT_BY,
+  DEFAULT_REPOSITORY_STATUS_FILTER,
+  getRepositoryStatusFilterFromPosted,
+  normalizeRepositoryFilterState,
 } from '../utils/repositoryListUtils';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
@@ -93,15 +93,18 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       isFetching.current = true;
       await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
 
-      const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? false : statusFilter;
-      const effectiveSortOrder = normalizeRepositorySortOrder(sortOrder, sortBy);
+      const effectiveFilters = normalizeRepositoryFilterState(
+        getRepositoryStatusFilterFromPosted(statusFilter),
+        sortBy,
+        sortOrder
+      );
 
       const response = await getRepositories(
         itemsPerPage,
-        effectiveStatusFilter,
+        effectiveFilters.posted,
         fetchAll,
-        sortBy,
-        effectiveSortOrder,
+        effectiveFilters.sortBy,
+        effectiveFilters.sortOrder,
         fetchAll ? undefined : page,
         fetchAll ? 0 : itemsPerPage
       );
@@ -118,7 +121,15 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
 
         const settings = getApiSettings();
         const textLanguage = settings.displayLanguage || 'uk';
-        const cacheKey = JSON.stringify({ statusFilter: effectiveStatusFilter, fetchAll, itemsPerPage, sortBy, sortOrder: effectiveSortOrder, page, textLanguage });
+        const cacheKey = JSON.stringify({
+          statusFilter: effectiveFilters.posted,
+          fetchAll,
+          itemsPerPage,
+          sortBy: effectiveFilters.sortBy,
+          sortOrder: effectiveFilters.sortOrder,
+          page,
+          textLanguage,
+        });
         localStorage.setItem('cache_repositories_key', cacheKey);
 
         const newData = {
@@ -250,14 +261,17 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     try {
       const settings = getApiSettings();
       const textLanguage = settings.displayLanguage || 'uk';
-      const effectiveStatusFilter = sortBy === PUBLICATION_QUEUE_SORT_BY ? false : statusFilter;
-      const effectiveSortOrder = normalizeRepositorySortOrder(sortOrder, sortBy);
+      const effectiveFilters = normalizeRepositoryFilterState(
+        getRepositoryStatusFilterFromPosted(statusFilter),
+        sortBy,
+        sortOrder
+      );
       const cacheKey = JSON.stringify({
-        statusFilter: effectiveStatusFilter,
+        statusFilter: effectiveFilters.posted,
         fetchAll,
         itemsPerPage,
-        sortBy,
-        sortOrder: effectiveSortOrder,
+        sortBy: effectiveFilters.sortBy,
+        sortOrder: effectiveFilters.sortOrder,
         page,
         textLanguage,
       });
@@ -278,11 +292,11 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       const isBackgroundFetch = hasCache && currentCacheKey === cacheKey && !forceFetch;
       
       await fetchRepositoriesFromAPI(
-        effectiveStatusFilter,
+        effectiveFilters.posted,
         fetchAll,
         itemsPerPage,
-        sortBy,
-        effectiveSortOrder,
+        effectiveFilters.sortBy,
+        effectiveFilters.sortOrder,
         page,
         isBackgroundFetch,
         forceFetch
@@ -362,32 +376,26 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
 
   useEffect(() => {
     // Load initial data with saved filter values using centralized storage utilities
-    const savedSortBy = normalizeRepositorySortBy(getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY));
-    const savedSortOrder = normalizeRepositorySortOrder(
-      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER),
-      savedSortBy
+    const savedFilters = normalizeRepositoryFilterState(
+      getStoredValue('dashboardStatusFilter', DEFAULT_REPOSITORY_STATUS_FILTER),
+      getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY),
+      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER)
     );
-    const savedStatusFilter = getStoredValue('dashboardStatusFilter', 'all' as 'all' | 'posted' | 'unposted');
     const savedItemsPerPage = getStoredValue('dashboardItemsPerPage', 10);
-    
-    const posted = savedSortBy === PUBLICATION_QUEUE_SORT_BY
-      ? false
-      : savedStatusFilter === 'all' ? undefined : savedStatusFilter === 'posted';
 
-    if (savedSortBy === PUBLICATION_QUEUE_SORT_BY) {
-      localStorage.setItem('dashboardStatusFilter', 'unposted');
-      localStorage.setItem('dashboardSortOrder', 'ASC');
-    }
+    localStorage.setItem('dashboardStatusFilter', savedFilters.statusFilter);
+    localStorage.setItem('dashboardSortBy', savedFilters.sortBy);
+    localStorage.setItem('dashboardSortOrder', savedFilters.sortOrder);
     
     // Validate cache key against current parameters
     const settings = getApiSettings();
     const textLanguage = settings.displayLanguage || 'uk';
     const expectedCacheKey = JSON.stringify({
-      statusFilter: posted,
+      statusFilter: savedFilters.posted,
       fetchAll: savedItemsPerPage === 0,
       itemsPerPage: savedItemsPerPage,
-      sortBy: savedSortBy,
-      sortOrder: savedSortOrder,
+      sortBy: savedFilters.sortBy,
+      sortOrder: savedFilters.sortOrder,
       page: 1,
       textLanguage,
     });
@@ -397,12 +405,12 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
     const shouldForceFetch = currentCacheKey !== expectedCacheKey;
     
     fetchRepositories(
-      posted,
+      savedFilters.posted,
       false,
       savedItemsPerPage === 0,
       savedItemsPerPage,
-      savedSortBy,
-      savedSortOrder,
+      savedFilters.sortBy,
+      savedFilters.sortOrder,
       1,
       shouldForceFetch
     );
