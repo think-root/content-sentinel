@@ -27,27 +27,6 @@ const LANGUAGE_MAPPING = {
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 const CLIPBOARD_TEXT_MIME_TYPES = ['text/plain', 'text/uri-list'] as const;
 
-type StandaloneNavigator = Navigator & {
-  standalone?: boolean;
-};
-
-const isIOSLikePlatform = () => {
-  const platform = navigator.platform || '';
-  const userAgent = navigator.userAgent || '';
-
-  return /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-};
-
-const isStandalonePwa = () => {
-  const standaloneNavigator = navigator as StandaloneNavigator;
-  const isDisplayModeStandalone =
-    typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches;
-
-  return isDisplayModeStandalone || standaloneNavigator.standalone === true;
-};
-
-const isIOSStandalonePwa = () => isIOSLikePlatform() && isStandalonePwa();
-
 const readClipboardItemText = async () => {
   if (!navigator.clipboard?.read) {
     return '';
@@ -216,12 +195,6 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         resizeUrlTextarea(textarea);
       });
     };
-
-    if (isIOSStandalonePwa()) {
-      focusTextareaForNativePaste();
-      toast.info('Use the iOS Paste action in the field', { duration: 3000 });
-      return;
-    }
 
     if (!navigator.clipboard?.readText) {
       focusTextareaForNativePaste();
