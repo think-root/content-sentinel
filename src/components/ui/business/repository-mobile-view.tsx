@@ -30,6 +30,7 @@ export function RepositoryMobileView({
   const [textInput, setTextInput] = useState('');
   const [textError, setTextError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Repository | null>(null);
+  const [showPromoteConfirm, setShowPromoteConfirm] = useState<Repository | null>(null);
   const [promotingId, setPromotingId] = useState<number | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -294,7 +295,7 @@ export function RepositoryMobileView({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handlePromoteRepository(repo)}
+                          onClick={() => setShowPromoteConfirm(repo)}
                           disabled={repo.id === nextPostId || promotingId !== null}
                           aria-label={repo.id === nextPostId ? 'Already next' : 'Publish next'}
                           className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -365,6 +366,22 @@ export function RepositoryMobileView({
           }
         }}
         onCancel={() => setShowDeleteConfirm(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showPromoteConfirm !== null}
+        title="Publish Next"
+        message="Publish this repository in the next posting cycle?"
+        confirmText="Publish"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          if (showPromoteConfirm) {
+            handlePromoteRepository(showPromoteConfirm);
+          }
+          setShowPromoteConfirm(null);
+        }}
+        onCancel={() => setShowPromoteConfirm(null)}
       />
     </>
   );
