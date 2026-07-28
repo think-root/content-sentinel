@@ -31,10 +31,57 @@ interface CronJobsProps {
   onJobsUpdate?: (jobs: CronJob[]) => void;
 }
 
+// Дзеркалить логіку бекенду (content-maestro/internal/validation/cron.go),
+// щоб фронтенд не був суворішим за сервер: підтримує списки (`,`),
+// діапазони (`-`), кроки (`*/n`, `a-b/n`) у кожному полі.
+const isNumber = (value: string): boolean => /^\d+$/.test(value);
+
+const isInRange = (value: string, min: number, max: number): boolean => {
+  const num = Number(value);
+  return isNumber(value) && num >= min && num <= max;
+};
+
+const isValidRange = (part: string, min: number, max: number): boolean => {
+  const [start, end] = part.split('-');
+  if (start === undefined || end === undefined) return false;
+  if (!isNumber(start) || !isNumber(end)) return false;
+  const startNum = Number(start);
+  const endNum = Number(end);
+  return startNum >= min && endNum <= max && startNum <= endNum;
+};
+
+const isValidStep = (part: string, min: number, max: number): boolean => {
+  const segments = part.split('/');
+  if (segments.length !== 2) return false;
+  const [base, step] = segments;
+  if (!isNumber(step)) return false;
+  if (base === '*') return true;
+  return isValidRange(base, min, max);
+};
+
+const isValidCronField = (field: string, min: number, max: number): boolean => {
+  if (field === '*') return true;
+
+  return field.split(',').every((part) => {
+    if (part.includes('/')) return isValidStep(part, min, max);
+    if (part.includes('-')) return isValidRange(part, min, max);
+    return isInRange(part, min, max);
+  });
+};
+
 const validateCronExpression = (cron: string): boolean => {
-  if (!cron.trim()) return false;
-  const cronRegex = /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|(\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]))) (\*|([0-9]|1[0-9]|2[0-3])|(\*\/([0-9]|1[0-9]|2[0-3]))) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|(\*\/([1-9]|1[0-9]|2[0-9]|3[0-1]))) (\*|([1-9]|1[0-2])|(\*\/([1-9]|1[0-2]))) (\*|([0-6])|(\*\/([0-6])))$/;
-  return cronRegex.test(cron);
+  const fields = cron.trim().split(/\s+/).filter(Boolean);
+  if (fields.length !== 5 && fields.length !== 6) return false;
+
+  const ranges: Array<[number, number]> = [
+    [0, 59], // minute
+    [0, 23], // hour
+    [1, 31], // day of month
+    [1, 12], // month
+    [0, 6],  // day of week
+  ];
+
+  return ranges.every(([min, max], i) => isValidCronField(fields[i], min, max));
 };
 
 const getHumanReadableCron = (cronExpression: string): string => {
