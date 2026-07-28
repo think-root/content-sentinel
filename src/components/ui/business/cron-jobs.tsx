@@ -84,6 +84,57 @@ const validateCronExpression = (cron: string): boolean => {
   return ranges.every(([min, max], i) => isValidCronField(fields[i], min, max));
 };
 
+// Current UTC→timezone offset in minutes (DST-aware for the current date).
+const getTimezoneOffsetMinutes = (timezone: string): number => {
+  const now = new Date();
+  const asUTC = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const asTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+  return Math.round((asTz.getTime() - asUTC.getTime()) / 60000);
+};
+
+// Shift an (hour, minute) pair by an offset, wrapping within a single day.
+const shiftToLocal = (hour: number, minute: number, offsetMinutes: number) => {
+  const total = (((hour * 60 + minute + offsetMinutes) % 1440) + 1440) % 1440;
+  return { hour: Math.floor(total / 60), minute: total % 60 };
+};
+
+// Convert the minute+hour fields of a cron expression to local time, shifting
+// EVERY value in the hour field (single values, comma lists and ranges), not
+// just the first one. Returns null when the fields can't be reliably localized
+// (steps, wildcards, multi-value minutes, or ranges that would cross midnight).
+const localizeCronTimeFields = (
+  minuteField: string,
+  hourField: string,
+  offsetMinutes: number
+): { minute: string; hour: string } | null => {
+  if (!isNumber(minuteField)) return null;
+  if (hourField === '*' || hourField.includes('/')) return null;
+
+  const minute = Number(minuteField);
+  const shiftedHours: string[] = [];
+  let shiftedMinute: number | null = null;
+
+  for (const token of hourField.split(',')) {
+    if (token.includes('-')) {
+      const [start, end] = token.split('-');
+      if (!isNumber(start) || !isNumber(end)) return null;
+      const a = shiftToLocal(Number(start), minute, offsetMinutes);
+      const b = shiftToLocal(Number(end), minute, offsetMinutes);
+      // A shifted range that wraps past midnight would reorder its bounds.
+      if (a.hour > b.hour) return null;
+      shiftedMinute ??= a.minute;
+      shiftedHours.push(`${a.hour}-${b.hour}`);
+    } else {
+      if (!isNumber(token)) return null;
+      const s = shiftToLocal(Number(token), minute, offsetMinutes);
+      shiftedMinute ??= s.minute;
+      shiftedHours.push(String(s.hour));
+    }
+  }
+
+  return { minute: String(shiftedMinute ?? minute), hour: shiftedHours.join(',') };
+};
+
 const getHumanReadableCron = (cronExpression: string): string => {
   try {
     const { timezone } = getApiSettings();
@@ -94,16 +145,16 @@ const getHumanReadableCron = (cronExpression: string): string => {
       return cronstrue.toString(cronExpression, { use24HourTimeFormat: true, verbose: true });
     }
 
-    const utcDate = new Date();
-    utcDate.setUTCHours(parseInt(hour));
-    utcDate.setUTCMinutes(parseInt(minute));
-
-    const localDate = new Date(utcDate.toLocaleString('en-US', { timeZone: normalizedTimezone }));
-    const localHour = localDate.getHours();
-    const localMinute = localDate.getMinutes();
-
-    const localCron = `${localMinute} ${localHour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+    const offsetMinutes = getTimezoneOffsetMinutes(normalizedTimezone);
+    const localized = localizeCronTimeFields(minute, hour, offsetMinutes);
     const utcText = cronstrue.toString(cronExpression, { use24HourTimeFormat: true });
+
+    if (!localized) {
+      // Can't reliably localize (steps, wildcards, midnight-crossing ranges).
+      return `${utcText} (UTC)`;
+    }
+
+    const localCron = `${localized.minute} ${localized.hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
     const localText = cronstrue.toString(localCron, { use24HourTimeFormat: true });
 
     return `${utcText} (UTC) / ${localText} (${timezone})`;
