@@ -4,6 +4,10 @@
 
 @layer base {
   :root {
+    /* Makes native scrollbars - the page's and any inner scroll box - render in the
+       current theme, so they all look the same instead of light-on-dark */
+    color-scheme: light;
+
     /* Core colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -66,6 +70,9 @@
   }
 
   .dark {
+    /* Dark native scrollbars, page-level and inside any scroll box */
+    color-scheme: dark;
+
     /* Core colors */
     --background: 220 13% 9%;
     --foreground: 210 40% 98%;
