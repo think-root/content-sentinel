@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, RotateCw } from 'lucide-react';
+import { LayoutDashboard, Menu, RotateCw } from 'lucide-react';
 import { ThemeToggle } from '../common/theme-toggle';
 import { RefreshIndicator } from '../common/refresh-indicator';
 import { SettingsButton } from '../common/settings-button';
@@ -13,6 +13,7 @@ interface DashboardLayoutProps {
   isSettingsOpen: boolean;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
+  onNavOpen: () => void;
   handleManualRefresh: (showNotification?: boolean) => Promise<boolean>;
   loading: boolean;
   previewsLoading: boolean;
@@ -23,13 +24,14 @@ export const DashboardLayout = ({
   children,
   isRefreshing,
   onSettingsOpen,
+  onNavOpen,
   handleManualRefresh,
   loading,
 }: DashboardLayoutProps) => {
 
 
   const renderHeader = () => (
-    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+    <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
       <Card>
         <CardHeader className="py-3 sm:py-4 px-3 sm:px-4">
           <div className="flex items-center justify-between">
@@ -44,6 +46,16 @@ export const DashboardLayout = ({
               </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNavOpen}
+                className="h-8 w-8 sm:h-10 sm:w-10 md:hidden"
+                aria-label="Open navigation"
+                aria-haspopup="dialog"
+              >
+                <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -66,7 +78,7 @@ export const DashboardLayout = ({
   );
 
   const renderFooter = () => (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+    <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
       <Card>
         <CardFooter className="p-3 sm:p-4 text-muted-foreground justify-center">
           <div className="text-center w-full text-sm">
@@ -92,11 +104,11 @@ export const DashboardLayout = ({
 
 
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full">
       <RefreshIndicator isRefreshing={isRefreshing} />
       <div className="py-3 sm:py-6">
         {renderHeader()}
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+        <main className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
           {children}
         </main>
         {renderFooter()}
