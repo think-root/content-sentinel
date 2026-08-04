@@ -1,3 +1,19 @@
+# [1.47.0](https://github.com/think-root/content-sentinel/compare/v1.46.0...v1.47.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* **cron:** accept lists, ranges and steps in schedule validation ([4f522b3](https://github.com/think-root/content-sentinel/commit/4f522b38f88d25d5fecd640be64e5261d6de1b22))
+* **cron:** localize every hour in a list/range, not just the first ([9f9a7f2](https://github.com/think-root/content-sentinel/commit/9f9a7f22c608bee4f844404e2b17ebb85eb8e5c6))
+* **generate:** handle iOS PWA paste fallback ([915bf5f](https://github.com/think-root/content-sentinel/commit/915bf5f9626b8306713e8c5c7a3e9028b52d88b9))
+* **ui:** accept any GitHub URL form and fix empty validation tooltip ([f413777](https://github.com/think-root/content-sentinel/commit/f4137774a8b188e9abffbee2e04a60a7307808ca))
+* **ui:** enable clipboard paste in iOS PWA ([834175a](https://github.com/think-root/content-sentinel/commit/834175ac9571a64c45a7cbeeb3738d83ee848862))
+
+
+### Features
+
+* **ui:** confirm before promoting a repository to publish next ([4d50764](https://github.com/think-root/content-sentinel/commit/4d50764f42f2150310379a28293c59ab453a91d2))
+
 # [1.46.0](https://github.com/think-root/content-sentinel/compare/v1.45.1...v1.46.0) (2026-05-12)
 
 
