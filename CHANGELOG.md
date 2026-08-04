@@ -1,3 +1,15 @@
+# [1.48.0](https://github.com/think-root/content-sentinel/compare/v1.47.0...v1.48.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* **cron:** stop fabricating local descriptions for day-crossing schedules ([6c56269](https://github.com/think-root/content-sentinel/commit/6c562691aec885970d367c37b4b88dc817f07a4c))
+
+
+### Features
+
+* **ui:** replace horizontal tabs with side navigation ([c07467c](https://github.com/think-root/content-sentinel/commit/c07467ceaf8572cbe4181b48a41446af46c3ec8c))
+
 # [1.47.0](https://github.com/think-root/content-sentinel/compare/v1.46.0...v1.47.0) (2026-08-04)
 
 
