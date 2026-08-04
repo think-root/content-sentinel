@@ -1,3 +1,20 @@
+# [1.49.0](https://github.com/think-root/content-sentinel/compare/v1.48.0...v1.49.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* **ui:** equalize button heights, theme native scrollbars, use full width ([31af1ae](https://github.com/think-root/content-sentinel/commit/31af1aec54f9c79f89cd9ee13630fd7f48f71a25))
+
+
+### Features
+
+* **archive:** add archive page and archive action for published posts ([5c63287](https://github.com/think-root/content-sentinel/commit/5c63287947e8fce94c59ee35824847aec3d9bdd1))
+
+
+### Performance Improvements
+
+* **date-format:** reuse Intl.DateTimeFormat instances ([b914a18](https://github.com/think-root/content-sentinel/commit/b914a18e1ccc02f42c13b9653d1ff938d92bfa64))
+
 # [1.48.0](https://github.com/think-root/content-sentinel/compare/v1.47.0...v1.48.0) (2026-08-04)
 
 
