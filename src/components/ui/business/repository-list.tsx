@@ -23,9 +23,10 @@ interface RepositoryListProps {
   pageSize: number;
   loading: boolean;
   isApiReady?: boolean;
+  onRepositoryArchived?: () => void | Promise<void>;
 }
 
-export function RepositoryList({ 
+export function RepositoryList({
   repositories, 
   fetchRepositories, 
   fetchPreviews,
@@ -34,8 +35,9 @@ export function RepositoryList({
   totalPages, 
   currentPage: initialPage, 
   pageSize: initialPageSize, 
-  loading, 
-  isApiReady = true 
+  loading,
+  isApiReady = true,
+  onRepositoryArchived
 }: RepositoryListProps) {
   const {
     searchTerm,
@@ -138,9 +140,10 @@ export function RepositoryList({
               searchTerm={searchTerm}
               nextPostId={nextPostId}
               onRepositoryUpdate={handleRepositoryUpdate}
+              onRepositoryArchived={onRepositoryArchived}
             />
           </div>
-          
+
           <div className="md:hidden block">
             <RepositoryMobileView
               repositories={filteredItems}
@@ -151,6 +154,7 @@ export function RepositoryList({
               searchTerm={searchTerm}
               nextPostId={nextPostId}
               onRepositoryUpdate={handleRepositoryUpdate}
+              onRepositoryArchived={onRepositoryArchived}
             />
           </div>
         </div>

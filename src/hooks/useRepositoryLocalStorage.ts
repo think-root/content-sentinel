@@ -15,7 +15,20 @@ export type RepositoryStorageKey =
   | 'dashboardSortBy'
   | 'dashboardSortOrder'
   | 'dashboardItemsPerPage'
-  | 'postsShowFilters';
+  | 'postsShowFilters'
+  | 'archiveUrlFilter'
+  | 'archiveTextFilter'
+  | 'archiveDateAddedFrom'
+  | 'archiveDateAddedTo'
+  | 'archiveDatePostedFrom'
+  | 'archiveDatePostedTo'
+  | 'archiveDateArchivedFrom'
+  | 'archiveDateArchivedTo'
+  | 'archiveSortBy'
+  | 'archiveSortOrder'
+  | 'archivePageSize'
+  | 'archiveShowFilters'
+  | 'archiveOlderThanDays';
 
 export function useRepositoryLocalStorage() {
   const getStoredValue = useCallback(<T>(key: RepositoryStorageKey, defaultValue: T): T => {

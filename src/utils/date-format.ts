@@ -1,6 +1,32 @@
 import { getApiSettings } from "./api-settings";
 import { normalizeTimezoneForIntl } from "./timezone-mapper";
 
+/**
+ * Intl.DateTimeFormat construction is expensive and this runs once per rendered date cell -
+ * hundreds of times for a long table. Instances are reused per timezone/hour-format pair; the
+ * settings themselves are still read on every call, so a settings change takes effect immediately.
+ */
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getDateTimeFormatter(timeZone: string, hour12: boolean): Intl.DateTimeFormat {
+  const key = `${timeZone}|${hour12}`;
+  const cached = formatterCache.get(key);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12,
+  });
+  formatterCache.set(key, formatter);
+  return formatter;
+}
+
 export function formatDate(dateString: string): string {
   const settings = getApiSettings();
   const dateFormat = settings.dateFormat || "DD.MM.YYYY HH:mm:ss";
@@ -8,20 +34,9 @@ export function formatDate(dateString: string): string {
   const timezone = settings.timezone || "Europe/Kyiv";
   const normalizedTimezone = normalizeTimezoneForIntl(timezone);
 
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: normalizedTimezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: is12HourFormat,
-  };
-
   try {
     const date = new Date(dateString);
-    const formatter = new Intl.DateTimeFormat("en-US", options);
+    const formatter = getDateTimeFormatter(normalizedTimezone, is12HourFormat);
     const parts = formatter.formatToParts(date);
     const values: { [key: string]: string } = {};
 

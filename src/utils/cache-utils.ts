@@ -1,10 +1,24 @@
 import type { Repository } from '../types';
+import type { ArchivedRepository } from '../types/archive';
 import type { CronJob, CronJobHistory } from '../api/index';
 import type { ApiConfig } from '../api/api-configs';
 
 interface RepositoriesCache {
   repositories: Repository[];
   stats: { all: number; posted: number; unposted: number };
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+  };
+  timestamp: number;
+}
+
+// Kept separate from RepositoriesCache: archived rows have a different shape and no posted/unposted stats
+interface ArchiveCache {
+  items: ArchivedRepository[];
+  all: number;
   pagination: {
     currentPage: number;
     pageSize: number;
@@ -77,6 +91,30 @@ export const getRepositoriesFromCache = (): CacheResult<RepositoriesCache> | nul
     const data = JSON.parse(cachedData) as RepositoriesCache;
     const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
     
+    return {
+      data,
+      isStale
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const saveArchiveToCache = (data: ArchiveCache) => {
+  localStorage.setItem('cache_archive', JSON.stringify({
+    ...data,
+    timestamp: Date.now()
+  }));
+};
+
+export const getArchiveFromCache = (): CacheResult<ArchiveCache> | null => {
+  const cachedData = localStorage.getItem('cache_archive');
+  if (!cachedData) return null;
+
+  try {
+    const data = JSON.parse(cachedData) as ArchiveCache;
+    const isStale = Date.now() - data.timestamp > CACHE_EXPIRY;
+
     return {
       data,
       isStale
@@ -218,6 +256,7 @@ export const clearAllCaches = () => {
   const clearedCaches: string[] = [];
   const cacheKeys = [
     'cache_repositories',
+    'cache_archive',
     'cache_previews',
     'cache_cron_jobs',
     'cache_cron_job_history',

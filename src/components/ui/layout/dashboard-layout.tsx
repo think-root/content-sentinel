@@ -31,7 +31,7 @@ export const DashboardLayout = ({
 
 
   const renderHeader = () => (
-    <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+    <div className="relative w-full px-4 sm:px-6 lg:px-8 mb-6">
       <Card>
         <CardHeader className="py-3 sm:py-4 px-3 sm:px-4">
           <div className="flex items-center justify-between">
@@ -78,7 +78,7 @@ export const DashboardLayout = ({
   );
 
   const renderFooter = () => (
-    <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+    <div className="w-full px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
       <Card>
         <CardFooter className="p-3 sm:p-4 text-muted-foreground justify-center">
           <div className="text-center w-full text-sm">
@@ -108,7 +108,7 @@ export const DashboardLayout = ({
       <RefreshIndicator isRefreshing={isRefreshing} />
       <div className="py-3 sm:py-6">
         {renderHeader()}
-        <main className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+        <main className="w-full px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
           {children}
         </main>
         {renderFooter()}

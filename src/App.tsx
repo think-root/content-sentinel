@@ -4,6 +4,7 @@ import { toast } from './components/ui/common/toast-config';
 import { useResponsiveToast } from './hooks/useResponsiveToast';
 import { useDisclosure } from './hooks/useDisclosure';
 import { useRepositories } from './hooks/useRepositories';
+import { useArchive } from './hooks/useArchive';
 import { usePreviews } from './hooks/usePreviews';
 import { useCronJobs } from './hooks/useCronJobs';
 import { useCronJobHistory } from './hooks/useCronJobHistory';
@@ -17,6 +18,12 @@ import { DashboardLayout } from './components/ui/layout/dashboard-layout';
 import { DashboardContent } from './components/ui/layout/dashboard-content';
 import { SettingsModal } from './components/ui/common/settings-modal';
 import { isApiConfigured } from './utils/api-settings';
+import {
+  DEFAULT_REPOSITORY_SORT_BY,
+  DEFAULT_REPOSITORY_SORT_ORDER,
+  DEFAULT_REPOSITORY_STATUS_FILTER,
+  normalizeRepositoryFilterState,
+} from './utils/repositoryListUtils';
 
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -53,6 +60,25 @@ function App() {
     applyNewData: applyRepoNewData,
     setLoading
   } = useRepositories({ isCacheBust, setErrorWithScroll });
+
+  const {
+    items: archiveItems,
+    all: archiveAll,
+    loading: archiveLoading,
+    filters: archiveFilters,
+    showFilters: archiveShowFilters,
+    currentPage: archiveCurrentPage,
+    totalPages: archiveTotalPages,
+    totalItems: archiveTotalItems,
+    newDataAvailable: archiveNewDataAvailable,
+    fetchArchive,
+    setFilter: archiveSetFilter,
+    setPage: archiveSetPage,
+    resetFilters: archiveResetFilters,
+    toggleFilters: archiveToggleFilters,
+    refreshArchive,
+    applyNewData: applyArchiveNewData
+  } = useArchive({ isCacheBust, setErrorWithScroll });
 
   const {
     latestPost,
@@ -156,6 +182,30 @@ function App() {
     setErrorWithScroll
   });
 
+  // Bulk archiving moves rows out of github_repositories, so both lists need a foreground refresh.
+  // Kept sequential and previews-free to stay within the Content Alchemist rate limit.
+  const handleArchiveMutation = useCallback(async () => {
+    await refreshArchive();
+
+    const savedFilters = normalizeRepositoryFilterState(
+      localStorage.getItem('dashboardStatusFilter') || DEFAULT_REPOSITORY_STATUS_FILTER,
+      localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY,
+      localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER
+    );
+    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+
+    await fetchRepositories(
+      savedFilters.posted,
+      false,
+      savedItemsPerPage === 0,
+      savedItemsPerPage,
+      savedFilters.sortBy,
+      savedFilters.sortOrder,
+      1,
+      true
+    );
+  }, [refreshArchive, fetchRepositories]);
+
   useEffect(() => {
     if (!isApiReady) {
       return;
@@ -186,15 +236,17 @@ function App() {
       return;
     }
 
-    if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable) {
+    if (repoNewDataAvailable || previewsNewDataAvailable || cronJobsNewDataAvailable || cronJobHistoryNewDataAvailable || archiveNewDataAvailable) {
       if (repoNewDataAvailable) applyRepoNewData();
       if (previewsNewDataAvailable) applyPreviewsNewData();
       if (cronJobsNewDataAvailable) applyCronJobsNewData();
       if (cronJobHistoryNewDataAvailable) applyCronJobHistoryNewData();
+      if (archiveNewDataAvailable) applyArchiveNewData();
     }
   }, [
     repoNewDataAvailable, previewsNewDataAvailable, cronJobsNewDataAvailable, cronJobHistoryNewDataAvailable,
-    newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData, applyCronJobHistoryNewData, isRefreshing
+    archiveNewDataAvailable, newDataDetails, applyRepoNewData, applyPreviewsNewData, applyCronJobsNewData,
+    applyCronJobHistoryNewData, applyArchiveNewData, isRefreshing
   ]);
 
   return (
@@ -260,6 +312,21 @@ function App() {
                   isNavOpen={isNavOpen}
                   onNavOpen={onNavOpen}
                   onNavClose={onNavClose}
+                  archiveItems={archiveItems}
+                  archiveAll={archiveAll}
+                  archiveLoading={archiveLoading}
+                  archiveFilters={archiveFilters}
+                  archiveShowFilters={archiveShowFilters}
+                  archiveCurrentPage={archiveCurrentPage}
+                  archiveTotalPages={archiveTotalPages}
+                  archiveTotalItems={archiveTotalItems}
+                  archiveSetFilter={archiveSetFilter}
+                  archiveSetPage={archiveSetPage}
+                  archiveResetFilters={archiveResetFilters}
+                  archiveToggleFilters={archiveToggleFilters}
+                  fetchArchive={fetchArchive}
+                  refreshArchive={refreshArchive}
+                  onArchiveMutation={handleArchiveMutation}
                 />
               </DashboardLayout>
               <SettingsModal isOpen={isSettingsOpen} onClose={onSettingsClose} />
