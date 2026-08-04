@@ -30,6 +30,7 @@ function App() {
 
   const toastPosition = useResponsiveToast();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
+  const { isOpen: isNavOpen, onOpen: onNavOpen, onClose: onNavClose } = useDisclosure();
   const isApiReady = isApiConfigured();
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
@@ -210,6 +211,7 @@ function App() {
                 isSettingsOpen={isSettingsOpen}
                 onSettingsOpen={onSettingsOpen}
                 onSettingsClose={onSettingsClose}
+                onNavOpen={onNavOpen}
                 handleManualRefresh={handleManualRefresh}
                 loading={loading}
                 previewsLoading={previewsLoading}
@@ -255,6 +257,9 @@ function App() {
                   setOverviewTimeRange={setOverviewTimeRange}
                   overviewHistoryData={overviewHistoryData}
                   overviewLoading={overviewLoading}
+                  isNavOpen={isNavOpen}
+                  onNavOpen={onNavOpen}
+                  onNavClose={onNavClose}
                 />
               </DashboardLayout>
               <SettingsModal isOpen={isSettingsOpen} onClose={onSettingsClose} />

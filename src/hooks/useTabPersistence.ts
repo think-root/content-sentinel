@@ -1,40 +1,45 @@
 import { useState } from 'react';
+import { NAV_KEYS, DEFAULT_TAB, type DashboardTabKey } from '@/config/nav-items';
 
 interface UseTabPersistenceReturn {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: DashboardTabKey;
+  setActiveTab: (tab: DashboardTabKey) => void;
 }
 
 const TAB_STORAGE_KEY = 'dashboardActiveTab';
-const VALID_TABS = ['overview', 'repositories', 'automation', 'integrations', 'settings'] as const;
+
+const isValidTab = (tab: string): tab is DashboardTabKey =>
+  (NAV_KEYS as readonly string[]).includes(tab);
 
 // Helper function to get initial tab synchronously
-const getInitialTab = (defaultTab: string): string => {
+const getInitialTab = (defaultTab: DashboardTabKey): DashboardTabKey => {
   try {
     const savedTab = localStorage.getItem(TAB_STORAGE_KEY);
-    
+
     // Check if saved tab is valid
-    if (savedTab && (VALID_TABS as readonly string[]).includes(savedTab)) {
+    if (savedTab && isValidTab(savedTab)) {
       return savedTab;
     }
   } catch (error) {
     // Handle localStorage access errors (e.g., in private mode)
     console.warn('Failed to access localStorage for tab persistence:', error);
   }
-  
+
   // Fall back to default tab
   return defaultTab;
 };
 
-export const useTabPersistence = (defaultTab: string = 'overview'): UseTabPersistenceReturn => {
+export const useTabPersistence = (
+  defaultTab: DashboardTabKey = DEFAULT_TAB
+): UseTabPersistenceReturn => {
   // Use lazy initialization to load saved tab synchronously during state initialization
-  const [activeTab, setActiveTab] = useState<string>(() => getInitialTab(defaultTab));
+  const [activeTab, setActiveTab] = useState<DashboardTabKey>(() => getInitialTab(defaultTab));
 
   // Save tab to localStorage when it changes
-  const setActiveTabAndSave = (tab: string) => {
+  const setActiveTabAndSave = (tab: DashboardTabKey) => {
     try {
       // Validate tab before saving
-      if ((VALID_TABS as readonly string[]).includes(tab)) {
+      if (isValidTab(tab)) {
         localStorage.setItem(TAB_STORAGE_KEY, tab);
       }
       setActiveTab(tab);

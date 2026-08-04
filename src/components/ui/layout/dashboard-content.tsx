@@ -9,8 +9,13 @@ import { CronJobs } from '../business/cron-jobs';
 import { ApiConfigs } from '../business/api-configs';
 import { CronJobHistory } from '../business/cron-job-history';
 import { RepositoryPreview } from '../business/repository-preview';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../base/tabs';
+import { Tabs, TabsContent } from '../base/tabs';
+import { DashboardSidebar } from './dashboard-sidebar';
+import { MobileNavDrawer } from './mobile-nav-drawer';
+import { NavEdgeSwipeZone } from './nav-edge-swipe-zone';
+import { NAV_KEYS, type DashboardTabKey } from '@/config/nav-items';
 import { useTabPersistence } from '../../../hooks/useTabPersistence';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useSwipeable } from 'react-swipeable';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../../../types';
@@ -18,8 +23,6 @@ import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api
 import type { ManualGenerateResponse } from '../../../api';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
-
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 
 interface DashboardContentProps {
   stats: {
@@ -86,6 +89,9 @@ interface DashboardContentProps {
   setOverviewTimeRange: (range: TimeRange) => void;
   overviewHistoryData: CronJobHistoryType[];
   overviewLoading: boolean;
+  isNavOpen: boolean;
+  onNavOpen: () => void;
+  onNavClose: () => void;
 }
 
 export const DashboardContent = ({
@@ -127,7 +133,10 @@ export const DashboardContent = ({
   overviewTimeRange,
   setOverviewTimeRange,
   overviewHistoryData,
-  overviewLoading
+  overviewLoading,
+  isNavOpen,
+  onNavOpen,
+  onNavClose
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
@@ -145,22 +154,8 @@ export const DashboardContent = ({
   // Track unsaved changes in AI Settings tab
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
-  // Ordered tabs for swipe navigation (readonly tuple for type-safety)
-  const orderedTabs = ['overview', 'repositories', 'automation', 'integrations', 'settings'] as const;
-
   // Mobile detection flag
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 767px)');
-    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    // Initialize state
-    setIsMobile(mql.matches);
-    // Listen for viewport changes
-    mql.addEventListener?.('change', handleChange);
-    return () => {
-      mql.removeEventListener?.('change', handleChange);
-    };
-  }, []);
+  const isMobile = useIsMobile();
 
   // Track swipe-origin animations and direction (mobile-only)
   const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
@@ -169,9 +164,27 @@ export const DashboardContent = ({
   // Swipe intent handlers derived from useSwipeableTabs
   const { onSwipedLeft, onSwipedRight } = useSwipeableTabs(
     activeTab,
-    setActiveTab,
-    orderedTabs as unknown as string[],
+    setActiveTab as (tab: string) => void,
+    NAV_KEYS,
   );
+
+  // The drawer only mounts on mobile, so growing past the breakpoint would leave
+  // isNavOpen stuck true with no visible control to clear it - the drawer would
+  // then reopen by itself on the way back down.
+  useEffect(() => {
+    if (!isMobile && isNavOpen) {
+      onNavClose();
+    }
+  }, [isMobile, isNavOpen, onNavClose]);
+
+  // Selecting a nav item closes the mobile drawer and resets scroll position
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as DashboardTabKey);
+    onNavClose();
+    if (isMobile) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
 
   // Initialize react-swipeable
   const swipeableHandlers = useSwipeable({
@@ -222,83 +235,32 @@ export const DashboardContent = ({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Mobile Tab Navigation - Full Width */}
-        <div className="md:hidden w-full mb-4 sm:mb-6">
-          <TabsList className="flex h-10 items-center justify-between rounded-md bg-muted p-1 text-muted-foreground w-full">
-            <TabsTrigger value="overview" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="repositories" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
-              Repos
-            </TabsTrigger>
-            <TabsTrigger value="automation" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
-              Cron
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="whitespace-nowrap px-3 py-2 text-sm flex-1">
-              APIs
-            </TabsTrigger>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-1">
-                    <TabsTrigger value="settings" className="w-full whitespace-nowrap px-3 py-2 text-sm">
-                      AI Settings{hasUnsavedSettingsChanges && ' *'}
-                    </TabsTrigger>
-                  </div>
-                </TooltipTrigger>
-                {hasUnsavedSettingsChanges && (
-                  <TooltipContent>
-                    <p>You have unsaved changes</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </TabsList>
-        </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical" className="w-full">
+        <div className="md:flex md:items-start md:gap-6">
+          {isMobile ? (
+            <>
+              <MobileNavDrawer
+                open={isNavOpen}
+                onClose={onNavClose}
+                hasUnsavedSettingsChanges={hasUnsavedSettingsChanges}
+              />
+              {!isNavOpen && <NavEdgeSwipeZone onOpen={onNavOpen} />}
+            </>
+          ) : (
+            <DashboardSidebar hasUnsavedSettingsChanges={hasUnsavedSettingsChanges} />
+          )}
 
-        {/* Desktop Tab Navigation - Grid Layout */}
-        <TabsList className="hidden md:grid w-full grid-cols-5 gap-2 mb-4 sm:mb-6">
-          <TabsTrigger value="overview">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="repositories">
-            Repositories
-          </TabsTrigger>
-          <TabsTrigger value="automation">
-            Cron
-          </TabsTrigger>
-          <TabsTrigger value="integrations">
-            Integrations
-          </TabsTrigger>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <TabsTrigger value="settings" className="w-full">
-                    AI Settings{hasUnsavedSettingsChanges && ' *'}
-                  </TabsTrigger>
-                </div>
-              </TooltipTrigger>
-              {hasUnsavedSettingsChanges && (
-                <TooltipContent>
-                  <p>You have unsaved changes</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </TabsList>
-
-        <div
-          {...(isMobile ? swipeableHandlers : {})}
-          className={`w-full ${
-            isMobile && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
-          } ${
-            isMobile && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
-          }`}
-        >
+          {/* min-w-0 keeps wide tables/charts from blowing out the flex row */}
+          <div
+            {...(isMobile ? swipeableHandlers : {})}
+            className={`w-full min-w-0 flex-1 ${
+              isMobile && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
+            } ${
+              isMobile && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
+            }`}
+          >
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="mt-0 space-y-6">
             {/* Top Grid: Previews & Static Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RepositoryPreview
@@ -402,7 +364,7 @@ export const DashboardContent = ({
           </TabsContent>
 
           {/* Repositories Tab */}
-          <TabsContent value="repositories" className="space-y-6">
+          <TabsContent value="repositories" className="mt-0 space-y-6">
             {/* Generate Content */}
             <GenerateForm
               onManualGenerate={handleManualGenerate}
@@ -424,7 +386,7 @@ export const DashboardContent = ({
           </TabsContent>
 
           {/* Automation Tab */}
-          <TabsContent value="automation" className="space-y-6">
+          <TabsContent value="automation" className="mt-0 space-y-6">
             <CronJobs
               jobs={cronJobs}
               onJobsUpdate={onCronJobsUpdate}
@@ -459,7 +421,7 @@ export const DashboardContent = ({
           </TabsContent>
 
           {/* Integrations Tab */}
-          <TabsContent value="integrations" className="space-y-6">
+          <TabsContent value="integrations" className="mt-0 space-y-6">
             <ApiConfigs
               configs={apiConfigs}
               loading={apiConfigsLoading}
@@ -476,13 +438,14 @@ export const DashboardContent = ({
           <TabsContent
             value="settings"
             forceMount
-            className={activeTab !== 'settings' ? 'hidden' : ''}
+            className={activeTab !== 'settings' ? 'hidden' : 'mt-0'}
           >
             <PromptSettings
               isApiReady={isApiReady}
               onUnsavedChangesChange={setHasUnsavedSettingsChanges}
             />
           </TabsContent>
+          </div>
         </div>
       </Tabs>
     </div>
