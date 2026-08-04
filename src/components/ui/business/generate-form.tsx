@@ -10,11 +10,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../base/button';
 import { Textarea } from '../base/textarea';
 
-// Function to validate GitHub repository URLs
-const isValidGithubRepoUrl = (url: string): boolean => {
-  // GitHub repository URL pattern
-  const githubUrlPattern = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/;
-  return githubUrlPattern.test(url.trim());
+// First path segments of github.com that can never be a repository owner
+const RESERVED_GITHUB_PATHS = new Set([
+  'orgs', 'settings', 'topics', 'sponsors', 'features', 'marketplace', 'apps',
+  'collections', 'trending', 'explore', 'notifications', 'pulls', 'issues', 'search',
+]);
+
+// Converts any form of GitHub repository reference into the canonical
+// https://github.com/<owner>/<repo> form, tolerating a missing scheme, "http://",
+// a "www." host, tracking query parameters, a fragment, a ".git" suffix and deep
+// paths such as "/tree/main/src". Returns null when the input is not a repository.
+const normalizeGithubRepoUrl = (input: string): string | null => {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+
+  const host = parsed.hostname.toLowerCase();
+  if (host !== 'github.com' && host !== 'www.github.com') return null;
+
+  const segments = parsed.pathname.split('/').filter(Boolean);
+  if (segments.length < 2) return null;
+
+  const owner = segments[0];
+  const repo = segments[1].replace(/\.git$/, '');
+  if (!owner || !repo || RESERVED_GITHUB_PATHS.has(owner.toLowerCase())) return null;
+
+  return `https://github.com/${owner}/${repo}`;
 };
 
 const LANGUAGE_MAPPING = {
@@ -300,36 +329,50 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       try {
         setIsManualLoading(true);
 
-        // Check if input contains valid GitHub repository URLs
-        const urls = url.split(/\s+/).filter(u => u.trim());
-        const invalidUrls = urls.filter(u => !isValidGithubRepoUrl(u));
+        // Normalize the input: valid repository references are sent in canonical
+        // form, everything else is reported per URL without blocking the rest.
+        const inputs = url.split(/\s+/).filter(u => u.trim());
+        if (inputs.length === 0) {
+          toast.error('Enter at least one GitHub repository URL');
+          return;
+        }
 
-        if (invalidUrls.length > 0) {
-          // If there are invalid URLs, show error dialog with a single clear message
+        const normalizedUrls: string[] = [];
+        const invalidUrls: string[] = [];
+
+        inputs.forEach(input => {
+          const normalized = normalizeGithubRepoUrl(input);
+          if (normalized) {
+            if (!normalizedUrls.includes(normalized)) {
+              normalizedUrls.push(normalized);
+            }
+          } else {
+            invalidUrls.push(input);
+          }
+        });
+
+        const invalidMap: Record<string, string> = {};
+        invalidUrls.forEach(invalidUrl => {
+          invalidMap[invalidUrl] = `Not a GitHub repository URL. Expected format: https://github.com/username/repository`;
+        });
+
+        if (normalizedUrls.length === 0) {
           setAddedRepos([]);
-
-          // Use the first invalid URL as the example in the error message
-          const invalidUrl = invalidUrls[0];
-          setNotAddedRepos([invalidUrl]);
-
-          const errorMap: Record<string, string> = {};
-          errorMap[invalidUrl] = `Invalid GitHub repository URL format. URLs should be in the format: https://github.com/username/repository`;
-
-          setErrorMessages(errorMap);
+          setNotAddedRepos(invalidUrls);
+          setErrorMessages(invalidMap);
           setDialogContext('manual');
           setIsResultDialogOpen(true);
         } else {
-          // All URLs are valid, proceed with API call
           await new Promise(resolve => setTimeout(resolve, DEBUG_DELAY));
-          const response = await onManualGenerate(url);
+          const response = await onManualGenerate(normalizedUrls.join(' '));
 
           const added = response.added || [];
           const notAdded = response.dont_added || [];
 
           setAddedRepos(added as string[]);
-          setNotAddedRepos(notAdded as string[]);
+          setNotAddedRepos([...(notAdded as string[]), ...invalidUrls]);
 
-          const map: Record<string, string> = {};
+          const map: Record<string, string> = { ...invalidMap };
 
           // Map detailed errors if available
           if (response.error_details) {
@@ -339,7 +382,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
           }
 
           // Fallback to error_message or default if detailed error missing
-          if (Object.keys(map).length === 0 && response.error_message && response.error_message.trim() !== '') {
+          if (response.error_message && response.error_message.trim() !== '') {
             (response.dont_added || []).forEach(repo => {
               if (!map[repo]) {
                 map[repo] = response.error_message!;

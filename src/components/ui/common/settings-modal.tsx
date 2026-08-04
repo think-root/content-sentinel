@@ -252,6 +252,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     resetFormState();
   }, [isOpen]);
 
+  // The validator can report a valid code without listing it (e.g. when the
+  // available-languages list can't be fetched), so the tooltip always needs a
+  // fallback — otherwise hovering the icon shows an empty bubble.
+  const languageValidationTooltip = languageValidation.isValid
+    ? languageValidation.validCodes.length > 0
+      ? `Valid: ${languageValidation.validCodes.join(', ')}`
+      : 'Valid language code'
+    : languageValidation.message ||
+      (languageValidation.invalidCodes.length > 0
+        ? `Invalid: ${languageValidation.invalidCodes.join(', ')}`
+        : 'Invalid language code');
+
   const validateLanguageCodes = useCallback(async (codes: string) => {
     const raw = codes || '';
     const normalized = normalizeCodesStr(raw);
@@ -586,12 +598,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
-                                  <div>Valid: {languageValidation.validCodes.join(', ')}</div>
-                                )}
-                                {!languageValidation.isValid && languageValidation.message && (
-                                  <div>{languageValidation.message}</div>
-                                )}
+                                <div>{languageValidationTooltip}</div>
                               </TooltipContent>
                             </Tooltip>
                           )}
