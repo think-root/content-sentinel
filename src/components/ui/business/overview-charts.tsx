@@ -17,6 +17,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 interface OverviewChartsProps {
   posted: number;
   unposted: number;
+  archived?: number;
   statsLoading?: boolean;
   cronJobs?: CronJob[];
   cronJobsLoading?: boolean;
@@ -31,6 +32,7 @@ interface OverviewChartsProps {
 export function OverviewCharts({
   posted,
   unposted,
+  archived = 0,
   statsLoading = false,
   historyData,
   historyLoading,
@@ -226,7 +228,7 @@ export function OverviewCharts({
                   </div>
                 </div>
                 {/* Static Stats */}
-                <div className="mt-4 flex items-center text-xs text-muted-foreground border-b border-border/50 pb-2 mb-2">
+                <div className="mt-4 flex flex-wrap items-center text-xs text-muted-foreground border-b border-border/50 pb-2 mb-2">
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-success" />
                     <span>{posted} posted</span>
@@ -235,6 +237,12 @@ export function OverviewCharts({
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-warning" />
                     <span>{unposted} pending</span>
+                  </div>
+                  <span className="mx-2">•</span>
+                  {/* Archived rows live in a separate table, so they are not part of totalRepos */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                    <span>{archived} archived</span>
                   </div>
                 </div>
                 {/* Dynamic Period Stats */}

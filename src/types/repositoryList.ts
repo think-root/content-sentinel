@@ -31,6 +31,7 @@ export interface RepositoryTableProps {
   searchTerm: string;
   nextPostId?: number;
   onRepositoryUpdate?: () => void | Promise<void>;
+  onRepositoryArchived?: () => void | Promise<void>;
 }
 
 export interface RepositoryMobileViewProps {
@@ -42,6 +43,7 @@ export interface RepositoryMobileViewProps {
   searchTerm: string;
   nextPostId?: number;
   onRepositoryUpdate?: () => void | Promise<void>;
+  onRepositoryArchived?: () => void | Promise<void>;
 }
 
 export interface RepositoryPaginationProps {

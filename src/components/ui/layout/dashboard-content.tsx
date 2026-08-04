@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { OverviewCharts } from '../business/overview-charts';
 import { Card, CardContent } from '../layout/card';
 import { Clock, Server } from 'lucide-react';
@@ -9,6 +9,8 @@ import { CronJobs } from '../business/cron-jobs';
 import { ApiConfigs } from '../business/api-configs';
 import { CronJobHistory } from '../business/cron-job-history';
 import { RepositoryPreview } from '../business/repository-preview';
+import { ArchiveList } from '../business/archive-list';
+import { ArchiveOldRepositories } from '../business/archive-old-repositories';
 import { Tabs, TabsContent } from '../base/tabs';
 import { DashboardSidebar } from './dashboard-sidebar';
 import { MobileNavDrawer } from './mobile-nav-drawer';
@@ -19,6 +21,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useSwipeable } from 'react-swipeable';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../../../types';
+import type { ArchiveFilterKey, ArchiveFilterState, ArchivedRepository } from '../../../types/archive';
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
 import type { ManualGenerateResponse } from '../../../api';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
@@ -92,6 +95,21 @@ interface DashboardContentProps {
   isNavOpen: boolean;
   onNavOpen: () => void;
   onNavClose: () => void;
+  archiveItems: ArchivedRepository[];
+  archiveAll: number;
+  archiveLoading: boolean;
+  archiveFilters: ArchiveFilterState;
+  archiveShowFilters: boolean;
+  archiveCurrentPage: number;
+  archiveTotalPages: number;
+  archiveTotalItems: number;
+  archiveSetFilter: <K extends ArchiveFilterKey>(key: K, value: ArchiveFilterState[K]) => void;
+  archiveSetPage: (page: number) => void;
+  archiveResetFilters: () => void;
+  archiveToggleFilters: () => void;
+  fetchArchive: (forceFetch?: boolean) => Promise<void>;
+  refreshArchive: () => Promise<void>;
+  onArchiveMutation: () => Promise<void>;
 }
 
 export const DashboardContent = ({
@@ -136,7 +154,22 @@ export const DashboardContent = ({
   overviewLoading,
   isNavOpen,
   onNavOpen,
-  onNavClose
+  onNavClose,
+  archiveItems,
+  archiveAll,
+  archiveLoading,
+  archiveFilters,
+  archiveShowFilters,
+  archiveCurrentPage,
+  archiveTotalPages,
+  archiveTotalItems,
+  archiveSetFilter,
+  archiveSetPage,
+  archiveResetFilters,
+  archiveToggleFilters,
+  fetchArchive,
+  refreshArchive,
+  onArchiveMutation
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
 
@@ -232,6 +265,22 @@ export const DashboardContent = ({
       fetchPreviews();
     }
   }, [activeTab, fetchPreviews]);
+
+  // Fetched once per session, on the first visit to either tab that shows archive numbers -
+  // lazily rather than at startup so cold start stays under the API rate limit.
+  // Gated on isApiReady: without credentials the API layer returns an empty stub that would be
+  // cached as a legitimately empty archive, and the ref would then block the refetch after the
+  // user saves their settings.
+  const archiveFetchedRef = useRef(false);
+  useEffect(() => {
+    if (!isApiReady) {
+      return;
+    }
+    if ((activeTab === 'archive' || activeTab === 'overview') && !archiveFetchedRef.current) {
+      archiveFetchedRef.current = true;
+      fetchArchive(false);
+    }
+  }, [activeTab, fetchArchive, isApiReady]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -351,6 +400,7 @@ export const DashboardContent = ({
             <OverviewCharts
               posted={stats.posted}
               unposted={stats.unposted}
+              archived={archiveAll}
               statsLoading={statsLoading}
               cronJobs={cronJobs}
               cronJobsLoading={cronJobsLoading}
@@ -382,6 +432,31 @@ export const DashboardContent = ({
               totalItems={pagination.totalItems}
               loading={loading}
               isApiReady={isApiReady}
+              onRepositoryArchived={refreshArchive}
+            />
+          </TabsContent>
+
+          {/* Archive Tab */}
+          <TabsContent value="archive" className="mt-0 space-y-6">
+            <ArchiveOldRepositories
+              isApiReady={isApiReady}
+              onArchived={onArchiveMutation}
+            />
+
+            <ArchiveList
+              items={archiveItems}
+              all={archiveAll}
+              loading={archiveLoading}
+              isApiReady={isApiReady}
+              filters={archiveFilters}
+              showFilters={archiveShowFilters}
+              currentPage={archiveCurrentPage}
+              totalPages={archiveTotalPages}
+              totalItems={archiveTotalItems}
+              onFilterChange={archiveSetFilter}
+              onClearFilters={archiveResetFilters}
+              onToggleFilters={archiveToggleFilters}
+              onPageChange={archiveSetPage}
             />
           </TabsContent>
 

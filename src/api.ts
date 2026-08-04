@@ -1,4 +1,11 @@
 import type { Repository, RepositorySortBy, RepositorySortOrder } from './types';
+import type {
+  ArchiveOldRepositoriesResponse,
+  ArchiveRepositoryResponse,
+  GetArchivedRepositoriesRequest,
+  GetArchivedRepositoriesResponse,
+} from './types/archive';
+import { ARCHIVE_MAX_IDENTIFIERS } from "./utils/archiveUtils";
 import { getApiSettings, isApiConfigured } from "./utils/api-settings";
 import { queueRequest, createRequestSignature } from "./lib/requestQueue";
 
@@ -738,4 +745,146 @@ export async function updateRepositoryText(identifier: { id?: number; url?: stri
 
   // Use fallback logic
   return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
+}
+
+/**
+ * Reads a Content Alchemist response body defensively.
+ *
+ * The middleware answers 401 and 429 with plain text, not the JSON envelope, so the body has to be
+ * read as text and parsed optimistically - calling response.json() first throws a SyntaxError that
+ * would mask the real status.
+ */
+async function parseAlchemistEnvelope<T>(response: Response, action: string): Promise<T> {
+  const raw = await response.text();
+
+  let parsed: unknown = null;
+  try {
+    parsed = raw ? JSON.parse(raw) : null;
+  } catch {
+    // Plain-text body (401 / 429 / 405) - handled below.
+  }
+
+  const envelopeMessage =
+    parsed && typeof parsed === 'object' && 'message' in parsed
+      ? String((parsed as { message?: unknown }).message ?? '')
+      : '';
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    if (response.status === 401) {
+      throw new Error("Unauthorized. Check the Content Alchemist bearer token in settings.");
+    }
+    throw new Error(envelopeMessage || raw.trim() || `${action} failed with status: ${response.status}`);
+  }
+
+  if (!parsed) {
+    throw new Error(`${action} returned an unexpected response`);
+  }
+
+  return parsed as T;
+}
+
+export async function archiveRepositories(
+  identifiers: { ids: number[] } | { urls: string[] }
+): Promise<ArchiveRepositoryResponse> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+
+  if (!isConfigured) {
+    return { status: "error", message: "API not configured", data: { archived: [], failed: [] } };
+  }
+
+  const entries = 'ids' in identifiers ? identifiers.ids : identifiers.urls;
+
+  if (!entries.length) {
+    throw new Error("No repositories selected for archiving");
+  }
+
+  if (entries.length > ARCHIVE_MAX_IDENTIFIERS) {
+    throw new Error(`A maximum of ${ARCHIVE_MAX_IDENTIFIERS} repositories can be archived per request`);
+  }
+
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/archive-repository/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(identifiers),
+    });
+
+    return parseAlchemistEnvelope<ArchiveRepositoryResponse>(response, "Archiving repositories");
+  };
+
+  return createRequestSignature(
+    `${baseUrl}/archive-repository/`,
+    "POST",
+    identifiers
+  ).then(signature => queueRequest(fetchFunction, signature));
+}
+
+export async function archiveOldRepositories(
+  days: number,
+  dryRun: boolean
+): Promise<ArchiveOldRepositoriesResponse> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+
+  if (!isConfigured) {
+    return {
+      status: "error",
+      message: "API not configured",
+      data: { archived_count: 0, dry_run: dryRun, archived: [] },
+    };
+  }
+
+  if (!Number.isInteger(days) || days < 1) {
+    throw new Error("Days must be a whole number greater than 0");
+  }
+
+  const requestBody = { days, dry_run: dryRun };
+
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/archive-old-repositories/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    return parseAlchemistEnvelope<ArchiveOldRepositoriesResponse>(response, "Archiving old repositories");
+  };
+
+  return createRequestSignature(
+    `${baseUrl}/archive-old-repositories/`,
+    "POST",
+    requestBody
+  ).then(signature => queueRequest(fetchFunction, signature));
+}
+
+export async function getArchivedRepositories(
+  requestBody: GetArchivedRepositoriesRequest
+): Promise<GetArchivedRepositoriesResponse> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+
+  if (!isConfigured) {
+    return {
+      status: "error",
+      message: "API not configured",
+      data: { all: 0, items: [], page: 1, page_size: 0, total_pages: 0, total_items: 0 },
+    };
+  }
+
+  const fetchFunction = async () => {
+    const response = await fetch(`${baseUrl}/get-archived-repositories/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    return parseAlchemistEnvelope<GetArchivedRepositoriesResponse>(response, "Fetching archived repositories");
+  };
+
+  return createRequestSignature(
+    `${baseUrl}/get-archived-repositories/`,
+    "POST",
+    requestBody
+  ).then(signature => queueRequest(fetchFunction, signature));
 }

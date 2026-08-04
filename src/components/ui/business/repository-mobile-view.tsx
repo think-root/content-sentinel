@@ -3,8 +3,9 @@ import { RepositoryMobileViewProps } from '@/types/repositoryList';
 import { Repository } from '@/types';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
 import { formatDate } from '@/utils/date-format';
-import { deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api';
-import { Pencil, Check, X, Trash2, AlertCircle, Send } from 'lucide-react';
+import { archiveRepositories, deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api';
+import { Pencil, Check, X, Trash2, AlertCircle, Archive, Send } from 'lucide-react';
+import { describeArchiveFailure, isStaleArchiveFailure, summarizeArchiveResult } from '@/utils/archiveUtils';
 import { toast } from '@/components/ui/common/toast-config';
 import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
 import { RepositoryLink } from '@/components/ui/common/repository-link';
@@ -23,13 +24,16 @@ export function RepositoryMobileView({
   itemsPerPage,
   searchTerm,
   nextPostId,
-  onRepositoryUpdate
+  onRepositoryUpdate,
+  onRepositoryArchived
 }: RepositoryMobileViewProps) {
   const [localRepositories, setLocalRepositories] = useState<Repository[]>(repositories);
   const [editingText, setEditingText] = useState<{ id: number; text: string } | null>(null);
   const [textInput, setTextInput] = useState('');
   const [textError, setTextError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Repository | null>(null);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState<Repository | null>(null);
+  const [archivingId, setArchivingId] = useState<number | null>(null);
   const [showPromoteConfirm, setShowPromoteConfirm] = useState<Repository | null>(null);
   const [promotingId, setPromotingId] = useState<number | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
@@ -143,6 +147,62 @@ export function RepositoryMobileView({
         ...toastOptions,
         id: 'content-alchemist-error'
       });
+    }
+  };
+
+  const handleArchiveRepository = async (repo: Repository) => {
+    if (archivingId !== null) return;
+
+    try {
+      setArchivingId(repo.id);
+      // Optimistic update - archiving moves the row out of the repositories table
+      setLocalRepositories(prevRepos =>
+        prevRepos.filter(r => r.id !== repo.id)
+      );
+
+      const result = await archiveRepositories({ ids: [repo.id] });
+      const { archivedCount, firstFailure } = summarizeArchiveResult(result);
+
+      if (archivedCount > 0) {
+        toast.success(`Repository archived successfully`, {
+          ...toastOptions,
+          id: `archive-${repo.id}`
+        });
+      } else if (firstFailure) {
+        // The row's posted flag can be stale, so put it back unless the server says it is already gone
+        if (!isStaleArchiveFailure(firstFailure)) {
+          setLocalRepositories(repositories);
+        }
+        toast.error(describeArchiveFailure(firstFailure), {
+          ...toastOptions,
+          id: `archive-error-${repo.id}`
+        });
+      } else {
+        // Nothing archived and nothing reported as failed - never treat that as success, or the row
+        // disappears as if it had been archived
+        setLocalRepositories(repositories);
+        toast.error(result.message || 'Failed to archive repository', {
+          ...toastOptions,
+          id: `archive-error-${repo.id}`
+        });
+      }
+
+      if (onRepositoryUpdate) {
+        await onRepositoryUpdate();
+      }
+      if (onRepositoryArchived) {
+        await onRepositoryArchived();
+      }
+    } catch (error) {
+      // Rollback on error
+      setLocalRepositories(repositories);
+      const message = error instanceof Error ? error.message : 'Failed to connect to Content Alchemist API';
+      toast.error(message, {
+        ...toastOptions,
+        id: 'content-alchemist-error'
+      });
+    } finally {
+      setArchivingId(null);
     }
   };
 
@@ -313,15 +373,30 @@ export function RepositoryMobileView({
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowDeleteConfirm(repo)}
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        title="Delete repository"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {/* Only published repositories can be archived, so they get Archive instead of Delete */}
+                      {repo.posted ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowArchiveConfirm(repo)}
+                          disabled={archivingId !== null}
+                          aria-label="Archive repository"
+                          className="h-8 w-8 text-muted-foreground hover:text-warning disabled:opacity-50"
+                          title="Archive repository"
+                        >
+                          <Archive className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowDeleteConfirm(repo)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          title="Delete repository"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -366,6 +441,22 @@ export function RepositoryMobileView({
           }
         }}
         onCancel={() => setShowDeleteConfirm(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showArchiveConfirm !== null}
+        title="Archive Repository"
+        message="Move this published repository to the archive? It will be removed from Posts and cannot be restored from the dashboard."
+        confirmText="Archive"
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={() => {
+          if (showArchiveConfirm) {
+            handleArchiveRepository(showArchiveConfirm);
+          }
+          setShowArchiveConfirm(null);
+        }}
+        onCancel={() => setShowArchiveConfirm(null)}
       />
 
       <ConfirmDialog
