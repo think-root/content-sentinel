@@ -88,14 +88,21 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
                     className="bg-destructive/10 p-3 rounded-md mr-1 flex flex-col gap-1 border border-destructive/20"
                   >
                     <div className="flex items-center justify-between">
-                      <a
-                        href={repo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline break-all font-medium text-foreground"
-                      >
-                        {repo.replace('https://github.com/', '')}
-                      </a>
+                      {/* Rejected entries may be arbitrary user input (e.g. a URL
+                          that is not a repository), so only real repository URLs
+                          are rendered as links. */}
+                      {repo.startsWith('https://github.com/') ? (
+                        <a
+                          href={repo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline break-all font-medium text-foreground"
+                        >
+                          {repo.replace('https://github.com/', '')}
+                        </a>
+                      ) : (
+                        <span className="break-all font-medium text-foreground">{repo}</span>
+                      )}
                     </div>
                     <div className="text-sm dark:text-red-400 text-red-600 flex items-start gap-2">
                       <span>({errorMessages?.[repo] || "Repository already exists in database"})</span>

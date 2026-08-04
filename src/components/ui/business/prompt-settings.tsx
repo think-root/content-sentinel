@@ -57,6 +57,18 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
   });
   const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
 
+  // The validator can report a valid code without listing it (e.g. when the
+  // available-languages list can't be fetched), so the tooltip always needs a
+  // fallback — otherwise hovering the icon shows an empty bubble.
+  const languageValidationTooltip = languageValidation.isValid
+    ? languageValidation.validCodes.length > 0
+      ? `Valid: ${languageValidation.validCodes.join(', ')}`
+      : 'Valid language code'
+    : languageValidation.message ||
+      (languageValidation.invalidCodes.length > 0
+        ? `Invalid: ${languageValidation.invalidCodes.join(', ')}`
+        : 'Invalid language code');
+
   // Language validation cache helpers
   const LANG_VALIDATION_CACHE_KEY = 'promptLanguageValidationCache';
   const LANG_VALIDATION_TTL = 60 * 60 * 1000; // 1 hour
@@ -409,12 +421,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  {languageValidation.isValid && languageValidation.validCodes.length > 0 && (
-                                    <div>Valid: {languageValidation.validCodes.join(', ')}</div>
-                                  )}
-                                  {!languageValidation.isValid && languageValidation.message && (
-                                    <div>{languageValidation.message}</div>
-                                  )}
+                                  <div>{languageValidationTooltip}</div>
                                 </TooltipContent>
                               </Tooltip>
                             )}
