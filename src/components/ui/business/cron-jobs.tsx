@@ -69,9 +69,17 @@ const isValidCronField = (field: string, min: number, max: number): boolean => {
   });
 };
 
+// Split on any run of whitespace so a double space can't shift field positions.
+const cronFields = (cron: string): string[] => cron.trim().split(/\s+/).filter(Boolean);
+
+// Five fields only. The backend validator accepts six (validating just the
+// first five), but it schedules through gocron's Cron(), which parses with
+// cron.ParseStandard - a six-field expression fails there and the job never
+// runs. Accepting one here would let the user save a schedule that silently
+// never fires.
 const validateCronExpression = (cron: string): boolean => {
-  const fields = cron.trim().split(/\s+/).filter(Boolean);
-  if (fields.length !== 5 && fields.length !== 6) return false;
+  const fields = cronFields(cron);
+  if (fields.length !== 5) return false;
 
   const ranges: Array<[number, number]> = [
     [0, 59], // minute
@@ -85,34 +93,55 @@ const validateCronExpression = (cron: string): boolean => {
 };
 
 // Current UTC→timezone offset in minutes (DST-aware for the current date).
-const getTimezoneOffsetMinutes = (timezone: string): number => {
+// Returns null when the offset can't be determined: re-parsing a toLocaleString
+// result is not spec-guaranteed, and a NaN offset would otherwise propagate into
+// the cron string and make cronstrue throw on a perfectly valid schedule.
+const getTimezoneOffsetMinutes = (timezone: string): number | null => {
   const now = new Date();
   const asUTC = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
   const asTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
-  return Math.round((asTz.getTime() - asUTC.getTime()) / 60000);
+  const offset = Math.round((asTz.getTime() - asUTC.getTime()) / 60000);
+  return Number.isFinite(offset) ? offset : null;
 };
 
-// Shift an (hour, minute) pair by an offset, wrapping within a single day.
+// Shift an (hour, minute) pair by an offset. dayShift records whether the result
+// landed on the previous (-1) or next (+1) day, which the caller needs because
+// the day-of-month and day-of-week fields are not shifted along with it.
 const shiftToLocal = (hour: number, minute: number, offsetMinutes: number) => {
-  const total = (((hour * 60 + minute + offsetMinutes) % 1440) + 1440) % 1440;
-  return { hour: Math.floor(total / 60), minute: total % 60 };
+  const raw = hour * 60 + minute + offsetMinutes;
+  const total = ((raw % 1440) + 1440) % 1440;
+  return {
+    hour: Math.floor(total / 60),
+    minute: total % 60,
+    dayShift: Math.floor(raw / 1440),
+  };
 };
 
 // Convert the minute+hour fields of a cron expression to local time, shifting
 // EVERY value in the hour field (single values, comma lists and ranges), not
 // just the first one. Returns null when the fields can't be reliably localized
-// (steps, wildcards, multi-value minutes, or ranges that would cross midnight).
+// (steps, wildcards, multi-value minutes, or ranges that would cross midnight),
+// and reports dayShift so the caller can refuse to localize when the shift moves
+// the schedule onto another day than the day fields name.
 const localizeCronTimeFields = (
   minuteField: string,
   hourField: string,
   offsetMinutes: number
-): { minute: string; hour: string } | null => {
+): { minute: string; hour: string; dayShift: number } | null => {
   if (!isNumber(minuteField)) return null;
   if (hourField === '*' || hourField.includes('/')) return null;
 
   const minute = Number(minuteField);
   const shiftedHours: string[] = [];
   let shiftedMinute: number | null = null;
+  let dayShift: number | null = null;
+
+  // Every value has to land on the same day, otherwise one expression would need
+  // two different day fields and no single localized string is correct.
+  const trackDayShift = (shift: number): boolean => {
+    if (dayShift === null) dayShift = shift;
+    return dayShift === shift;
+  };
 
   for (const token of hourField.split(',')) {
     if (token.includes('-')) {
@@ -122,35 +151,48 @@ const localizeCronTimeFields = (
       const b = shiftToLocal(Number(end), minute, offsetMinutes);
       // A shifted range that wraps past midnight would reorder its bounds.
       if (a.hour > b.hour) return null;
+      if (!trackDayShift(a.dayShift) || !trackDayShift(b.dayShift)) return null;
       shiftedMinute ??= a.minute;
       shiftedHours.push(`${a.hour}-${b.hour}`);
     } else {
       if (!isNumber(token)) return null;
       const s = shiftToLocal(Number(token), minute, offsetMinutes);
+      if (!trackDayShift(s.dayShift)) return null;
       shiftedMinute ??= s.minute;
       shiftedHours.push(String(s.hour));
     }
   }
 
-  return { minute: String(shiftedMinute ?? minute), hour: shiftedHours.join(',') };
+  return {
+    minute: String(shiftedMinute ?? minute),
+    hour: shiftedHours.join(','),
+    dayShift: dayShift ?? 0,
+  };
 };
 
 const getHumanReadableCron = (cronExpression: string): string => {
   try {
     const { timezone } = getApiSettings();
     const normalizedTimezone = normalizeTimezoneForIntl(timezone);
-    const [minute, hour, dayOfMonth, month, dayOfWeek] = cronExpression.split(' ');
+    const [minute, hour, dayOfMonth, month, dayOfWeek] = cronFields(cronExpression);
 
     if (hour === '*' || minute === '*') {
       return cronstrue.toString(cronExpression, { use24HourTimeFormat: true, verbose: true });
     }
 
     const offsetMinutes = getTimezoneOffsetMinutes(normalizedTimezone);
-    const localized = localizeCronTimeFields(minute, hour, offsetMinutes);
+    const localized =
+      offsetMinutes === null ? null : localizeCronTimeFields(minute, hour, offsetMinutes);
     const utcText = cronstrue.toString(cronExpression, { use24HourTimeFormat: true });
 
-    if (!localized) {
-      // Can't reliably localize (steps, wildcards, midnight-crossing ranges).
+    // A shift across midnight also moves the weekday and the day of the month, but
+    // those fields aren't shifted - localizing anyway would name the wrong day.
+    // It is only safe when both day fields are wildcards.
+    const dayFieldsPinned = dayOfMonth !== '*' || dayOfWeek !== '*';
+
+    if (!localized || (localized.dayShift !== 0 && dayFieldsPinned)) {
+      // Can't reliably localize (steps, wildcards, midnight-crossing ranges,
+      // unknown timezone offset, or a day-crossing shift with pinned day fields).
       return `${utcText} (UTC)`;
     }
 
