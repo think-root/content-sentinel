@@ -140,22 +140,51 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Height of the mobile bottom nav, declared once and read by everything that
+     has to stay clear of it (page padding, sonner offsets, any future floating
+     action). 0 above `md` so consumers need no `md:` variant of their own.
+     Includes the iOS home-indicator inset because the bar is the bottom-most
+     fixed element on the page. */
+  :root {
+    --bottom-nav-h: 0px;
+  }
+
+  /* `not all and (min-width: …)` rather than `max-width: 767px`, so this is the
+     exact complement of Tailwind's `md:` and of the bar's own `md:hidden`. At a
+     fractional viewport width (browser zoom) `max-width: 767px` and
+     `min-width: 768px` are both false, which would leave the bar displayed at
+     zero height. */
+  @media not all and (min-width: 768px) {
+    :root {
+      --bottom-nav-h: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* iOS Safari zooms the whole page when a focused text field renders below 16px,
+     and stays zoomed after blur. Enforced here at element level instead of per
+     call-site, because `cn()` (twMerge) silently drops a component's `text-base`
+     as soon as a caller passes `text-sm` - they are the same font-size group -
+     while leaving `md:text-sm` intact. An element rule doesn't compete in that
+     group at all.
+     The `:not([data-small-ok])` parts are load-bearing for SPECIFICITY (0-1-1),
+     not just as an opt-out: a bare `textarea {}` is 0-0-1 and loses to Tailwind's
+     `.text-sm` utility. Do not "simplify" them away.
+     Verify changes here with getComputedStyle on a real field under 768px -
+     never by reading the source.
+     `not all and (min-width: …)` keeps this the exact complement of the
+     `md:text-sm` half of the field components, with no gap at fractional
+     viewport widths. */
+  @media not all and (min-width: 768px) {
+    input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([data-small-ok]),
+    textarea:not([data-small-ok]),
+    select:not([data-small-ok]) {
+      font-size: 1rem;
+    }
+  }
 }
 
 @layer components {
-  /* Form controls */
-  .form-input {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  
-  .form-textarea {
-    @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  
-  .form-select {
-    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring-subtle disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  
   /* Card improvements */
   .card-enhanced {
     @apply bg-card text-card-foreground shadow-sm border border-border rounded-lg;

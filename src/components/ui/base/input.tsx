@@ -14,7 +14,9 @@ const inputVariants = cva(
       },
       inputSize: {
         default: "h-10",
-        sm: "h-9 px-2 text-sm",
+        // No font-size here: it would defeat the base `text-base md:text-sm` and
+        // re-arm the iOS focus-zoom bug (see the field rule in index.css).
+        sm: "h-9 px-2",
         lg: "h-11 px-4",
       },
     },

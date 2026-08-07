@@ -309,7 +309,7 @@ export function RepositoryMobileView({
                         className={`flex-1 px-2 py-1 rounded border ${textError
                           ? 'border-destructive'
                           : 'border-input'
-                          } bg-background text-foreground text-sm focus:outline-none resize-none`}
+                          } bg-background text-foreground text-base md:text-sm focus:outline-none resize-none`}
                         placeholder="Repository text"
                         ref={textInputRef}
                         style={{ height: '130px' }}
