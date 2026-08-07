@@ -13,8 +13,7 @@ import { ArchiveList } from '../business/archive-list';
 import { ArchiveOldRepositories } from '../business/archive-old-repositories';
 import { Tabs, TabsContent } from '../base/tabs';
 import { DashboardSidebar } from './dashboard-sidebar';
-import { MobileNavDrawer } from './mobile-nav-drawer';
-import { NavEdgeSwipeZone } from './nav-edge-swipe-zone';
+import { DashboardBottomNav } from './dashboard-bottom-nav';
 import { NAV_KEYS, type DashboardTabKey } from '@/config/nav-items';
 import { useTabPersistence } from '../../../hooks/useTabPersistence';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -92,9 +91,6 @@ interface DashboardContentProps {
   setOverviewTimeRange: (range: TimeRange) => void;
   overviewHistoryData: CronJobHistoryType[];
   overviewLoading: boolean;
-  isNavOpen: boolean;
-  onNavOpen: () => void;
-  onNavClose: () => void;
   archiveItems: ArchivedRepository[];
   archiveAll: number;
   archiveLoading: boolean;
@@ -152,9 +148,6 @@ export const DashboardContent = ({
   setOverviewTimeRange,
   overviewHistoryData,
   overviewLoading,
-  isNavOpen,
-  onNavOpen,
-  onNavClose,
   archiveItems,
   archiveAll,
   archiveLoading,
@@ -201,19 +194,9 @@ export const DashboardContent = ({
     NAV_KEYS,
   );
 
-  // The drawer only mounts on mobile, so growing past the breakpoint would leave
-  // isNavOpen stuck true with no visible control to clear it - the drawer would
-  // then reopen by itself on the way back down.
-  useEffect(() => {
-    if (!isMobile && isNavOpen) {
-      onNavClose();
-    }
-  }, [isMobile, isNavOpen, onNavClose]);
-
-  // Selecting a nav item closes the mobile drawer and resets scroll position
+  // Selecting a nav item resets scroll position
   const handleTabChange = (tab: string) => {
     setActiveTab(tab as DashboardTabKey);
-    onNavClose();
     if (isMobile) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
@@ -286,18 +269,15 @@ export const DashboardContent = ({
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical" className="w-full">
         <div className="md:flex md:items-start md:gap-6">
-          {isMobile ? (
-            <>
-              <MobileNavDrawer
-                open={isNavOpen}
-                onClose={onNavClose}
-                hasUnsavedSettingsChanges={hasUnsavedSettingsChanges}
-              />
-              {!isNavOpen && <NavEdgeSwipeZone onOpen={onNavOpen} />}
-            </>
-          ) : (
-            <DashboardSidebar hasUnsavedSettingsChanges={hasUnsavedSettingsChanges} />
-          )}
+          {/* Both navs render unconditionally and hide via CSS (`hidden md:block` /
+              `md:hidden`), so no JS breakpoint sits in the nav path and neither can
+              flicker in on the first paint. */}
+          <DashboardSidebar hasUnsavedSettingsChanges={hasUnsavedSettingsChanges} />
+          <DashboardBottomNav
+            activeTab={activeTab}
+            onSelect={handleTabChange}
+            hasUnsavedSettingsChanges={hasUnsavedSettingsChanges}
+          />
 
           {/* min-w-0 keeps wide tables/charts from blowing out the flex row */}
           <div

@@ -50,6 +50,14 @@ export const ToastConfig = ({ position }: ToastConfigProps) => {
     <Toaster
       position={getPosition()}
       theme={isDarkMode ? 'dark' : 'light'}
+      // Bottom-positioned toasts have to clear the fixed mobile bottom nav. The
+      // added constants are sonner's own defaults (32px desktop / 16px mobile),
+      // and `--bottom-nav-h` is 0 above `md`, so desktop placement is unchanged.
+      // Passing these as props rather than overriding sonner's CSS vars in a
+      // stylesheet is deliberate: sonner writes them as inline styles, which a
+      // stylesheet rule cannot win against.
+      offset={{ bottom: 'calc(var(--bottom-nav-h) + 32px)' }}
+      mobileOffset={{ bottom: 'calc(var(--bottom-nav-h) + 16px)' }}
       toastOptions={{
         classNames: {
           toast: `

@@ -141,6 +141,21 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Height of the mobile bottom nav, declared once and read by everything that
+     has to stay clear of it (page padding, sonner offsets, any future floating
+     action). 0 above `md` so consumers need no `md:` variant of their own.
+     Includes the iOS home-indicator inset because the bar is the bottom-most
+     fixed element on the page. */
+  :root {
+    --bottom-nav-h: 0px;
+  }
+
+  @media (max-width: 767px) {
+    :root {
+      --bottom-nav-h: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
   /* iOS Safari zooms the whole page when a focused text field renders below 16px,
      and stays zoomed after blur. Enforced here at element level instead of per
      call-site, because `cn()` (twMerge) silently drops a component's `text-base`

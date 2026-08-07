@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Menu, RotateCw } from 'lucide-react';
+import { LayoutDashboard, RotateCw } from 'lucide-react';
 import { ThemeToggle } from '../common/theme-toggle';
 import { RefreshIndicator } from '../common/refresh-indicator';
 import { SettingsButton } from '../common/settings-button';
@@ -13,7 +13,6 @@ interface DashboardLayoutProps {
   isSettingsOpen: boolean;
   onSettingsOpen: () => void;
   onSettingsClose: () => void;
-  onNavOpen: () => void;
   handleManualRefresh: (showNotification?: boolean) => Promise<boolean>;
   loading: boolean;
   previewsLoading: boolean;
@@ -24,7 +23,6 @@ export const DashboardLayout = ({
   children,
   isRefreshing,
   onSettingsOpen,
-  onNavOpen,
   handleManualRefresh,
   loading,
 }: DashboardLayoutProps) => {
@@ -46,16 +44,6 @@ export const DashboardLayout = ({
               </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onNavOpen}
-                className="h-8 w-8 sm:h-10 sm:w-10 md:hidden"
-                aria-label="Open navigation"
-                aria-haspopup="dialog"
-              >
-                <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -106,7 +94,11 @@ export const DashboardLayout = ({
   return (
     <div className="w-full">
       <RefreshIndicator isRefreshing={isRefreshing} />
-      <div className="py-3 sm:py-6">
+      {/* Bottom padding clears the fixed mobile bottom nav. It lives on this wrapper
+          rather than on <main> because the credits footer is a sibling of <main> and
+          would otherwise slide under the bar. `--bottom-nav-h` is 0 above `md`, so
+          these collapse back to the plain py-3/py-6 spacing on desktop. */}
+      <div className="pt-3 sm:pt-6 pb-[calc(var(--bottom-nav-h)+0.75rem)] sm:pb-[calc(var(--bottom-nav-h)+1.5rem)]">
         {renderHeader()}
         <main className="w-full px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
           {children}
