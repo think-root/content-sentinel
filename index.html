@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve to real
+         values; without it they are always 0 and every safe-area rule in
+         index.css is dead code. Required because the manifest is
+         display:standalone, so an installed instance draws under the rounded
+         corners and the home indicator.
+         No maximum-scale / user-scalable=no here - that breaks pinch-zoom for
+         everyone (WCAG 1.4.4). The iOS focus-zoom fix is the 16px field floor
+         in index.css. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#ffffff" />
     <title>Dashboard</title>
