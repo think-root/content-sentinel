@@ -150,7 +150,12 @@
     --bottom-nav-h: 0px;
   }
 
-  @media (max-width: 767px) {
+  /* `not all and (min-width: …)` rather than `max-width: 767px`, so this is the
+     exact complement of Tailwind's `md:` and of the bar's own `md:hidden`. At a
+     fractional viewport width (browser zoom) `max-width: 767px` and
+     `min-width: 768px` are both false, which would leave the bar displayed at
+     zero height. */
+  @media not all and (min-width: 768px) {
     :root {
       --bottom-nav-h: calc(3.25rem + env(safe-area-inset-bottom, 0px));
     }
@@ -166,8 +171,11 @@
      not just as an opt-out: a bare `textarea {}` is 0-0-1 and loses to Tailwind's
      `.text-sm` utility. Do not "simplify" them away.
      Verify changes here with getComputedStyle on a real field under 768px -
-     never by reading the source. */
-  @media (max-width: 767px) {
+     never by reading the source.
+     `not all and (min-width: …)` keeps this the exact complement of the
+     `md:text-sm` half of the field components, with no gap at fractional
+     viewport widths. */
+  @media not all and (min-width: 768px) {
     input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([data-small-ok]),
     textarea:not([data-small-ok]),
     select:not([data-small-ok]) {
