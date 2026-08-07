@@ -19,12 +19,14 @@ interface DashboardBottomNavProps {
  * plus `aria-current` keep the desktop nav byte-identical and the a11y tree
  * unambiguous; Radix's roving tabindex buys nothing on a touch device.
  *
- * Six equal `flex-1` slots: 320px / 6 = 53px wide and ~52px tall, both clear the
- * 44px minimum touch target, so all six destinations stay visible - no overflow
- * menu and no scroll strip, which would reintroduce the drawer's discoverability
+ * Six equal `flex-1` slots inside the bar's safe-area padding: (320 - 32) / 6 =
+ * 48px wide and ~52px tall at the narrowest supported width, both clear the 44px
+ * minimum touch target, so all six destinations stay visible - no overflow menu
+ * and no scroll strip, which would reintroduce the drawer's discoverability
  * problem. `shortLabel` exists in nav-items.ts for exactly this. Bar height is
  * owned by `--bottom-nav-h` in index.css so page padding and toast offsets can
- * read it.
+ * read it, and the insets by `.bottom-nav-insets` - see the note there for why
+ * the horizontal floor is not just `env()`.
  */
 export const DashboardBottomNav = ({
   activeTab,
@@ -33,7 +35,7 @@ export const DashboardBottomNav = ({
 }: DashboardBottomNavProps) => (
   <nav
     aria-label="Main navigation"
-    className="md:hidden fixed inset-x-0 bottom-0 z-40 flex h-[var(--bottom-nav-h)] items-stretch border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/80"
+    className="bottom-nav-insets md:hidden fixed inset-x-0 bottom-0 z-40 flex h-[var(--bottom-nav-h)] items-stretch border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
   >
     {NAV_ITEMS.map((item) => {
       const Icon = item.icon;

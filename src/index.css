@@ -139,6 +139,16 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+
+    /* index.html sets viewport-fit=cover, so the page now draws under the notch,
+       the rounded corners and the status bar. Keep normal flow content out of
+       those areas. The bottom is deliberately absent: the fixed bottom nav owns
+       it via --bottom-nav-h, and body padding would not affect a fixed element
+       anyway. All four insets are 0 on hardware without them, so this is inert
+       on desktop and on older phones. */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   /* Height of the mobile bottom nav, declared once and read by everything that
@@ -185,6 +195,25 @@
 }
 
 @layer components {
+  /* Safe-area insets for the fixed mobile bottom nav. Its border and background
+     still span the full width - only the buttons are inset.
+
+     The horizontal floor is the point: on iPhone in PORTRAIT both left and right
+     insets are 0, yet the display's rounded corners still clip the outermost
+     slots, which is what hid the first and last icons. So the floor handles
+     portrait and env() handles landscape, where the inset is real (~44px).
+
+     Bottom needs no floor: with viewport-fit=cover the inset is the home
+     indicator's own height on the devices that have one, and 0 on those that
+     don't - a hardcoded floor would just add dead space on the latter. It pairs
+     with --bottom-nav-h, which adds the same inset to the height, so the content
+     box stays exactly 3.25rem. */
+  .bottom-nav-insets {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: max(env(safe-area-inset-left, 0px), 1rem);
+    padding-right: max(env(safe-area-inset-right, 0px), 1rem);
+  }
+
   /* Card improvements */
   .card-enhanced {
     @apply bg-card text-card-foreground shadow-sm border border-border rounded-lg;
