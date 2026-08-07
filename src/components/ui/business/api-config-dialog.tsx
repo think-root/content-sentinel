@@ -369,7 +369,9 @@ export const ApiConfigDialog = ({
               onChange={(e) => handleFieldChange('default_json_body', e.target.value)}
               disabled={saving}
               placeholder='{"key": "value"}'
-              className="min-h-[80px] font-mono text-sm"
+              // No `text-sm`: twMerge would drop the base `text-base` and iOS would
+              // zoom the dialog on focus. The base already carries `md:text-sm`.
+              className="min-h-[80px] font-mono"
             />
             <p className="text-xs text-muted-foreground">
               JSON string for default request body. Supports {'{env.VAR}'} syntax.

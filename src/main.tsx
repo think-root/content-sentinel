@@ -14,6 +14,11 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+if (import.meta.env.DEV) {
+  // Warns when any field would trigger iOS focus-zoom. Dev-only, tree-shaken out of prod.
+  import('./dev/field-zoom-audit');
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
