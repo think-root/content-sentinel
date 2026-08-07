@@ -160,12 +160,13 @@
     --bottom-nav-h: 0px;
   }
 
-  /* `not all and (min-width: …)` rather than `max-width: 767px`, so this is the
-     exact complement of Tailwind's `md:` and of the bar's own `md:hidden`. At a
+  /* `not all and (…)` rather than `max-width: …`, so this is the exact
+     complement of Tailwind's `md:` and of the bar's own `md:hidden`. At a
      fractional viewport width (browser zoom) `max-width: 767px` and
-     `min-width: 768px` are both false, which would leave the bar displayed at
-     zero height. */
-  @media not all and (min-width: 768px) {
+     `min-width: 768px` would both be false, leaving the bar displayed at zero
+     height. The height term must match `screens.md` in tailwind.config.js -
+     without it a landscape phone gets the desktop layout. */
+  @media not all and (min-width: 768px) and (min-height: 500px) {
     :root {
       --bottom-nav-h: calc(3.25rem + env(safe-area-inset-bottom, 0px));
     }
@@ -182,10 +183,10 @@
      `.text-sm` utility. Do not "simplify" them away.
      Verify changes here with getComputedStyle on a real field under 768px -
      never by reading the source.
-     `not all and (min-width: …)` keeps this the exact complement of the
-     `md:text-sm` half of the field components, with no gap at fractional
-     viewport widths. */
-  @media not all and (min-width: 768px) {
+     `not all and (…)` keeps this the exact complement of the `md:text-sm` half
+     of the field components, with no gap at fractional viewport widths, and the
+     height term keeps a landscape phone - still iOS, still zooming - on 16px. */
+  @media not all and (min-width: 768px) and (min-height: 500px) {
     input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([data-small-ok]),
     textarea:not([data-small-ok]),
     select:not([data-small-ok]) {

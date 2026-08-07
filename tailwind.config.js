@@ -14,6 +14,18 @@ module.exports = {
       },
     },
     extend: {
+      // `md` is the switch between the mobile and the desktop layout: sidebar vs
+      // bottom nav, table vs cards, and every multi-column grid. Width alone is
+      // the wrong test - a phone in landscape is 844x390, so it cleared the old
+      // 768px and got the full desktop layout in a 390px-tall window: crushed
+      // grids, wrapped-to-death text, unusable filters.
+      // Requiring height too keeps landscape phones on the mobile layout, where
+      // they belong. 500px separates them (375-430px tall) from tablets in
+      // landscape (744px+). Keep `useIsMobile` and the complement queries in
+      // index.css in sync with this string.
+      screens: {
+        md: { raw: "(min-width: 768px) and (min-height: 500px)" },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
