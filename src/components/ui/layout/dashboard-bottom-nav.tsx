@@ -1,5 +1,4 @@
 import { NAV_ITEMS, type DashboardTabKey } from '@/config/nav-items';
-import { useIsScrolling } from '@/hooks/useIsScrolling';
 
 interface DashboardBottomNavProps {
   activeTab: DashboardTabKey;
@@ -28,23 +27,14 @@ interface DashboardBottomNavProps {
  * owned by `--bottom-nav-h` in index.css so page padding and toast offsets can
  * read it, and the insets by `.bottom-nav-insets` - see the note there for why
  * the horizontal floor is not just `env()`.
- *
- * While the page is scrolling the bar collapses to icons only and returns when
- * it stops. `--bottom-nav-h` deliberately does NOT follow: it is the space the
- * page reserves, and shrinking it mid-scroll would reflow the document under the
- * user's finger. Only the bar's own painted height changes.
  */
 export const DashboardBottomNav = ({
   activeTab,
   onSelect,
   hasUnsavedSettingsChanges,
-}: DashboardBottomNavProps) => {
-  const isScrolling = useIsScrolling();
-
-  return (
+}: DashboardBottomNavProps) => (
   <nav
     aria-label="Main navigation"
-    data-scrolling={isScrolling ? 'true' : undefined}
     className="bottom-nav-insets md:hidden fixed inset-x-0 bottom-0 z-40 flex h-[var(--bottom-nav-h)] items-stretch border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
   >
     {NAV_ITEMS.map((item) => {
@@ -57,18 +47,17 @@ export const DashboardBottomNav = ({
           type="button"
           onClick={() => onSelect(item.key)}
           aria-current={isActive ? 'page' : undefined}
-          className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle ${
+          className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring-subtle ${
             isActive ? 'text-primary' : 'text-muted-foreground'
           }`}
         >
           <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span data-nav-label className="max-w-full truncate text-[10px] font-medium leading-none">
+          <span className="max-w-full truncate text-[10px] font-medium leading-none">
             {item.shortLabel}
             {item.key === 'settings' && hasUnsavedSettingsChanges && ' *'}
           </span>
         </button>
       );
     })}
-    </nav>
-  );
-};
+  </nav>
+);
