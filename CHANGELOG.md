@@ -1,3 +1,20 @@
+# [1.50.0](https://github.com/think-root/content-sentinel/compare/v1.49.0...v1.50.0) (2026-08-08)
+
+
+### Bug Fixes
+
+* **ui:** honour iOS safe areas so the bottom nav clears the corners and home bar ([5d6653f](https://github.com/think-root/content-sentinel/commit/5d6653f9319131bbafe69216fadd8e7994da0a59))
+* **ui:** keep phones in landscape on the mobile layout ([9870175](https://github.com/think-root/content-sentinel/commit/98701753fbaecab1fb0c26eee915271e0bb328d8))
+* **ui:** make the mobile media queries exact complements of `md:` ([b7a577d](https://github.com/think-root/content-sentinel/commit/b7a577ddddf7a63d87b33d6b93e509decf6ecae6))
+* **ui:** stop iOS Safari zooming on focused fields ([aa20a4d](https://github.com/think-root/content-sentinel/commit/aa20a4da73f8c943771c55912d4d5ecfb43e90e9))
+
+
+### Features
+
+* **nav:** collapse the bottom nav while scrolling, and close the iOS gap ([72daf6a](https://github.com/think-root/content-sentinel/commit/72daf6a47ee0af2db8975b0067d33116775e817e))
+* **nav:** replace the mobile drawer with a bottom nav bar ([f098356](https://github.com/think-root/content-sentinel/commit/f098356f2d4cbbfd393d1267408a48454eab939b))
+* **skills:** add skills-lock.json for ADHD skill ([3fe5db4](https://github.com/think-root/content-sentinel/commit/3fe5db4282827c2b2b7ec2ac632c47195c4ede7f))
+
 # [1.49.0](https://github.com/think-root/content-sentinel/compare/v1.48.0...v1.49.0) (2026-08-04)
 
 
