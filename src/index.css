@@ -213,6 +213,55 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: max(env(safe-area-inset-left, 0px), 1rem);
     padding-right: max(env(safe-area-inset-right, 0px), 1rem);
+
+    transition: height 200ms ease;
+  }
+
+  /* Fills the gap that opens under the bar while iOS scrolls.
+     A `position: fixed` element is placed against the LAYOUT viewport, so on
+     iOS it detaches from the bottom of the screen twice over: the layout
+     viewport slides during rubber-band overscroll, and in Safari it also stops
+     matching the visual viewport while the toolbar collapses. Either way the
+     scrolling page shows through beneath the bar for a moment.
+     Painting an opaque strip below the bar means that moment reveals the page's
+     own background instead of content sliding past, so there is nothing to
+     notice. It cannot be `background: inherit` - the bar is translucent, and a
+     see-through filler would defeat the point. Non-interactive and clipped off
+     screen, so it costs nothing. */
+  .bottom-nav-insets::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 5rem;
+    background: hsl(var(--background));
+    pointer-events: none;
+  }
+
+  /* Collapsed to icons while the page scrolls - see the note in
+     dashboard-bottom-nav.tsx for why --bottom-nav-h stays put.
+     0-2-0 beats the `h-[var(--bottom-nav-h)]` utility at 0-1-0, so this wins
+     regardless of source order. */
+  .bottom-nav-insets[data-scrolling='true'] {
+    height: calc(2.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-nav-insets [data-nav-label] {
+    max-height: 1rem;
+    transition: opacity 150ms ease, max-height 200ms ease;
+  }
+
+  .bottom-nav-insets[data-scrolling='true'] [data-nav-label] {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bottom-nav-insets,
+    .bottom-nav-insets [data-nav-label] {
+      transition: none;
+    }
   }
 
   /* Card improvements */
