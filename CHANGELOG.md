@@ -1,3 +1,10 @@
+## [1.50.1](https://github.com/think-root/content-sentinel/compare/v1.50.0...v1.50.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **nav:** stop the bottom nav collapsing while the page scrolls ([f92b986](https://github.com/think-root/content-sentinel/commit/f92b986429a78cca900a66caf6afffcdebc5ab2d))
+
 # [1.50.0](https://github.com/think-root/content-sentinel/compare/v1.49.0...v1.50.0) (2026-08-08)
 
 
