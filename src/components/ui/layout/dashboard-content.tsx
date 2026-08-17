@@ -87,6 +87,7 @@ interface DashboardContentProps {
   cronJobHistoryTotalPages?: number;
   cronJobHistoryCurrentPage?: number;
   cronJobHistorySetPage?: (page: number) => void;
+  cronJobHistoryOnRetryComplete?: () => void | Promise<void>;
   overviewTimeRange: TimeRange;
   setOverviewTimeRange: (range: TimeRange) => void;
   overviewHistoryData: CronJobHistoryType[];
@@ -144,6 +145,7 @@ export const DashboardContent = ({
   cronJobHistoryTotalPages,
   cronJobHistoryCurrentPage,
   cronJobHistorySetPage,
+  cronJobHistoryOnRetryComplete,
   overviewTimeRange,
   setOverviewTimeRange,
   overviewHistoryData,
@@ -470,6 +472,7 @@ export const DashboardContent = ({
                 totalPages={cronJobHistoryTotalPages}
                 currentPage={cronJobHistoryCurrentPage}
                 setPage={cronJobHistorySetPage}
+                onRetryComplete={cronJobHistoryOnRetryComplete}
                 isApiReady={isApiReady}
               />
             )}

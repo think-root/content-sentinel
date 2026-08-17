@@ -3,6 +3,7 @@ import { getCronJobs, type CronJob } from '../api/index';
 import { saveCronJobsToCache, getCronJobsFromCache } from '../utils/cache-utils';
 import { compareCronJobs } from '../utils/data-comparison';
 import { isApiConfigured } from '../utils/api-settings';
+import { maestroErrorMessage } from '../utils/api-error';
 
 interface CronJobsState {
   cronJobs: CronJob[];
@@ -93,11 +94,11 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
       if (!isBackgroundFetch || isCacheBust) {
         setState(prev => ({ ...prev, stale: false }));
       }
-    } catch {
+    } catch (error) {
       if (!isApiConfigured()) {
         setState(prev => ({ ...prev, loading: false }));
       } else {
-        setErrorWithScroll('Failed to connect to Content Maestro API', 'content-maestro-error');
+        setErrorWithScroll(maestroErrorMessage(error), 'content-maestro-error');
         setState(prev => ({ ...prev, loading: false }));
       }
     }

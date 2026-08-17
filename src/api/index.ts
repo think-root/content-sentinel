@@ -7,11 +7,35 @@ export interface CronJob {
   updated_at: string;
 }
 
+export interface MessageRunDetails {
+  url?: string;
+  sent?: string[];
+  failed?: string[];
+  manual?: boolean;
+}
+
 export interface CronJobHistory {
   name: string;
   timestamp: string;
   status: number;
   output?: string;
+  /** Only present on message runs recorded after the details column was added. */
+  details?: MessageRunDetails;
+}
+
+export interface RetryMessageOutcome {
+  api_name: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface RetryMessageResult {
+  url: string;
+  status: number;
+  message: string;
+  succeeded?: string[] | null;
+  failed?: string[] | null;
+  outcomes?: RetryMessageOutcome[] | null;
 }
 
 export interface CronJobHistoryResponse {
@@ -141,6 +165,42 @@ export const updateCronSchedule = async (name: string, schedule: string): Promis
     }
     throw new Error(`Failed to update cron schedule: ${response.status}`);
   }
+};
+
+/**
+ * Re-sends a repository to the integrations that missed it. Omitting `url` lets
+ * Content Maestro fall back to the most recently published repository, which is
+ * what a partial run has just consumed.
+ */
+export const retryMessagePost = async (
+  apis: string[],
+  url?: string
+): Promise<RetryMessageResult> => {
+  const settings = getApiSettings();
+
+  if (!isApiConfigured()) {
+    throw new Error("API not configured. Check the Content Maestro settings.");
+  }
+
+  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/message/retry`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+    },
+    body: JSON.stringify(url ? { apis, url } : { apis }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    // Content Maestro answers errors as plain text.
+    const detail = (await response.text()).trim();
+    throw new Error(detail || `Failed to retry the publication: ${response.status}`);
+  }
+
+  return response.json();
 };
 
 export const updateCronStatus = async (name: string, is_active: boolean): Promise<void> => {

@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatDateOnly } from '@/utils/date-format';
-import { getCronJobs } from '@/api/index';
-import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { getCronJobs, retryMessagePost } from '@/api/index';
+import { getLatestPostedRepository } from '@/api';
+import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '@/api/index';
+import { getHistoryEntryKey, getLegacyFailedApis, getRetryTarget } from '@/utils/message-retry';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
+import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
+import { toast } from '@/components/ui/common/toast-config';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/base/tooltip";
 
 import {
   Table,
@@ -49,6 +59,8 @@ interface CronJobHistoryProps {
   endDate?: string;
   setStartDate?: (startDate?: string) => void;
   setEndDate?: (endDate?: string) => void;
+  /** Called after a manual retry so the caller can refresh the history. */
+  onRetryComplete?: () => void | Promise<void>;
 }
 
 export const CronJobHistory = ({
@@ -71,7 +83,8 @@ export const CronJobHistory = ({
   startDate,
   endDate,
   setStartDate,
-  setEndDate
+  setEndDate,
+  onRetryComplete
 }: CronJobHistoryProps) => {
   const [cronJobs, setCronJobs] = useState<string[]>([]);
   const [selectedJob, setSelectedJob] = useState<string>(
@@ -90,6 +103,132 @@ export const CronJobHistory = ({
     const saved = localStorage.getItem('cronHistoryShowFilters');
     return saved === 'true';
   });
+  const [retryingKey, setRetryingKey] = useState<string | null>(null);
+  const [retriedKeys, setRetriedKeys] = useState<string[]>([]);
+  const [retryConfirm, setRetryConfirm] = useState<{
+    key: string;
+    failed: string[];
+    url: string;
+    /** True when the url was resolved for the run rather than recorded by it. */
+    resolved: boolean;
+  } | null>(null);
+
+  const openRetryConfirm = async (entry: CronJobHistoryType, plan: RetryPlan) => {
+    const key = getHistoryEntryKey(entry);
+
+    if (plan.url) {
+      setRetryConfirm({ key, failed: plan.failed, url: plan.url, resolved: false });
+      return;
+    }
+
+    // Runs recorded before Content Maestro tracked the item carry no url, so it
+    // has to be resolved here and pinned into the request: leaving that to the
+    // backend would publish whatever is latest at confirm time, which a cron run
+    // in between would have changed.
+    setRetryingKey(key);
+    try {
+      const response = await getLatestPostedRepository();
+      const resolvedUrl = response.data?.items?.[0]?.url;
+      if (!resolvedUrl) {
+        toast.error('Could not determine which repository to publish', { id: `retry-${key}` });
+        return;
+      }
+      setRetryConfirm({ key, failed: plan.failed, url: resolvedUrl, resolved: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to connect to Content Alchemist API';
+      toast.error(message, { id: `retry-${key}` });
+    } finally {
+      setRetryingKey(null);
+    }
+  };
+
+  const handleRetry = async (key: string, failed: string[], url: string) => {
+    const toastId = `retry-${key}`;
+    setRetryingKey(key);
+    toast.loading(`Re-sending to ${failed.join(', ')}...`, { id: toastId });
+
+    let published = false;
+    try {
+      const result = await retryMessagePost(failed, url);
+      const succeeded = result.succeeded ?? [];
+      const failures = result.failed ?? [];
+      published = succeeded.length > 0;
+
+      if (failures.length === 0) {
+        toast.success(`Sent to ${succeeded.join(', ')}`, { id: toastId });
+      } else {
+        const reasons = (result.outcomes ?? [])
+          .filter(outcome => !outcome.success)
+          .map(outcome => `${outcome.api_name}: ${outcome.error ?? 'unknown error'}`)
+          .join('; ');
+        toast.error(reasons || `Failed to send to ${failures.join(', ')}`, { id: toastId });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to connect to Content Maestro API';
+      toast.error(message, { id: toastId });
+    } finally {
+      setRetryingKey(null);
+    }
+
+    if (published) {
+      // Rows are immutable, so the original run keeps looking retryable. Remember
+      // the ones already handled to keep a second click from publishing twice.
+      setRetriedKeys(previous => [...previous, key]);
+    }
+
+    // Refreshing is a separate concern: a failure here must not overwrite the
+    // result of the publish that just happened.
+    if (onRetryComplete) {
+      try {
+        await onRetryComplete();
+      } catch {
+        // useCronJobHistory already surfaces its own fetch errors.
+      }
+    }
+  };
+
+  const renderRetryButton = (entry: CronJobHistoryType, variant: 'desktop' | 'mobile') => {
+    const plan = getRetryPlan(entry);
+    const key = getHistoryEntryKey(entry);
+    if (!plan || retriedKeys.includes(key)) {
+      return null;
+    }
+
+    const isRetrying = retryingKey === key;
+    const label = `Publish to ${plan.failed.join(', ')}`;
+
+    const button = (
+      <Button
+        variant="ghost"
+        size={variant === 'desktop' ? 'icon' : 'sm'}
+        onClick={() => openRetryConfirm(entry, plan)}
+        disabled={!isApiReady || retryingKey !== null}
+        aria-label={label}
+        title={label}
+        className={variant === 'desktop'
+          ? 'h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50'
+          : 'flex items-center gap-2'}
+      >
+        <RefreshCw className={cn('h-4 w-4', isRetrying && 'animate-spin')} />
+        {variant === 'mobile' && <span>{isRetrying ? 'Sending...' : 'Publish again'}</span>}
+      </Button>
+    );
+
+    if (variant === 'mobile') {
+      return button;
+    }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{button}</span>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -417,14 +556,15 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     <div className="text-muted-foreground text-sm py-4">
                       Data could not be loaded because API keys are not configured
                     </div>
@@ -448,9 +588,10 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -468,6 +609,7 @@ export const CronJobHistory = ({
                     <TableCell>
                       <Skeleton className="h-4 w-1/2" />
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 ))}
               </TableBody>
@@ -491,9 +633,10 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -520,13 +663,18 @@ export const CronJobHistory = ({
                           <TruncatedText text={entry.output || 'None'} maxChars={65} />
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end">
+                          {renderRetryButton(entry, 'desktop')}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               ) : (
                 <TableBody>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       <div className="text-muted-foreground text-sm py-4">
                         No data available
                       </div>
@@ -572,6 +720,8 @@ export const CronJobHistory = ({
                         <TruncatedText text={entry.output || 'None'} maxChars={65} />
                       </div>
                     </div>
+
+                    {renderRetryButton(entry, 'mobile')}
                   </div>
                 </div>
               ))
@@ -724,6 +874,49 @@ export const CronJobHistory = ({
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={retryConfirm !== null}
+        title="Publish again"
+        message={retryConfirm ? buildRetryConfirmMessage(retryConfirm) : ''}
+        confirmText="Publish"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          if (retryConfirm) {
+            handleRetry(retryConfirm.key, retryConfirm.failed, retryConfirm.url);
+          }
+          setRetryConfirm(null);
+        }}
+        onCancel={() => setRetryConfirm(null)}
+      />
     </div>
   );
+};
+
+/** A plan is retryable once the integrations and the repository are both known. */
+interface RetryPlan {
+  failed: string[];
+  /** Absent for legacy runs that never recorded the item; resolved before sending. */
+  url?: string;
+}
+
+const getRetryPlan = (entry: CronJobHistoryType): RetryPlan | null => {
+  const target = getRetryTarget(entry);
+  if (target) {
+    return target;
+  }
+
+  const legacyFailed = getLegacyFailedApis(entry);
+  return legacyFailed.length > 0 ? { failed: legacyFailed } : null;
+};
+
+const buildRetryConfirmMessage = (confirm: { failed: string[]; url: string; resolved: boolean }): string => {
+  const integrations = confirm.failed.join(', ');
+
+  if (confirm.resolved) {
+    return `This run did not record which repository it published, so the latest published one will be used: ${confirm.url}. Send it to ${integrations}?`;
+  }
+
+  return `Send ${confirm.url} to ${integrations}?`;
 };
