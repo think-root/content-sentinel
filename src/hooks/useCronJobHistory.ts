@@ -398,6 +398,19 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     });
   };
 
+  // Re-reads the current page with the active filters, bypassing the cache.
+  const refresh = () => {
+    return fetchCronJobHistory(true, false, {
+      page: state.page,
+      nameFilter: state.nameFilter,
+      statusFilter: state.statusFilter,
+      sortOrder: state.sortOrder,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      pageSize: state.pageSize
+    });
+  };
+
   return {
     history: state.history,
     loading: state.loading,
@@ -414,6 +427,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     newDataAvailable: state.newDataAvailable,
     hasMore: state.hasMore,
     fetchCronJobHistory,
+    refresh,
     applyNewData,
     setNameFilter,
     setStatusFilter,

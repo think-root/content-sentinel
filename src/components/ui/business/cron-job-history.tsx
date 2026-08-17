@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatDateOnly } from '@/utils/date-format';
-import { getCronJobs } from '@/api/index';
-import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { getCronJobs, retryMessagePost } from '@/api/index';
+import { getLatestPostedRepository } from '@/api';
+import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '@/api/index';
+import { getHistoryEntryKey, getRetryTarget, type RetryTarget } from '@/utils/message-retry';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
+import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
+import { toast } from '@/components/ui/common/toast-config';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/base/tooltip";
 
 import {
   Table,
@@ -49,6 +59,8 @@ interface CronJobHistoryProps {
   endDate?: string;
   setStartDate?: (startDate?: string) => void;
   setEndDate?: (endDate?: string) => void;
+  /** Called after a manual retry so the caller can refresh the history. */
+  onRetryComplete?: () => void | Promise<void>;
 }
 
 export const CronJobHistory = ({
@@ -71,7 +83,8 @@ export const CronJobHistory = ({
   startDate,
   endDate,
   setStartDate,
-  setEndDate
+  setEndDate,
+  onRetryComplete
 }: CronJobHistoryProps) => {
   const [cronJobs, setCronJobs] = useState<string[]>([]);
   const [selectedJob, setSelectedJob] = useState<string>(
@@ -90,6 +103,108 @@ export const CronJobHistory = ({
     const saved = localStorage.getItem('cronHistoryShowFilters');
     return saved === 'true';
   });
+  const [retryingKey, setRetryingKey] = useState<string | null>(null);
+  const [retryConfirm, setRetryConfirm] = useState<{
+    key: string;
+    target: RetryTarget;
+    resolvedUrl?: string;
+  } | null>(null);
+
+  const openRetryConfirm = async (entry: CronJobHistoryType, target: RetryTarget) => {
+    const key = getHistoryEntryKey(entry);
+
+    if (target.url) {
+      setRetryConfirm({ key, target });
+      return;
+    }
+
+    // Runs recorded before the details field carry no url, so Content Maestro
+    // will fall back to the latest published repository. Show which one that is:
+    // a cron run in between would have moved the target.
+    let resolvedUrl: string | undefined;
+    try {
+      const response = await getLatestPostedRepository();
+      resolvedUrl = response.data?.items?.[0]?.url;
+    } catch {
+      resolvedUrl = undefined;
+    }
+
+    setRetryConfirm({ key, target, resolvedUrl });
+  };
+
+  const handleRetry = async (key: string, target: RetryTarget) => {
+    const toastId = `retry-${key}`;
+    setRetryingKey(key);
+    toast.loading(`Re-sending to ${target.failed.join(', ')}...`, { id: toastId });
+
+    try {
+      const result = await retryMessagePost(target.failed, target.url);
+      const succeeded = result.succeeded ?? [];
+      const failed = result.failed ?? [];
+
+      if (failed.length === 0) {
+        toast.success(`Sent to ${succeeded.join(', ')}`, { id: toastId });
+      } else {
+        const reasons = (result.outcomes ?? [])
+          .filter(outcome => !outcome.success)
+          .map(outcome => `${outcome.api_name}: ${outcome.error ?? 'unknown error'}`)
+          .join('; ');
+        toast.error(reasons || `Failed to send to ${failed.join(', ')}`, { id: toastId });
+      }
+
+      if (onRetryComplete) {
+        await onRetryComplete();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to connect to Content Maestro API';
+      toast.error(message, { id: toastId });
+    } finally {
+      setRetryingKey(null);
+    }
+  };
+
+  const renderRetryButton = (entry: CronJobHistoryType, variant: 'desktop' | 'mobile') => {
+    const target = getRetryTarget(entry);
+    if (!target) {
+      return null;
+    }
+
+    const key = getHistoryEntryKey(entry);
+    const isRetrying = retryingKey === key;
+    const label = `Publish to ${target.failed.join(', ')}`;
+
+    const button = (
+      <Button
+        variant="ghost"
+        size={variant === 'desktop' ? 'icon' : 'sm'}
+        onClick={() => openRetryConfirm(entry, target)}
+        disabled={!isApiReady || retryingKey !== null}
+        aria-label={label}
+        title={label}
+        className={variant === 'desktop'
+          ? 'h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50'
+          : 'flex items-center gap-2'}
+      >
+        <RefreshCw className={cn('h-4 w-4', isRetrying && 'animate-spin')} />
+        {variant === 'mobile' && <span>{isRetrying ? 'Sending...' : 'Publish again'}</span>}
+      </Button>
+    );
+
+    if (variant === 'mobile') {
+      return button;
+    }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{button}</span>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -417,14 +532,15 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     <div className="text-muted-foreground text-sm py-4">
                       Data could not be loaded because API keys are not configured
                     </div>
@@ -448,9 +564,10 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -491,9 +608,10 @@ export const CronJobHistory = ({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/4">Date</TableHead>
+                  <TableHead className="w-1/5">Date</TableHead>
                   <TableHead className="w-1/6">Status</TableHead>
                   <TableHead className="w-5/12">Output</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -520,13 +638,18 @@ export const CronJobHistory = ({
                           <TruncatedText text={entry.output || 'None'} maxChars={65} />
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end">
+                          {renderRetryButton(entry, 'desktop')}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               ) : (
                 <TableBody>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       <div className="text-muted-foreground text-sm py-4">
                         No data available
                       </div>
@@ -572,6 +695,8 @@ export const CronJobHistory = ({
                         <TruncatedText text={entry.output || 'None'} maxChars={65} />
                       </div>
                     </div>
+
+                    {renderRetryButton(entry, 'mobile')}
                   </div>
                 </div>
               ))
@@ -724,6 +849,36 @@ export const CronJobHistory = ({
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={retryConfirm !== null}
+        title="Publish again"
+        message={retryConfirm ? buildRetryConfirmMessage(retryConfirm.target, retryConfirm.resolvedUrl) : ''}
+        confirmText="Publish"
+        cancelText="Cancel"
+        variant="info"
+        onConfirm={() => {
+          if (retryConfirm) {
+            handleRetry(retryConfirm.key, retryConfirm.target);
+          }
+          setRetryConfirm(null);
+        }}
+        onCancel={() => setRetryConfirm(null)}
+      />
     </div>
   );
+};
+
+const buildRetryConfirmMessage = (target: RetryTarget, resolvedUrl?: string): string => {
+  const integrations = target.failed.join(', ');
+
+  if (target.url) {
+    return `Send ${target.url} to ${integrations}?`;
+  }
+
+  if (resolvedUrl) {
+    return `This run did not record which repository it published, so the latest published one will be used: ${resolvedUrl}. Send it to ${integrations}?`;
+  }
+
+  return `This run did not record which repository it published, so the latest published one will be used. Send it to ${integrations}?`;
 };

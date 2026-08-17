@@ -119,7 +119,8 @@ function App() {
     setEndDate: cronJobHistorySetEndDate,
     resetFilters: cronJobHistoryResetFilters,
     setPageSize: cronJobHistorySetPageSize,
-    setPage: cronJobHistorySetPage
+    setPage: cronJobHistorySetPage,
+    refresh: refreshCronJobHistory
   } = useCronJobHistory({ isCacheBust, setErrorWithScroll });
 
   const {
@@ -303,6 +304,7 @@ function App() {
                   cronJobHistoryTotalPages={cronJobHistoryTotalPages}
                   cronJobHistoryCurrentPage={cronJobHistoryCurrentPage}
                   cronJobHistorySetPage={cronJobHistorySetPage}
+                  cronJobHistoryOnRetryComplete={refreshCronJobHistory}
                   overviewTimeRange={overviewTimeRange}
                   setOverviewTimeRange={setOverviewTimeRange}
                   overviewHistoryData={overviewHistoryData}
