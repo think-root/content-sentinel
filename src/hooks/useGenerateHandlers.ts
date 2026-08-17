@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api';
+import { alchemistErrorMessage } from '../utils/api-error';
 import type { RepositorySortBy, RepositorySortOrder } from '../types';
 import {
   DEFAULT_REPOSITORY_SORT_BY,
@@ -61,8 +62,8 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
         }
       }
       return response;
-    } catch {
-      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
+    } catch (error) {
+      setErrorWithScroll(alchemistErrorMessage(error), 'content-alchemist-error');
       return { status: 'error' };
     }
   }, [fetchRepositories, setErrorWithScroll]);
@@ -101,8 +102,8 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
         );
       }
       return response;
-    } catch {
-      setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
+    } catch (error) {
+      setErrorWithScroll(alchemistErrorMessage(error), 'content-alchemist-error');
       return { status: 'error', added: [], dont_added: [] };
     }
   }, [fetchRepositories, setErrorWithScroll]);

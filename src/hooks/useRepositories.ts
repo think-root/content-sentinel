@@ -4,6 +4,7 @@ import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
 import { isApiConfigured, getApiSettings } from "../utils/api-settings";
+import { alchemistErrorMessage } from "../utils/api-error";
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import {
   DEFAULT_REPOSITORY_SORT_BY,
@@ -311,7 +312,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
           // Don't show error toast for language errors - fallback should handle them
           setState((prev) => ({ ...prev, loading: false }));
         } else {
-          setErrorWithScroll("Failed to connect to Content Alchemist API", "content-alchemist-error");
+          setErrorWithScroll(alchemistErrorMessage(error), "content-alchemist-error");
           setState((prev) => ({ ...prev, loading: false }));
         }
       }

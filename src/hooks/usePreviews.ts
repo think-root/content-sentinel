@@ -4,6 +4,7 @@ import type { Repository } from '../types';
 import { savePreviewsToCache, getPreviewsFromCache } from '../utils/cache-utils';
 import { comparePreviews } from '../utils/data-comparison';
 import { isApiConfigured } from '../utils/api-settings';
+import { alchemistErrorMessage } from '../utils/api-error';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -107,11 +108,11 @@ export const usePreviews = ({ isCacheBust, setErrorWithScroll }: UsePreviewsProp
       }
 
       await fetchPreviewsFromAPI(isBackgroundFetch);
-    } catch {
+    } catch (error) {
       if (!isApiConfigured()) {
         setState(prev => ({ ...prev, loading: false }));
       } else {
-        setErrorWithScroll('Failed to connect to Content Alchemist API', 'content-alchemist-error');
+        setErrorWithScroll(alchemistErrorMessage(error), 'content-alchemist-error');
         setState(prev => ({ ...prev, loading: false }));
       }
     }
