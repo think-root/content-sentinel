@@ -4,7 +4,7 @@ import { getCronJobs, retryMessagePost } from '@/api/index';
 import { getLatestPostedRepository } from '@/api';
 import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '@/api/index';
-import { getHistoryEntryKey, getRetryTarget, type RetryTarget } from '@/utils/message-retry';
+import { getHistoryEntryKey, getLegacyFailedApis, getRetryTarget } from '@/utils/message-retry';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
 import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
 import { toast } from '@/components/ui/common/toast-config';
@@ -104,56 +104,64 @@ export const CronJobHistory = ({
     return saved === 'true';
   });
   const [retryingKey, setRetryingKey] = useState<string | null>(null);
+  const [retriedKeys, setRetriedKeys] = useState<string[]>([]);
   const [retryConfirm, setRetryConfirm] = useState<{
     key: string;
-    target: RetryTarget;
-    resolvedUrl?: string;
+    failed: string[];
+    url: string;
+    /** True when the url was resolved for the run rather than recorded by it. */
+    resolved: boolean;
   } | null>(null);
 
-  const openRetryConfirm = async (entry: CronJobHistoryType, target: RetryTarget) => {
+  const openRetryConfirm = async (entry: CronJobHistoryType, plan: RetryPlan) => {
     const key = getHistoryEntryKey(entry);
 
-    if (target.url) {
-      setRetryConfirm({ key, target });
+    if (plan.url) {
+      setRetryConfirm({ key, failed: plan.failed, url: plan.url, resolved: false });
       return;
     }
 
-    // Runs recorded before the details field carry no url, so Content Maestro
-    // will fall back to the latest published repository. Show which one that is:
-    // a cron run in between would have moved the target.
-    let resolvedUrl: string | undefined;
+    // Runs recorded before Content Maestro tracked the item carry no url, so it
+    // has to be resolved here and pinned into the request: leaving that to the
+    // backend would publish whatever is latest at confirm time, which a cron run
+    // in between would have changed.
+    setRetryingKey(key);
     try {
       const response = await getLatestPostedRepository();
-      resolvedUrl = response.data?.items?.[0]?.url;
-    } catch {
-      resolvedUrl = undefined;
+      const resolvedUrl = response.data?.items?.[0]?.url;
+      if (!resolvedUrl) {
+        toast.error('Could not determine which repository to publish', { id: `retry-${key}` });
+        return;
+      }
+      setRetryConfirm({ key, failed: plan.failed, url: resolvedUrl, resolved: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to connect to Content Alchemist API';
+      toast.error(message, { id: `retry-${key}` });
+    } finally {
+      setRetryingKey(null);
     }
-
-    setRetryConfirm({ key, target, resolvedUrl });
   };
 
-  const handleRetry = async (key: string, target: RetryTarget) => {
+  const handleRetry = async (key: string, failed: string[], url: string) => {
     const toastId = `retry-${key}`;
     setRetryingKey(key);
-    toast.loading(`Re-sending to ${target.failed.join(', ')}...`, { id: toastId });
+    toast.loading(`Re-sending to ${failed.join(', ')}...`, { id: toastId });
 
+    let published = false;
     try {
-      const result = await retryMessagePost(target.failed, target.url);
+      const result = await retryMessagePost(failed, url);
       const succeeded = result.succeeded ?? [];
-      const failed = result.failed ?? [];
+      const failures = result.failed ?? [];
+      published = succeeded.length > 0;
 
-      if (failed.length === 0) {
+      if (failures.length === 0) {
         toast.success(`Sent to ${succeeded.join(', ')}`, { id: toastId });
       } else {
         const reasons = (result.outcomes ?? [])
           .filter(outcome => !outcome.success)
           .map(outcome => `${outcome.api_name}: ${outcome.error ?? 'unknown error'}`)
           .join('; ');
-        toast.error(reasons || `Failed to send to ${failed.join(', ')}`, { id: toastId });
-      }
-
-      if (onRetryComplete) {
-        await onRetryComplete();
+        toast.error(reasons || `Failed to send to ${failures.join(', ')}`, { id: toastId });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to connect to Content Maestro API';
@@ -161,23 +169,39 @@ export const CronJobHistory = ({
     } finally {
       setRetryingKey(null);
     }
+
+    if (published) {
+      // Rows are immutable, so the original run keeps looking retryable. Remember
+      // the ones already handled to keep a second click from publishing twice.
+      setRetriedKeys(previous => [...previous, key]);
+    }
+
+    // Refreshing is a separate concern: a failure here must not overwrite the
+    // result of the publish that just happened.
+    if (onRetryComplete) {
+      try {
+        await onRetryComplete();
+      } catch {
+        // useCronJobHistory already surfaces its own fetch errors.
+      }
+    }
   };
 
   const renderRetryButton = (entry: CronJobHistoryType, variant: 'desktop' | 'mobile') => {
-    const target = getRetryTarget(entry);
-    if (!target) {
+    const plan = getRetryPlan(entry);
+    const key = getHistoryEntryKey(entry);
+    if (!plan || retriedKeys.includes(key)) {
       return null;
     }
 
-    const key = getHistoryEntryKey(entry);
     const isRetrying = retryingKey === key;
-    const label = `Publish to ${target.failed.join(', ')}`;
+    const label = `Publish to ${plan.failed.join(', ')}`;
 
     const button = (
       <Button
         variant="ghost"
         size={variant === 'desktop' ? 'icon' : 'sm'}
-        onClick={() => openRetryConfirm(entry, target)}
+        onClick={() => openRetryConfirm(entry, plan)}
         disabled={!isApiReady || retryingKey !== null}
         aria-label={label}
         title={label}
@@ -585,6 +609,7 @@ export const CronJobHistory = ({
                     <TableCell>
                       <Skeleton className="h-4 w-1/2" />
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 ))}
               </TableBody>
@@ -853,13 +878,13 @@ export const CronJobHistory = ({
       <ConfirmDialog
         isOpen={retryConfirm !== null}
         title="Publish again"
-        message={retryConfirm ? buildRetryConfirmMessage(retryConfirm.target, retryConfirm.resolvedUrl) : ''}
+        message={retryConfirm ? buildRetryConfirmMessage(retryConfirm) : ''}
         confirmText="Publish"
         cancelText="Cancel"
         variant="info"
         onConfirm={() => {
           if (retryConfirm) {
-            handleRetry(retryConfirm.key, retryConfirm.target);
+            handleRetry(retryConfirm.key, retryConfirm.failed, retryConfirm.url);
           }
           setRetryConfirm(null);
         }}
@@ -869,16 +894,29 @@ export const CronJobHistory = ({
   );
 };
 
-const buildRetryConfirmMessage = (target: RetryTarget, resolvedUrl?: string): string => {
-  const integrations = target.failed.join(', ');
+/** A plan is retryable once the integrations and the repository are both known. */
+interface RetryPlan {
+  failed: string[];
+  /** Absent for legacy runs that never recorded the item; resolved before sending. */
+  url?: string;
+}
 
-  if (target.url) {
-    return `Send ${target.url} to ${integrations}?`;
+const getRetryPlan = (entry: CronJobHistoryType): RetryPlan | null => {
+  const target = getRetryTarget(entry);
+  if (target) {
+    return target;
   }
 
-  if (resolvedUrl) {
-    return `This run did not record which repository it published, so the latest published one will be used: ${resolvedUrl}. Send it to ${integrations}?`;
+  const legacyFailed = getLegacyFailedApis(entry);
+  return legacyFailed.length > 0 ? { failed: legacyFailed } : null;
+};
+
+const buildRetryConfirmMessage = (confirm: { failed: string[]; url: string; resolved: boolean }): string => {
+  const integrations = confirm.failed.join(', ');
+
+  if (confirm.resolved) {
+    return `This run did not record which repository it published, so the latest published one will be used: ${confirm.url}. Send it to ${integrations}?`;
   }
 
-  return `This run did not record which repository it published, so the latest published one will be used. Send it to ${integrations}?`;
+  return `Send ${confirm.url} to ${integrations}?`;
 };

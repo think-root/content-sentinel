@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCronJobHistory, type CronJobHistory } from '../api/index';
 import { saveCronJobHistoryToCache, getCronJobHistoryFromCache } from '../utils/cache-utils';
 
@@ -56,6 +56,9 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
       return isNaN(parsed) ? undefined : parsed;
     })()
   });
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const fetchCronJobHistory = useCallback(async (
     forceFetch: boolean = false,
@@ -399,15 +402,20 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
   };
 
   // Re-reads the current page with the active filters, bypassing the cache.
+  // Reads the live state through a ref: a caller can await a slow action for half
+  // a minute, and refreshing with the filters captured back then would drag the
+  // user off whatever page they moved to since.
   const refresh = () => {
+    const current = stateRef.current;
+
     return fetchCronJobHistory(true, false, {
-      page: state.page,
-      nameFilter: state.nameFilter,
-      statusFilter: state.statusFilter,
-      sortOrder: state.sortOrder,
-      startDate: state.startDate,
-      endDate: state.endDate,
-      pageSize: state.pageSize
+      page: current.page,
+      nameFilter: current.nameFilter,
+      statusFilter: current.statusFilter,
+      sortOrder: current.sortOrder,
+      startDate: current.startDate,
+      endDate: current.endDate,
+      pageSize: current.pageSize
     });
   };
 
