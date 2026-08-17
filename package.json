@@ -9,7 +9,8 @@
     "dev:clean": "vite --force",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf node_modules/.vite && rm -rf dist"
+    "clean": "rm -rf node_modules/.vite && rm -rf dist",
+    "test": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -63,6 +64,7 @@
     "tailwindcss-scrollbar": "^0.1.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "vitest": "^4.1.10"
   }
 }
