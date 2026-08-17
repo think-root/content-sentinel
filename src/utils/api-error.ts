@@ -5,6 +5,12 @@
  * error for days.
  */
 const apiErrorMessage = (error: unknown, service: string): string => {
+  // A rejected fetch means the service could not be reached at all; its message
+  // is a browser internal ("Failed to fetch") and says nothing a reader needs.
+  if (error instanceof TypeError) {
+    return `Failed to connect to ${service} API`;
+  }
+
   const detail = error instanceof Error ? error.message.trim() : '';
 
   if (!detail) {
