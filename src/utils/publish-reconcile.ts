@@ -83,10 +83,19 @@ export interface PublishReconcileOutcome {
   published: boolean;
 }
 
-/** The newest recorded run for this repository that can belong to our request. */
+/**
+ * The newest recorded run for this repository that can belong to our request.
+ *
+ * Only manual runs qualify: publish-now records itself as one, and a scheduled
+ * run for the same repository - which happens when an earlier run published it
+ * but failed to mark it posted, so it never left the queue - is a different
+ * publication. Reporting its result as ours is exactly the misattribution this
+ * reconciliation exists to avoid. A scheduled run is not lost by this: it still
+ * shows up through the posted flag below.
+ */
 const findRun = (url: string, since: number, history: CronJobHistory[]): CronJobHistory | undefined =>
   history.find(entry => {
-    if (entry.details?.url !== url) return false;
+    if (entry.details?.url !== url || entry.details?.manual !== true) return false;
     const at = Date.parse(entry.timestamp);
     // An unparsable timestamp must not discard an otherwise matching run: the url
     // already narrows it down to this repository.
@@ -133,9 +142,26 @@ export const reconcilePublish = ({
     };
 
     if (sent.length === 0) {
+      // The queue note does not apply here: this run sent nothing, so it cannot
+      // be the reason the repository left the queue. A posted repository means
+      // some other run published it, and saying "finish the rest" would be both
+      // wrong and an invitation to publish it twice.
+      if (posted === true) {
+        return {
+          tone: 'partial',
+          message: 'Cron History shows this run published nothing, but the repository is now marked '
+            + 'as published, so another run has published it. Open Cron History for the details.',
+          result,
+          published: true,
+        };
+      }
+
       return {
         tone: 'error',
-        message: 'Cron History shows the run published nothing.' + queueNote(posted, false),
+        message: 'Cron History shows the run published nothing.'
+          + (posted === false
+            ? ' The repository is still in the queue, so the scheduled run will publish it again.'
+            : ' Whether it left the publication queue could not be checked.'),
         result,
         published: false,
       };

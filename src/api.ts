@@ -257,6 +257,14 @@ export async function getRepositoryByUrl(url: string): Promise<Repository | null
   }
 
   const result = await response.json();
+
+  // Content Alchemist answers some errors with HTTP 200 and an error status in
+  // the body; treating one as an empty result would report a readable failure as
+  // "this repository does not exist".
+  if (result?.status === "error") {
+    throw new Error(result.message || "Content Alchemist rejected the request");
+  }
+
   const items: Repository[] = result?.data?.items ?? [];
   const item = items[0];
 

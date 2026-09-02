@@ -98,6 +98,29 @@ describe('reconcilePublish', () => {
     expect(outcome.result?.failed).toEqual(['bluesky', 'threads']);
   });
 
+  it('ignores a scheduled run for the same repository', () => {
+    const scheduled = run({ details: { url: URL, manual: false, sent: ['bluesky', 'threads'] } });
+    const outcome = reconcile({ history: [scheduled], posted: false });
+
+    expect(outcome.result).toBeNull();
+    expect(outcome.message).toContain('has not finished yet');
+  });
+
+  it('does not send a run that published nothing to Publish again', () => {
+    const outcome = reconcile({ history: [run({ sent: [], failed: ['bluesky'] })], posted: true });
+
+    expect(outcome.published).toBe(true);
+    expect(outcome.message).toContain('another run has published it');
+    expect(outcome.message).not.toContain('Publish again');
+  });
+
+  it('admits when a run that published nothing cannot be placed in the queue', () => {
+    const outcome = reconcile({ history: [run({ sent: [], failed: ['bluesky'] })], posted: null });
+
+    expect(outcome.published).toBe(false);
+    expect(outcome.message).toContain('could not be checked');
+  });
+
   it('admits when the posted state could not be read', () => {
     const outcome = reconcile({ history: [run({ sent: ['bluesky'], failed: ['threads'] })], posted: null });
 
