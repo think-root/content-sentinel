@@ -126,7 +126,11 @@ describe('buildPublishRows', () => {
 
 describe('summarizePublishResult', () => {
   it('reports a full success', () => {
-    const summary = summarizePublishResult(result({ status: 1, succeeded: ['telegram', 'threads'] }));
+    const summary = summarizePublishResult(result({
+      status: 1,
+      succeeded: ['telegram', 'threads'],
+      posted: true,
+    }));
     expect(summary.tone).toBe('success');
     expect(summary.text).toContain('all 2 integrations');
   });
@@ -136,10 +140,38 @@ describe('summarizePublishResult', () => {
       status: 2,
       succeeded: ['telegram'],
       failed: ['threads'],
+      posted: true,
     }));
     expect(summary.tone).toBe('partial');
     expect(summary.text).toContain('1 of 2');
     expect(summary.text).toContain('Cron History');
+  });
+
+  // Sending someone to "Publish again" for an item that never left the queue
+  // would have the scheduled run repost it to the integrations that already
+  // have it, so the queue sentence follows `posted` and not the counts.
+  it('does not claim the item left the queue when marking it posted failed', () => {
+    const summary = summarizePublishResult(result({
+      status: 2,
+      succeeded: ['telegram'],
+      failed: ['threads'],
+      posted: false,
+      posted_error: 'context deadline exceeded',
+    }));
+    expect(summary.tone).toBe('partial');
+    expect(summary.text).toContain('still in the queue');
+    expect(summary.text).not.toContain('Cron History');
+  });
+
+  it('downgrades an otherwise complete run that stayed in the queue', () => {
+    const summary = summarizePublishResult(result({
+      status: 1,
+      succeeded: ['telegram', 'threads'],
+      posted: false,
+      posted_error: 'context deadline exceeded',
+    }));
+    expect(summary.tone).toBe('partial');
+    expect(summary.text).toContain('still in the queue');
   });
 
   it('reports a run that published nothing and says the item stays queued', () => {

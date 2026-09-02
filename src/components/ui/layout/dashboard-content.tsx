@@ -409,6 +409,7 @@ export const DashboardContent = ({
               fetchPreviews={fetchPreviews}
               nextPostId={nextPost?.id}
               integrations={apiConfigs}
+              integrationsLoading={apiConfigsLoading}
               currentPage={pagination.currentPage}
               pageSize={pagination.pageSize}
               totalPages={pagination.totalPages}

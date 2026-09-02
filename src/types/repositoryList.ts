@@ -33,6 +33,8 @@ export interface RepositoryTableProps {
   nextPostId?: number;
   /** Integration configs, so the publish dialog can list the enabled ones. */
   integrations?: ApiConfig[];
+  /** True while those configs are still being fetched. */
+  integrationsLoading?: boolean;
   onRepositoryUpdate?: () => void | Promise<void>;
   onRepositoryArchived?: () => void | Promise<void>;
 }
@@ -47,6 +49,8 @@ export interface RepositoryMobileViewProps {
   nextPostId?: number;
   /** Integration configs, so the publish dialog can list the enabled ones. */
   integrations?: ApiConfig[];
+  /** True while those configs are still being fetched. */
+  integrationsLoading?: boolean;
   onRepositoryUpdate?: () => void | Promise<void>;
   onRepositoryArchived?: () => void | Promise<void>;
 }

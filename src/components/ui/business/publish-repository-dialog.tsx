@@ -29,7 +29,14 @@ interface PublishRepositoryDialogProps {
   isApiReady: boolean;
   /** The enabled integrations a publish-now will reach. */
   integrations: PublishIntegration[];
+  /** True while the integration list is still being fetched. */
+  integrationsLoading?: boolean;
   onClose: () => void;
+  /**
+   * Reports whether a request is in flight, so the caller can stop the row
+   * buttons from retargeting this dialog mid-publication.
+   */
+  onBusyChange?: (busy: boolean) => void;
   /** Promotes to the head of the queue - the caller's existing handler and toast. */
   onPromote: (repo: Repository) => Promise<void>;
   /** Called once the publication may have changed anything, so the caller refreshes. */
@@ -56,7 +63,9 @@ export function PublishRepositoryDialog({
   isNext,
   isApiReady,
   integrations,
+  integrationsLoading = false,
   onClose,
+  onBusyChange,
   onPromote,
   onPublished,
 }: PublishRepositoryDialogProps) {
@@ -64,9 +73,17 @@ export function PublishRepositoryDialog({
   const [result, setResult] = useState<RetryMessageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // The repository the state on screen belongs to. One dialog instance serves
+  // every row, so a request that outlives its own target must not write its
+  // outcome into the dialog somebody has since pointed at another repository.
+  const targetIdRef = useRef<number | null>(repository?.id ?? null);
 
-  // Reopening on another row must never show the previous run's rows.
+  // Reopening on another row must never show the previous run's rows, and the
+  // request that filled them has to be dropped rather than left to land later.
   useEffect(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    targetIdRef.current = repository?.id ?? null;
     setPhase('idle');
     setResult(null);
     setError(null);
@@ -75,6 +92,10 @@ export function PublishRepositoryDialog({
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const busy = phase === 'promoting' || phase === 'publishing';
+
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
   const rows = buildPublishRows(integrations, phase === 'idle' || phase === 'promoting' ? null : result);
   const summary = result ? summarizePublishResult(result) : null;
 
@@ -96,8 +117,13 @@ export function PublishRepositoryDialog({
   const handlePublishNow = async () => {
     if (!repository || phase !== 'idle') return;
 
+    const targetId = repository.id;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), PUBLISH_TIMEOUT_MS);
+    const timedOut = { value: false };
+    const timeout = window.setTimeout(() => {
+      timedOut.value = true;
+      controller.abort();
+    }, PUBLISH_TIMEOUT_MS);
     abortRef.current = controller;
     setPhase('publishing');
     setError(null);
@@ -106,13 +132,17 @@ export function PublishRepositoryDialog({
     try {
       const publishResult = await publishMessageNow(repository.url, { signal: controller.signal });
       answered = true;
+      if (targetIdRef.current !== targetId) return;
       setResult(publishResult);
       if (publishedSomething(publishResult)) {
         await onPublished();
       }
     } catch (err) {
+      // Retargeting the dialog aborts this request on purpose; its outcome
+      // belongs to a repository nobody is looking at any more.
+      if (targetIdRef.current !== targetId) return;
       setError(
-        controller.signal.aborted
+        timedOut.value
           ? 'Content Maestro did not answer in time. The publication may still be running — check Cron History before trying again.'
           : maestroErrorMessage(err)
       );
@@ -121,12 +151,16 @@ export function PublishRepositoryDialog({
       await onPublished();
     } finally {
       window.clearTimeout(timeout);
-      abortRef.current = null;
-      // A request that never produced a result leaves the choices in place, with
-      // the error above them: refusals (a cron run holding the lock, an item
-      // already published) are the kind of thing that is worth another try, and
-      // the backend refuses a duplicate on its own.
-      setPhase(answered ? 'done' : 'idle');
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+      if (targetIdRef.current === targetId) {
+        // A request that never produced a result leaves the choices in place, with
+        // the error above them: refusals (a cron run holding the lock, an item
+        // already published) are the kind of thing that is worth another try, and
+        // the backend refuses a duplicate on its own.
+        setPhase(answered ? 'done' : 'idle');
+      }
     }
   };
 
@@ -180,14 +214,21 @@ export function PublishRepositoryDialog({
     <Dialog
       open={repository !== null}
       onOpenChange={open => {
-        if (!open && !busy) onClose();
+        if (!open && phase !== 'publishing') onClose();
       }}
     >
+      {/*
+        Only a publication in flight blocks dismissal: its per-integration result
+        exists nowhere else, so closing mid-run would throw it away. Promoting is
+        not blocked - it has no in-dialog result to lose, and the promote request
+        carries no timeout, so blocking it would make a stalled backend leave a
+        dialog that cannot be closed at all.
+      */}
       <DialogContent
         className="max-w-lg"
-        closeDisabled={busy}
-        onEscapeKeyDown={event => busy && event.preventDefault()}
-        onPointerDownOutside={event => busy && event.preventDefault()}
+        closeDisabled={phase === 'publishing'}
+        onEscapeKeyDown={event => phase === 'publishing' && event.preventDefault()}
+        onPointerDownOutside={event => phase === 'publishing' && event.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Publish repository</DialogTitle>
@@ -241,12 +282,19 @@ export function PublishRepositoryDialog({
               </h4>
               <ul className="space-y-1 text-sm">{rows.map(renderRow)}</ul>
             </div>
-          ) : isApiReady ? (
+          ) : !isApiReady ? null : integrationsLoading ? (
+            // An empty list while the configs are still loading is not the same as
+            // no integration being enabled, and saying so would be wrong.
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Loading integrations...
+            </p>
+          ) : (
             <p className="bg-warning/10 text-warning p-3 rounded-md text-sm">
               No integration is enabled, so there is nothing to publish to. Enable one on the
               Integrations tab.
             </p>
-          ) : null}
+          )}
         </div>
 
         <DialogFooter>
@@ -256,7 +304,7 @@ export function PublishRepositoryDialog({
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} disabled={busy}>
+              <Button variant="outline" onClick={onClose} disabled={phase === 'publishing'}>
                 Cancel
               </Button>
               <Button
@@ -274,7 +322,7 @@ export function PublishRepositoryDialog({
               </Button>
               <Button
                 onClick={handlePublishNow}
-                disabled={busy || !isApiReady || integrations.length === 0}
+                disabled={busy || !isApiReady || integrationsLoading || integrations.length === 0}
               >
                 {phase === 'publishing' ? (
                   <>

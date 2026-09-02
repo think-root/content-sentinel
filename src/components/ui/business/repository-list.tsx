@@ -20,6 +20,8 @@ interface RepositoryListProps {
   nextPostId?: number;
   /** Integration configs, so the publish dialog can list the enabled ones. */
   integrations?: ApiConfig[];
+  /** True while those configs are still being fetched. */
+  integrationsLoading?: boolean;
   totalItems: number;
   totalPages: number;
   currentPage: number;
@@ -35,6 +37,7 @@ export function RepositoryList({
   fetchPreviews,
   nextPostId,
   integrations,
+  integrationsLoading,
   totalItems, 
   totalPages, 
   currentPage: initialPage, 
@@ -144,6 +147,7 @@ export function RepositoryList({
               searchTerm={searchTerm}
               nextPostId={nextPostId}
               integrations={integrations}
+              integrationsLoading={integrationsLoading}
               onRepositoryUpdate={handleRepositoryUpdate}
               onRepositoryArchived={onRepositoryArchived}
             />
@@ -159,6 +163,7 @@ export function RepositoryList({
               searchTerm={searchTerm}
               nextPostId={nextPostId}
               integrations={integrations}
+              integrationsLoading={integrationsLoading}
               onRepositoryUpdate={handleRepositoryUpdate}
               onRepositoryArchived={onRepositoryArchived}
             />

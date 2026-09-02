@@ -98,7 +98,14 @@ export const buildPublishRows = (
   return [...ordered, ...extras];
 };
 
-/** Wording and tone of the banner above the result rows. */
+/**
+ * Wording and tone of the banner above the result rows.
+ *
+ * What it says about the queue follows `posted`, not the success counts: marking
+ * the repository as published can fail on its own, and telling someone the item
+ * left the queue when it did not would send them to "Publish again" for a repost
+ * the scheduled run is about to do anyway.
+ */
 export const summarizePublishResult = (result: RetryMessageResult): PublishSummary => {
   const succeeded = result.succeeded ?? [];
   const failed = result.failed ?? [];
@@ -114,13 +121,18 @@ export const summarizePublishResult = (result: RetryMessageResult): PublishSumma
     return {
       tone: 'partial',
       text: `Published to ${succeeded.length} of ${succeeded.length + failed.length} integrations. `
-        + 'The repository left the queue, so finish the rest with "Publish again" in Cron History.',
+        + (result.posted
+          ? 'The repository left the queue, so finish the rest with "Publish again" in Cron History.'
+          : 'The repository is still in the queue, so the scheduled run will publish it again.'),
     };
   }
 
+  const reach = succeeded.length === 1 ? 'the integration' : `all ${succeeded.length} integrations`;
+
   return {
-    tone: 'success',
-    text: `Published to ${succeeded.length === 1 ? 'the integration' : `all ${succeeded.length} integrations`}.`,
+    tone: result.posted === false ? 'partial' : 'success',
+    text: `Published to ${reach}.`
+      + (result.posted === false ? ' The repository is still in the queue, so the scheduled run will publish it again.' : ''),
   };
 };
 

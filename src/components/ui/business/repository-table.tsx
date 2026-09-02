@@ -75,6 +75,7 @@ export function RepositoryTable({
   searchTerm,
   nextPostId,
   integrations,
+  integrationsLoading,
   onRepositoryUpdate,
   onRepositoryArchived
 }: RepositoryTableProps) {
@@ -86,6 +87,9 @@ export function RepositoryTable({
   const [showArchiveConfirm, setShowArchiveConfirm] = useState<Repository | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
   const [publishTarget, setPublishTarget] = useState<Repository | null>(null);
+  // One dialog instance serves every row, so retargeting it while it is working
+  // would leave a request writing its outcome into somebody else's repository.
+  const [publishBusy, setPublishBusy] = useState(false);
   const [promotingId, setPromotingId] = useState<number | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -258,10 +262,19 @@ export function RepositoryTable({
   };
 
   const handlePromoteRepository = async (repo: Repository) => {
-    if (repo.posted || repo.id === nextPostId || promotingId !== null) return;
+    if (promotingId !== null) return;
 
     try {
       setPromotingId(repo.id);
+      // nextPostId is a render-time value, so another tab - or the cron - can have
+      // moved the queue on since this row was drawn. Saying so beats closing the
+      // dialog as if a promotion that never happened had succeeded.
+      if (repo.posted) {
+        throw new Error('Repository is already published');
+      }
+      if (repo.id === nextPostId) {
+        throw new Error('Repository is already next in the queue');
+      }
       const result = await promoteRepositoryToNext({ id: repo.id });
       // An unconfigured API answers with an error payload instead of throwing, and
       // reporting success for a request that never left the browser is a lie.
@@ -422,15 +435,17 @@ export function RepositoryTable({
                            variant="ghost"
                            size="icon"
                            onClick={() => setPublishTarget(repo)}
-                           disabled={!isApiReady || promotingId !== null}
-                           aria-label="Publish"
+                           disabled={!isApiReady || promotingId !== null || publishBusy}
+                           aria-label={repo.id === nextPostId ? 'Publish (already next in the queue)' : 'Publish'}
                            className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
                          >
                            <Send className="h-4 w-4" />
                          </Button>
                        </span>
                      </TooltipTrigger>
-                     <TooltipContent>Publish</TooltipContent>
+                     <TooltipContent>
+                       {repo.id === nextPostId ? 'Publish (already next in the queue)' : 'Publish'}
+                     </TooltipContent>
                    </Tooltip>
                  </TooltipProvider>
                )}
@@ -561,7 +576,9 @@ export function RepositoryTable({
         isNext={publishTarget !== null && publishTarget.id === nextPostId}
         isApiReady={isApiReady}
         integrations={enabledIntegrations(integrations ?? [])}
+        integrationsLoading={integrationsLoading}
         onClose={() => setPublishTarget(null)}
+        onBusyChange={setPublishBusy}
         onPromote={handlePromoteRepository}
         onPublished={async () => {
           if (onRepositoryUpdate) {
