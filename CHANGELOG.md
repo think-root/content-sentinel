@@ -1,3 +1,21 @@
+# [1.51.0](https://github.com/think-root/content-sentinel/compare/v1.50.1...v1.51.0) (2026-09-02)
+
+
+### Bug Fixes
+
+* **cron:** never offer a retry that would publish the wrong repository ([a4a9a3d](https://github.com/think-root/content-sentinel/commit/a4a9a3d0ef9fe3cf91390255811cf63d4180c59c))
+* **errors:** keep the plain wording for an unreachable service ([b8037f4](https://github.com/think-root/content-sentinel/commit/b8037f43ea1ceac77b44c4005f9ad72dee347fc9))
+* **errors:** show what the API actually reported ([9456d20](https://github.com/think-root/content-sentinel/commit/9456d202b245e3a744271e0876a68e0dbb1f0325))
+* **language:** validate language codes against a bundled list ([269f25d](https://github.com/think-root/content-sentinel/commit/269f25d6cd097964c066c5b9e477b642d9d1d585))
+* **repositories:** keep the publish dialog honest about what it did ([57c1482](https://github.com/think-root/content-sentinel/commit/57c148267812b950323c034c7278e4719b507b8f))
+* **repositories:** stop the integration rows reading as already sending ([5c3a96c](https://github.com/think-root/content-sentinel/commit/5c3a96c0b2490e8f3e019855d3acbc2caf5b751e))
+
+
+### Features
+
+* **cron:** add a retry button for partial publications ([75a099b](https://github.com/think-root/content-sentinel/commit/75a099b47ae6d99d59ce27a888340d206e141a5b))
+* **repositories:** choose between publish next and publish now ([6a087a4](https://github.com/think-root/content-sentinel/commit/6a087a449d4f89ba227085ab46b05cc9778e1062))
+
 ## [1.50.1](https://github.com/think-root/content-sentinel/compare/v1.50.0...v1.50.1) (2026-08-08)
 
 
