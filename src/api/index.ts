@@ -36,6 +36,13 @@ export interface RetryMessageResult {
   succeeded?: string[] | null;
   failed?: string[] | null;
   outcomes?: RetryMessageOutcome[] | null;
+  /** Whether the repository was marked as published and left the queue. */
+  posted?: boolean;
+  /**
+   * Present only when that marking failed: the post went out but the repository
+   * stayed in the queue, so the scheduled run will publish it again.
+   */
+  posted_error?: string;
 }
 
 export interface CronJobHistoryResponse {
@@ -198,6 +205,47 @@ export const retryMessagePost = async (
     // Content Maestro answers errors as plain text.
     const detail = (await response.text()).trim();
     throw new Error(detail || `Failed to retry the publication: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Publishes a repository immediately to every enabled integration, instead of
+ * waiting for its turn in the publication queue. Content Maestro resolves the
+ * integrations itself: the dashboard's cached list must not decide what is sent.
+ *
+ * The request is synchronous and can take minutes - the Threads connector alone
+ * is configured with a 90 s timeout - so callers pass a signal and must treat an
+ * abort as "may still be running", not as "did not publish".
+ */
+export const publishMessageNow = async (
+  url: string,
+  options?: { signal?: AbortSignal }
+): Promise<RetryMessageResult> => {
+  const settings = getApiSettings();
+
+  if (!isApiConfigured()) {
+    throw new Error("API not configured. Check the Content Maestro settings.");
+  }
+
+  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/message/publish`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+    },
+    body: JSON.stringify({ url }),
+    signal: options?.signal,
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    // Content Maestro answers errors as plain text.
+    const detail = (await response.text()).trim();
+    throw new Error(detail || `Failed to publish the repository: ${response.status}`);
   }
 
   return response.json();

@@ -1,3 +1,4 @@
+import type { ApiConfig } from '../api/api-configs';
 import type { Repository, RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '../types';
 
 export interface TruncatedTextProps {
@@ -30,6 +31,10 @@ export interface RepositoryTableProps {
   itemsPerPage: number;
   searchTerm: string;
   nextPostId?: number;
+  /** Integration configs, so the publish dialog can list the enabled ones. */
+  integrations?: ApiConfig[];
+  /** True while those configs are still being fetched. */
+  integrationsLoading?: boolean;
   onRepositoryUpdate?: () => void | Promise<void>;
   onRepositoryArchived?: () => void | Promise<void>;
 }
@@ -42,6 +47,10 @@ export interface RepositoryMobileViewProps {
   itemsPerPage: number;
   searchTerm: string;
   nextPostId?: number;
+  /** Integration configs, so the publish dialog can list the enabled ones. */
+  integrations?: ApiConfig[];
+  /** True while those configs are still being fetched. */
+  integrationsLoading?: boolean;
   onRepositoryUpdate?: () => void | Promise<void>;
   onRepositoryArchived?: () => void | Promise<void>;
 }
