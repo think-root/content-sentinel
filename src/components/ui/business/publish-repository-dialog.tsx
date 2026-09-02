@@ -10,8 +10,13 @@ import {
 } from '../base/dialog';
 import { Button } from '../base/button';
 import { IntegrationIcon, getLanguageFlag } from './integration-icons';
-import { publishMessageNow, type RetryMessageResult } from '../../../api/index';
-import { maestroErrorMessage } from '../../../utils/api-error';
+import { getCronJobHistory, publishMessageNow, type RetryMessageResult } from '../../../api/index';
+import { getRepositoryByUrl } from '../../../api';
+import {
+  classifyPublishFailure,
+  reconcilePublish,
+  type PublishReconcileOutcome,
+} from '../../../utils/publish-reconcile';
 import {
   buildPublishRows,
   publishedSomething,
@@ -43,7 +48,7 @@ interface PublishRepositoryDialogProps {
   onPublished: () => void | Promise<void>;
 }
 
-type Phase = 'idle' | 'promoting' | 'publishing' | 'done';
+type Phase = 'idle' | 'promoting' | 'publishing' | 'reconciling' | 'done';
 
 /**
  * A safety net rather than a cancellation: aborting the request does not stop the
@@ -51,6 +56,30 @@ type Phase = 'idle' | 'promoting' | 'publishing' | 'done';
  * publication (image generation plus the Threads connector's own 90 s timeout).
  */
 const PUBLISH_TIMEOUT_MS = 240_000;
+
+/** How many recent `message` runs to search for this repository's run. */
+const RECONCILE_HISTORY_LIMIT = 20;
+
+/**
+ * Recovers what a publication did when its own answer never arrived, from the two
+ * records that outlive the request: Content Maestro's run log and the posted flag
+ * in Content Alchemist. Each is read independently - one of them being
+ * unreachable still leaves the other worth reporting.
+ */
+const collectReconciliation = async (url: string, since: number): Promise<PublishReconcileOutcome> => {
+  const [repository, history] = await Promise.allSettled([
+    getRepositoryByUrl(url),
+    getCronJobHistory('message', 1, RECONCILE_HISTORY_LIMIT),
+  ]);
+
+  return reconcilePublish({
+    url,
+    since,
+    posted: repository.status === 'fulfilled' ? repository.value?.posted ?? null : null,
+    history: history.status === 'fulfilled' ? history.value.data : [],
+    historyRead: history.status === 'fulfilled',
+  });
+};
 
 const toneStyles = {
   success: 'bg-success/20 text-success',
@@ -72,6 +101,7 @@ export function PublishRepositoryDialog({
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<RetryMessageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reconciled, setReconciled] = useState<PublishReconcileOutcome | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // The repository the state on screen belongs to. One dialog instance serves
   // every row, so a request that outlives its own target must not write its
@@ -87,16 +117,21 @@ export function PublishRepositoryDialog({
     setPhase('idle');
     setResult(null);
     setError(null);
+    setReconciled(null);
   }, [repository?.id]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const busy = phase === 'promoting' || phase === 'publishing';
+  const busy = phase === 'promoting' || phase === 'publishing' || phase === 'reconciling';
 
   useEffect(() => {
     onBusyChange?.(busy);
   }, [busy, onBusyChange]);
-  const rows = buildPublishRows(integrations, phase === 'idle' || phase === 'promoting' ? null : result);
+  const inFlight = phase === 'publishing' || phase === 'reconciling';
+  // Once a run has been reconciled, the rows recovered from Cron History are the
+  // only record of what reached which integration.
+  const reported = result ?? reconciled?.result ?? null;
+  const rows = buildPublishRows(integrations, inFlight ? null : reported);
   const summary = result ? summarizePublishResult(result) : null;
 
   const handlePromote = async () => {
@@ -125,14 +160,19 @@ export function PublishRepositoryDialog({
       controller.abort();
     }, PUBLISH_TIMEOUT_MS);
     abortRef.current = controller;
+    const startedAt = Date.now();
     setPhase('publishing');
     setError(null);
-    let answered = false;
+    setReconciled(null);
+    // A request that produced no result leaves the choices in place: refusals (a
+    // cron run holding the lock, an item already published) are worth another
+    // try, and the backend refuses a duplicate on its own.
+    let finalPhase: Phase = 'idle';
 
     try {
       const publishResult = await publishMessageNow(repository.url, { signal: controller.signal });
-      answered = true;
       if (targetIdRef.current !== targetId) return;
+      finalPhase = 'done';
       setResult(publishResult);
       if (publishedSomething(publishResult)) {
         await onPublished();
@@ -141,25 +181,33 @@ export function PublishRepositoryDialog({
       // Retargeting the dialog aborts this request on purpose; its outcome
       // belongs to a repository nobody is looking at any more.
       if (targetIdRef.current !== targetId) return;
-      setError(
-        timedOut.value
-          ? 'Content Maestro did not answer in time. The publication may still be running — check Cron History before trying again.'
-          : maestroErrorMessage(err)
-      );
+
+      const failure = classifyPublishFailure(err, timedOut.value);
+      setError(failure.message);
       // The run may have published before the connection broke, so the list has
       // to be refreshed either way.
       await onPublished();
+      if (targetIdRef.current !== targetId) return;
+
+      if (failure.unknown) {
+        // Nothing here can be inferred from the failed request, so ask the two
+        // services what actually happened instead of guessing.
+        setPhase('reconciling');
+        const outcome = await collectReconciliation(repository.url, startedAt);
+        if (targetIdRef.current !== targetId) return;
+        setReconciled(outcome);
+        if (outcome.published) {
+          finalPhase = 'done';
+          await onPublished();
+        }
+      }
     } finally {
       window.clearTimeout(timeout);
       if (abortRef.current === controller) {
         abortRef.current = null;
       }
       if (targetIdRef.current === targetId) {
-        // A request that never produced a result leaves the choices in place, with
-        // the error above them: refusals (a cron run holding the lock, an item
-        // already published) are the kind of thing that is worth another try, and
-        // the backend refuses a duplicate on its own.
-        setPhase(answered ? 'done' : 'idle');
+        setPhase(finalPhase);
       }
     }
   };
@@ -183,10 +231,10 @@ export function PublishRepositoryDialog({
           <span className="font-medium text-foreground capitalize">{row.name}</span>
           {flag && <span aria-hidden="true">{flag}</span>}
           <span className="ml-auto flex items-center gap-1 text-xs">
-            {row.state === 'pending' && phase === 'publishing' && (
+            {row.state === 'pending' && inFlight && (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Sending...
+                {phase === 'reconciling' ? 'Checking...' : 'Sending...'}
               </>
             )}
             {row.state === 'success' && (
@@ -268,6 +316,10 @@ export function PublishRepositoryDialog({
             </p>
           )}
 
+          {reconciled && (
+            <p className={`p-3 rounded-md text-sm ${toneStyles[reconciled.tone]}`}>{reconciled.message}</p>
+          )}
+
           {result?.posted_error && (
             <p className="bg-warning/10 text-warning p-3 rounded-md text-sm">
               Published, but the repository could not be marked as posted — the scheduled run may
@@ -278,7 +330,7 @@ export function PublishRepositoryDialog({
           {rows.length > 0 ? (
             <div>
               <h4 className="text-sm font-medium mb-2">
-                {phase === 'done' ? 'Integrations:' : 'Will publish to:'}
+                {reported || inFlight ? 'Integrations:' : 'Will publish to:'}
               </h4>
               <ul className="space-y-1 text-sm">{rows.map(renderRow)}</ul>
             </div>
@@ -324,10 +376,10 @@ export function PublishRepositoryDialog({
                 onClick={handlePublishNow}
                 disabled={busy || !isApiReady || integrationsLoading || integrations.length === 0}
               >
-                {phase === 'publishing' ? (
+                {phase === 'publishing' || phase === 'reconciling' ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Publishing...
+                    {phase === 'reconciling' ? 'Checking...' : 'Publishing...'}
                   </>
                 ) : (
                   <>

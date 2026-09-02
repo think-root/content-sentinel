@@ -228,6 +228,52 @@ export async function getRepositories(
   return handleLanguageFallback(() => createRequest(textLanguage), textLanguage, createRequest);
 }
 
+/**
+ * Fetches a single repository by url, bypassing both the request queue and the
+ * display-language filter.
+ *
+ * It exists for reconciliation: after a publication whose answer was lost, the
+ * posted flag is the only record that says whether the post went out, and it has
+ * to be readable even for an item that has no text in the display language.
+ */
+export async function getRepositoryByUrl(url: string): Promise<Repository | null> {
+  const { baseUrl, headers, isConfigured } = getApiConfig();
+
+  if (!isConfigured) {
+    throw new Error("API not configured. Check the Content Alchemist settings.");
+  }
+
+  const response = await fetch(`${baseUrl}/get-repository/`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ url, limit: 1 }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    throw new Error(`Failed to fetch the repository: ${response.status}`);
+  }
+
+  const result = await response.json();
+  const items: Repository[] = result?.data?.items ?? [];
+  const item = items[0];
+
+  if (!item) {
+    return null;
+  }
+
+  // An older Content Alchemist ignores the url filter and answers with the head
+  // of the queue instead; reporting that item's posted state as this one's would
+  // be worse than reporting nothing.
+  if (item.url !== url) {
+    throw new Error("Content Alchemist ignored the url filter");
+  }
+
+  return item;
+}
+
 export interface ManualGenerateResponse {
   status: string;
   added?: string[];
