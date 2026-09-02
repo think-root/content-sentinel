@@ -183,7 +183,7 @@ export function PublishRepositoryDialog({
           <span className="font-medium text-foreground capitalize">{row.name}</span>
           {flag && <span aria-hidden="true">{flag}</span>}
           <span className="ml-auto flex items-center gap-1 text-xs">
-            {row.state === 'pending' && (
+            {row.state === 'pending' && phase === 'publishing' && (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Sending...
