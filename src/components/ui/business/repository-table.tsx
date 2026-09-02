@@ -7,6 +7,8 @@ import { Pencil, Check, X, Trash2, AlertCircle, Archive, ChevronDown, ChevronUp,
 import { describeArchiveFailure, isStaleArchiveFailure, summarizeArchiveResult } from '@/utils/archiveUtils';
 import { toast } from '../common/toast-config';
 import { ConfirmDialog } from '../common/confirm-dialog';
+import { PublishRepositoryDialog } from './publish-repository-dialog';
+import { enabledIntegrations } from '@/utils/message-publish';
 import {
   Table,
   TableBody,
@@ -72,6 +74,7 @@ export function RepositoryTable({
   itemsPerPage,
   searchTerm,
   nextPostId,
+  integrations,
   onRepositoryUpdate,
   onRepositoryArchived
 }: RepositoryTableProps) {
@@ -82,7 +85,7 @@ export function RepositoryTable({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Repository | null>(null);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState<Repository | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
-  const [showPromoteConfirm, setShowPromoteConfirm] = useState<Repository | null>(null);
+  const [publishTarget, setPublishTarget] = useState<Repository | null>(null);
   const [promotingId, setPromotingId] = useState<number | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -259,7 +262,12 @@ export function RepositoryTable({
 
     try {
       setPromotingId(repo.id);
-      await promoteRepositoryToNext({ id: repo.id });
+      const result = await promoteRepositoryToNext({ id: repo.id });
+      // An unconfigured API answers with an error payload instead of throwing, and
+      // reporting success for a request that never left the browser is a lie.
+      if (result.status === 'error') {
+        throw new Error(result.message);
+      }
 
       toast.success(`Repository will be published next`, {
         ...toastOptions,
@@ -275,6 +283,8 @@ export function RepositoryTable({
         ...toastOptions,
         id: `promote-error-${repo.id}`
       });
+      // Rethrown so the publish dialog keeps itself open on a failed promotion.
+      throw error;
     } finally {
       setPromotingId(null);
     }
@@ -411,16 +421,16 @@ export function RepositoryTable({
                          <Button
                            variant="ghost"
                            size="icon"
-                           onClick={() => setShowPromoteConfirm(repo)}
-                           disabled={repo.id === nextPostId || promotingId !== null}
-                           aria-label={repo.id === nextPostId ? 'Already next' : 'Publish next'}
+                           onClick={() => setPublishTarget(repo)}
+                           disabled={!isApiReady || promotingId !== null}
+                           aria-label="Publish"
                            className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
                          >
                            <Send className="h-4 w-4" />
                          </Button>
                        </span>
                      </TooltipTrigger>
-                     <TooltipContent>{repo.id === nextPostId ? 'Already next' : 'Publish next'}</TooltipContent>
+                     <TooltipContent>Publish</TooltipContent>
                    </Tooltip>
                  </TooltipProvider>
                )}
@@ -546,20 +556,18 @@ export function RepositoryTable({
         onCancel={() => setShowArchiveConfirm(null)}
       />
 
-      <ConfirmDialog
-        isOpen={showPromoteConfirm !== null}
-        title="Publish Next"
-        message="Publish this repository in the next posting cycle?"
-        confirmText="Publish"
-        cancelText="Cancel"
-        variant="info"
-        onConfirm={() => {
-          if (showPromoteConfirm) {
-            handlePromoteRepository(showPromoteConfirm);
+      <PublishRepositoryDialog
+        repository={publishTarget}
+        isNext={publishTarget !== null && publishTarget.id === nextPostId}
+        isApiReady={isApiReady}
+        integrations={enabledIntegrations(integrations ?? [])}
+        onClose={() => setPublishTarget(null)}
+        onPromote={handlePromoteRepository}
+        onPublished={async () => {
+          if (onRepositoryUpdate) {
+            await onRepositoryUpdate();
           }
-          setShowPromoteConfirm(null);
         }}
-        onCancel={() => setShowPromoteConfirm(null)}
       />
     </>
   );

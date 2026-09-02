@@ -1,5 +1,6 @@
 // React imports
 // (no state needed since the Posts section is no longer collapsible)
+import type { ApiConfig } from '@/api/api-configs';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '@/types';
 import { Filter, ChevronDown } from 'lucide-react';
 import { filterRepositories, countActiveFilters } from '@/utils/repositoryListUtils';
@@ -17,6 +18,8 @@ interface RepositoryListProps {
   fetchRepositories: (posted?: boolean, append?: boolean, fetchAll?: boolean, itemsPerPage?: number, sortBy?: RepositorySortBy, sortOrder?: RepositorySortOrder, page?: number, forceFetch?: boolean) => Promise<void>;
   fetchPreviews: (forceFetch?: boolean) => Promise<void>;
   nextPostId?: number;
+  /** Integration configs, so the publish dialog can list the enabled ones. */
+  integrations?: ApiConfig[];
   totalItems: number;
   totalPages: number;
   currentPage: number;
@@ -31,6 +34,7 @@ export function RepositoryList({
   fetchRepositories, 
   fetchPreviews,
   nextPostId,
+  integrations,
   totalItems, 
   totalPages, 
   currentPage: initialPage, 
@@ -139,6 +143,7 @@ export function RepositoryList({
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
               nextPostId={nextPostId}
+              integrations={integrations}
               onRepositoryUpdate={handleRepositoryUpdate}
               onRepositoryArchived={onRepositoryArchived}
             />
@@ -153,6 +158,7 @@ export function RepositoryList({
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
               nextPostId={nextPostId}
+              integrations={integrations}
               onRepositoryUpdate={handleRepositoryUpdate}
               onRepositoryArchived={onRepositoryArchived}
             />
