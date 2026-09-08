@@ -53,6 +53,14 @@ const LANGUAGE_MAPPING = {
   'Spanish': 'es'
 };
 
+// Collect sources that are unavailable upstream: OssInsight paused its star-based
+// rankings, so its API answers with an empty result set. Stored settings pointing at
+// one of these fall back to GitHub instead of leaving the form on a hidden source.
+const PAUSED_RESOURCES = new Set(['ossinsight']);
+
+const normalizeResource = (value: string | null | undefined) =>
+  value && !PAUSED_RESOURCES.has(value) ? value : 'github';
+
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 const CLIPBOARD_TEXT_MIME_TYPES = ['text/plain', 'text/uri-list'] as const;
 
@@ -108,10 +116,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
     const saved = localStorage.getItem('dashboardSpokenLanguageCode');
     return saved || 'en';
   });
-  const [resource, setResource] = useState(() => {
-    const saved = localStorage.getItem('dashboardResource');
-    return saved || 'github';
-  });
+  const [resource, setResource] = useState(() => normalizeResource(localStorage.getItem('dashboardResource')));
   const [period, setPeriod] = useState(() => {
     const saved = localStorage.getItem('dashboardPeriod');
     return saved || 'past_24_hours';
@@ -141,14 +146,14 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         setMaxRepos(settings.max_repos);
         setSince(settings.since);
         setSpokenLanguageCode(settings.spoken_language_code);
-        setResource(settings.resource || 'github');
+        setResource(normalizeResource(settings.resource));
         setPeriod(settings.period || 'past_24_hours');
         setLanguage(settings.language || 'All');
 
         localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
         localStorage.setItem('dashboardSince', settings.since);
         localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
-        localStorage.setItem('dashboardResource', settings.resource || 'github');
+        localStorage.setItem('dashboardResource', normalizeResource(settings.resource));
         localStorage.setItem('dashboardPeriod', settings.period || 'past_24_hours');
         localStorage.setItem('dashboardLanguage', settings.language || 'All');
       }
@@ -158,7 +163,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       const savedMaxRepos = localStorage.getItem('dashboardMaxRepos') || '5';
       const savedSince = localStorage.getItem('dashboardSince') || 'daily';
       const savedLanguageCode = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
-      const savedResource = localStorage.getItem('dashboardResource') || 'github';
+      const savedResource = normalizeResource(localStorage.getItem('dashboardResource'));
       const savedPeriod = localStorage.getItem('dashboardPeriod') || 'past_24_hours';
       const savedLanguage = localStorage.getItem('dashboardLanguage') || 'All';
 
@@ -179,9 +184,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
         localStorage.setItem('dashboardSpokenLanguageCode', 'en');
       }
-      if (!localStorage.getItem('dashboardResource')) {
-        localStorage.setItem('dashboardResource', 'github');
-      }
+      localStorage.setItem('dashboardResource', savedResource);
       if (!localStorage.getItem('dashboardPeriod')) {
         localStorage.setItem('dashboardPeriod', 'past_24_hours');
       }
@@ -628,7 +631,9 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="github">GitHub</SelectItem>
-                    <SelectItem value="ossinsight">OssInsight</SelectItem>
+                    {/* OssInsight paused its star-based rankings upstream; re-enable by
+                        dropping `disabled` here and the migration in content-maestro. */}
+                    <SelectItem value="ossinsight" disabled>OssInsight (paused)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
