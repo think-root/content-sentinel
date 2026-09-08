@@ -1,3 +1,10 @@
+## [1.51.2](https://github.com/think-root/content-sentinel/compare/v1.51.1...v1.51.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **generate:** disable OssInsight while its rankings are paused ([9be47d9](https://github.com/think-root/content-sentinel/commit/9be47d98f1eeff8ca2d41f2362dc9184e2766d60))
+
 ## [1.51.1](https://github.com/think-root/content-sentinel/compare/v1.51.0...v1.51.1) (2026-09-02)
 
 
