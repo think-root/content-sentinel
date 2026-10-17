@@ -200,38 +200,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     trackMouse: false
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-
-      const preventTouchMove = (e: TouchEvent) => {
-        if (!isMobileDevice()) return;
-        const modalContent = document.querySelector('.settings-modal-content');
-        const target = e.target as HTMLElement;
-
-        // Allow scrolling within scrollable containers inside the modal
-        const scrollableContainer = target.closest('[data-scrollable="true"]') ||
-                                   target.closest('.overflow-y-auto');
-
-        if (modalContent && !modalContent.contains(target)) {
-          e.preventDefault();
-        } else if (scrollableContainer) {
-          // Allow natural scrolling within scrollable containers
-          return;
-        }
-      };
-
-      document.addEventListener('touchmove', preventTouchMove, { passive: false });
-
-      return () => {
-        document.body.style.overflow = '';
-        document.removeEventListener('touchmove', preventTouchMove);
-      };
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [isOpen]);
-
   // Rehydrate settings from storage on open, normalize displayLanguage, and clear ephemeral UI state
   useEffect(() => {
     if (!isOpen) return;
@@ -459,23 +427,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }));
   };
 
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (isMobileDevice()) {
-      // Scroll the focused input into view on mobile
-      setTimeout(() => {
-        e.target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
-        });
-      }, 100);
-    }
-  };
-
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && !isSaving && onClose()}>
-      <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full settings-modal-content">
+      <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -543,7 +498,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
             </TabsContent>
 
-            <TabsContent value="api" className="space-y-6 overflow-y-auto max-h-[60vh] sm:overflow-visible sm:max-h-none scrollbar-thin pr-3" data-scrollable="true">
+            <TabsContent value="api" className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium border-b pb-2">Content Alchemist API</h3>
                 <div className="space-y-2">
@@ -551,10 +506,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Input
                   type="text"
                   id="alchemistApiBaseUrl"
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Enter API base URL"
                   value={settings.contentAlchemist?.apiBaseUrl}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBaseUrl', e.target.value)}
-                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
@@ -562,10 +520,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Input
                   type="password"
                   id="alchemistApiBearerToken"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Enter API bearer token"
                   value={settings.contentAlchemist?.apiBearerToken}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBearerToken', e.target.value)}
-                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
@@ -577,7 +538,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         placeholder="uk or en, uk, fr"
                         value={settings.displayLanguage}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
-                        onFocus={handleInputFocus}
                         className={settings.displayLanguage.trim() ? 'pr-10' : ''}
                       />
                       {settings.displayLanguage.trim() && (
@@ -630,10 +590,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Input
                   type="text"
                   id="maestroApiBaseUrl"
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Enter API base URL"
                   value={settings.contentMaestro?.apiBaseUrl}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBaseUrl', e.target.value)}
-                    onFocus={handleInputFocus}
                   />
                 </div>
                 <div className="space-y-2">
@@ -641,10 +604,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Input
                   type="password"
                   id="maestroApiBearerToken"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Enter API bearer token"
                   value={settings.contentMaestro?.apiBearerToken}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBearerToken', e.target.value)}
-                    onFocus={handleInputFocus}
                   />
                 </div>
               </div>
