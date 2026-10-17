@@ -459,6 +459,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <Input
                   type="text"
                   id="dateFormat"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="example: DD.MM.YYYY HH:mm:ss"
                   value={settings.dateFormat}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: e.target.value.trim() })}
@@ -480,6 +483,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <Input
                   type="text"
                   id="timezone"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Enter timezone (e.g. Europe/Kyiv)"
                   value={settings.timezone}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ timezone: e.target.value.trim() })}
@@ -535,6 +541,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       <Input
                         type="text"
                         id="displayLanguage"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder="uk or en, uk, fr"
                         value={settings.displayLanguage}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
