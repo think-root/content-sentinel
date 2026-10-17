@@ -430,7 +430,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && !isSaving && onClose()}>
-      <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
+      <DialogContent className="max-w-lg w-[calc(100%-2rem)] sm:w-full max-h-[calc(100dvh-2rem)] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -438,8 +438,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'general' | 'api' | 'cache')}>
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'general' | 'api' | 'cache')}>
+          <TabsList className="grid w-full grid-cols-3 shrink-0">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="api">API</TabsTrigger>
             <TabsTrigger value="cache">Cache</TabsTrigger>
@@ -447,7 +447,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           <div
             {...handlers}
-            className={`mt-4 ${
+            className={`mt-4 -mx-1 px-1 pb-1 min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin ${
               isMobileDevice() && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
             } ${
               isMobileDevice() && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
@@ -670,7 +670,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </Tabs>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button
             variant="outline"
             size="sm"
