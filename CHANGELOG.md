@@ -1,3 +1,12 @@
+## [1.51.3](https://github.com/think-root/content-sentinel/compare/v1.51.2...v1.51.3) (2026-10-17)
+
+
+### Bug Fixes
+
+* **settings:** keep the dialog header and buttons in view ([37cd6f3](https://github.com/think-root/content-sentinel/commit/37cd6f3d28bcc77c14fd3ca927101b0565d4b58b))
+* **settings:** make API fields reachable on mobile ([50add0e](https://github.com/think-root/content-sentinel/commit/50add0e4382a8131d3fe06d6ac67e17e4f4d5890))
+* **settings:** stop mobile keyboards mangling general fields ([3f6e1ad](https://github.com/think-root/content-sentinel/commit/3f6e1ad8a919b7ab56b031c8570d41cbb43fb807))
+
 ## [1.51.2](https://github.com/think-root/content-sentinel/compare/v1.51.1...v1.51.2) (2026-09-08)
 
 
