@@ -109,3 +109,46 @@ export function formatDateOnly(dateString: string): string {
     return dateString;
   }
 }
+
+export const DATE_FORMAT_PRESETS = [
+  "DD.MM.YYYY HH:mm",
+  "DD.MM.YYYY",
+  "DD/MM/YYYY HH:mm",
+  "DD/MM/YYYY",
+  "DD-MM-YYYY HH:mm",
+  "DD-MM-YYYY",
+  "MM/DD/YYYY hh:mm A",
+  "MM/DD/YYYY",
+  "YYYY-MM-DD HH:mm",
+  "YYYY-MM-DD",
+  "YYYY/MM/DD HH:mm",
+  "YYYY/MM/DD",
+  "YYYY.MM.DD HH:mm",
+  "YYYY.MM.DD",
+];
+
+export function hasTime(format: string): boolean {
+  return /HH|hh/.test(format);
+}
+
+export function stripSeconds(format: string): string {
+  return format.replace(":ss", "");
+}
+
+export function withSeconds(format: string, include: boolean): string {
+  const base = stripSeconds(format);
+  return include && hasTime(base) ? base.replace("mm", "mm:ss") : base;
+}
+
+export function sampleDate(format: string): string {
+  return format
+    .replace("DD", "22")
+    .replace("MM", "10")
+    .replace("YYYY", "2026")
+    .replace("HH", "14")
+    .replace("hh", "02")
+    .replace("mm", "30")
+    .replace("ss", "45")
+    .replace("A", "PM")
+    .replace("a", "pm");
+}
