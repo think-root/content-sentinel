@@ -4,7 +4,8 @@ import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '@/utils/api-sett
 import { toast } from './toast-config';
 import { AlertCircle, Settings, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
 import { languageValidator, ValidationResult } from '@/utils/language-validation';
-import { validateDateFormat, validateTimezone } from '@/utils/settings-validators';
+import { validateTimezone } from '@/utils/settings-validators';
+import { DATE_FORMAT_PRESETS, hasTime, sampleDate, stripSeconds, withSeconds } from '@/utils/date-format';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
 import { Input } from '../base/input';
 import { Label } from '../base/label';
 import { Button } from '../base/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 
 // Normalize settings for comparison and equality check
 function normalizeValue(value: unknown): string {
@@ -84,8 +86,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   });
   const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [dateFormatError, setDateFormatError] = useState<string | null>(null);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
+
+  const baseDateFormat = stripSeconds(settings.dateFormat || 'DD.MM.YYYY HH:mm');
+  const includeSeconds = (settings.dateFormat || '').includes('ss');
+  const dateFormatOptions = DATE_FORMAT_PRESETS.includes(baseDateFormat)
+    ? DATE_FORMAT_PRESETS
+    : [baseDateFormat, ...DATE_FORMAT_PRESETS];
 
   // Capture initial settings snapshot on open to detect no-op saves
   const initialSettingsRef = useRef<ApiSettings | null>(null);
@@ -286,21 +293,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     return () => clearTimeout(timeoutId);
   }, [settings.displayLanguage, validateLanguageCodes]);
 
-  // Debounced validation for date format (sync)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const value = settings.dateFormat || '';
-      const result = validateDateFormat(value);
-      if (!result.isValid) {
-        setDateFormatError(result.message || 'Allowed values: DD, MM, YYYY, HH, hh, mm, ss, A, a and include DD, MM, YYYY.');
-      } else {
-        setDateFormatError(null);
-      }
-    }, 450);
-
-    return () => clearTimeout(timeoutId);
-  }, [settings.dateFormat]);
-
   // Debounced validation for timezone (sync)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -332,11 +324,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
 
     // Early guards for validation errors
-    if (dateFormatError) {
-      toast.error(dateFormatError, toastOptions);
-      setIsSaving(false);
-      return;
-    }
     if (timezoneError) {
       toast.error(timezoneError, toastOptions);
       setIsSaving(false);
@@ -399,7 +386,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   // Clear ephemeral UI state without touching persistence or tabs
   const resetFormState = () => {
-    setDateFormatError(null);
     setTimezoneError(null);
     setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
     setIsValidatingLanguage(false);
@@ -456,26 +442,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <TabsContent value="general" className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="dateFormat">Date Format</Label>
-                <Input
-                  type="text"
-                  id="dateFormat"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="example: DD.MM.YYYY HH:mm:ss"
-                  value={settings.dateFormat}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: e.target.value.trim() })}
-                />
-                {dateFormatError ? (
-                  <p className="text-sm text-destructive flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    {dateFormatError}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    DD, MM, YYYY, HH (24h), hh (12h), mm, ss, A (AM/PM), a (am/pm)
-                  </p>
+                <Select
+                  value={baseDateFormat}
+                  onValueChange={(value) => updateSettings({ dateFormat: withSeconds(value, includeSeconds) })}
+                >
+                  <SelectTrigger id="dateFormat">
+                    <SelectValue placeholder="Select date format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dateFormatOptions.map((format) => (
+                      <SelectItem key={format} value={format}>
+                        {format} <span className="text-muted-foreground">— {sampleDate(format)}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {hasTime(baseDateFormat) && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="dateFormatSeconds"
+                      className="h-4 w-4 accent-primary cursor-pointer"
+                      checked={includeSeconds}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: withSeconds(baseDateFormat, e.target.checked) })}
+                    />
+                    <Label htmlFor="dateFormatSeconds" className="cursor-pointer font-normal">Show seconds</Label>
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
@@ -691,7 +683,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isSaving || !!dateFormatError || !!timezoneError || (!languageValidation.isValid && !!settings.displayLanguage.trim())}
+            disabled={isSaving || !!timezoneError || (!languageValidation.isValid && !!settings.displayLanguage.trim())}
             aria-busy={isSaving ? 'true' : undefined}
           >
             {isSaving ? (
