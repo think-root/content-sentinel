@@ -132,7 +132,7 @@ export function hasTime(format: string): boolean {
 }
 
 export function stripSeconds(format: string): string {
-  return format.replace(":ss", "");
+  return format.replace(/[\s.\-/:]?ss/, "");
 }
 
 export function withSeconds(format: string, include: boolean): string {

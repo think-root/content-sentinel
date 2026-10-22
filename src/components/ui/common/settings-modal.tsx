@@ -89,7 +89,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
 
   const baseDateFormat = stripSeconds(settings.dateFormat || 'DD.MM.YYYY HH:mm');
-  const includeSeconds = (settings.dateFormat || '').includes(':ss');
+  const includeSeconds = (settings.dateFormat || '').includes('ss');
   const dateFormatOptions = DATE_FORMAT_PRESETS.includes(baseDateFormat)
     ? DATE_FORMAT_PRESETS
     : [baseDateFormat, ...DATE_FORMAT_PRESETS];
