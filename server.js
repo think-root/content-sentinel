@@ -6,19 +6,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distDir = path.join(__dirname, 'dist');
 const app = express();
 const PORT = process.env.PORT || process.env.VITE_PORT || 3000;
 
-app.use('/dashboard', express.static(path.join(__dirname, 'dist')));
+// The app used to live under /dashboard/; keep old bookmarks working.
+app.get(/^\/dashboard(\/.*)?$/, (req, res) => {
+  res.redirect(301, req.params[0] || '/');
+});
 
+app.use(express.static(distDir));
+
+// Client-side routes get the SPA shell; a missing file must stay a 404, or the
+// browser would receive index.html as a script or stylesheet.
 app.get('*', (req, res) => {
-  if (req.path === '/') {
-    return res.redirect('/dashboard/');
+  if (path.extname(req.path)) {
+    return res.sendStatus(404);
   }
-  if (req.path.startsWith('/dashboard/')) {
-    return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-  }
-  res.redirect('/dashboard/');
+  res.sendFile(path.join(distDir, 'index.html'));
 });
 
 app.listen(PORT, () => {

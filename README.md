@@ -85,13 +85,13 @@ In fact, this is a dashboard that allows you to monitor and manage the data of t
    npm run build
    ```
 
-6. Start the preview server at http://localhost:4173/dashboard/
+6. Start the preview server at http://localhost:4173/
 
    ```bash
    npm run preview
    ```
 
-7. Run production server at http://localhost:3000/dashboard/
+7. Run production server at http://localhost:3000/
    ```bash
    npm start
    ```
