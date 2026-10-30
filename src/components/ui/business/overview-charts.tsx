@@ -165,7 +165,7 @@ export function OverviewCharts({
   }, [historyData]);
 
   // 4. Repository Tech Trends
-  const { trends, loading: trendsLoading, error: trendsError } = useRepositoryTrends(timeRange, true, trendSortBy);
+  const { trends, loading: trendsLoading, error: trendsError } = useRepositoryTrends(timeRange, trendSortBy);
 
   const isLoading = statsLoading || historyLoading; 
 

@@ -26,7 +26,6 @@ export interface RepositoryListFiltersProps {
 export interface RepositoryTableProps {
   repositories: Repository[];
   loading: boolean;
-  isApiReady: boolean;
   totalItems: number;
   itemsPerPage: number;
   searchTerm: string;
@@ -42,7 +41,6 @@ export interface RepositoryTableProps {
 export interface RepositoryMobileViewProps {
   repositories: Repository[];
   loading: boolean;
-  isApiReady: boolean;
   totalItems: number;
   itemsPerPage: number;
   searchTerm: string;

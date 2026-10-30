@@ -6,7 +6,8 @@ import type {
   GetArchivedRepositoriesResponse,
 } from '../types/archive';
 import { ARCHIVE_MAX_IDENTIFIERS } from "../utils/archiveUtils";
-import { getApiSettings, isApiConfigured } from "../utils/api-settings";
+import { getApiSettings } from "../utils/api-settings";
+import { API_BASE, apiFetch } from "./client";
 import { queueRequest, createRequestSignature } from "../lib/requestQueue";
 import { getPromptSettings } from "./maestro";
 
@@ -24,14 +25,11 @@ async function getAvailableLanguages(): Promise<string[]> {
     return availableLanguagesCache;
   }
 
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   
-  if (!isConfigured) {
-    return ['uk']; // Default fallback
-  }
 
   try {
-    const response = await fetch(`${baseUrl}/get-available-languages/`, {
+    const response = await apiFetch(`${baseUrl}/get-available-languages/`, {
       method: "GET",
       headers,
     });
@@ -115,14 +113,11 @@ async function handleLanguageFallback<T>(
 }
 
 function getApiConfig() {
-  const settings = getApiSettings();
   return {
-    baseUrl: `${settings.contentAlchemist.apiBaseUrl}/api`,
+    baseUrl: API_BASE.alchemist,
     headers: {
-      Authorization: `Bearer ${settings.contentAlchemist.apiBearerToken}`,
       "Content-Type": "application/json",
     },
-    isConfigured: isApiConfigured()
   };
 }
 
@@ -159,25 +154,10 @@ export async function getRepositories(
   page?: number,
   pageSize?: number
 ): Promise<RepositoryResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   const settings = getApiSettings();
   const textLanguage = settings.displayLanguage || 'uk';
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      data: {
-        all: 0,
-        posted: 0,
-        unposted: 0,
-        items: [],
-        page: 1,
-        page_size: 10,
-        total_pages: 0,
-        total_items: 0,
-      },
-    };
-  }
 
   const createRequest = (language: string) => {
     const requestBody: GetRepositoryRequest = {
@@ -194,7 +174,7 @@ export async function getRepositories(
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
 
-      const response = await fetch(`${baseUrl}/get-repository/`, {
+      const response = await apiFetch(`${baseUrl}/get-repository/`, {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
@@ -238,13 +218,10 @@ export async function getRepositories(
  * to be readable even for an item that has no text in the display language.
  */
 export async function getRepositoryByUrl(url: string): Promise<Repository | null> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    throw new Error("API not configured. Check the Content Alchemist settings.");
-  }
 
-  const response = await fetch(`${baseUrl}/get-repository/`, {
+  const response = await apiFetch(`${baseUrl}/get-repository/`, {
     method: "POST",
     headers,
     body: JSON.stringify({ url, limit: 1 }),
@@ -292,15 +269,8 @@ export interface ManualGenerateResponse {
 }
 
 export async function manualGenerate(url: string): Promise<ManualGenerateResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      added: [],
-      dont_added: [],
-    };
-  }
 
   const promptSettings = await getPromptSettings();
 
@@ -323,7 +293,7 @@ export async function manualGenerate(url: string): Promise<ManualGenerateRespons
 
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/manual-generate/`, {
+    const response = await apiFetch(`${baseUrl}/manual-generate/`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
@@ -355,15 +325,8 @@ export async function autoGenerate(
   period: string,
   language: string
 ): Promise<ManualGenerateResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      added: [],
-      dont_added: [],
-    };
-  }
 
   const promptSettings = await getPromptSettings();
 
@@ -391,7 +354,7 @@ export async function autoGenerate(
 
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/auto-generate/`, {
+    const response = await apiFetch(`${baseUrl}/auto-generate/`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
@@ -416,25 +379,10 @@ export async function autoGenerate(
 }
 
 export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   const settings = getApiSettings();
   const textLanguage = settings.displayLanguage || 'uk';
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      data: {
-        all: 0,
-        posted: 0,
-        unposted: 0,
-        items: [],
-        page: 1,
-        page_size: 10,
-        total_pages: 0,
-        total_items: 0,
-      },
-    };
-  }
 
   const createRequest = (language: string) => {
     const requestBody = {
@@ -447,7 +395,7 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
 
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
-      const response = await fetch(`${baseUrl}/get-repository/`, {
+      const response = await apiFetch(`${baseUrl}/get-repository/`, {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
@@ -483,25 +431,10 @@ export async function getLatestPostedRepository(): Promise<RepositoryResponse> {
 }
 
 export async function getNextRepository(): Promise<RepositoryResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   const settings = getApiSettings();
   const textLanguage = settings.displayLanguage || 'uk';
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      data: {
-        all: 0,
-        posted: 0,
-        unposted: 0,
-        items: [],
-        page: 1,
-        page_size: 10,
-        total_pages: 0,
-        total_items: 0,
-      },
-    };
-  }
 
   const createRequest = (language: string) => {
     const requestBody = {
@@ -514,7 +447,7 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
 
     // Wrap the actual fetch logic in a function
     const fetchFunction = async () => {
-      const response = await fetch(`${baseUrl}/get-repository/`, {
+      const response = await apiFetch(`${baseUrl}/get-repository/`, {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
@@ -550,13 +483,10 @@ export async function getNextRepository(): Promise<RepositoryResponse> {
 }
 
 export async function deleteRepository(identifier: { id?: number; url?: string }): Promise<{ status: string; message: string }> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   
-  if (!isConfigured) {
-    return { status: "error", message: "API not configured" };
-  }
 
-  const response = await fetch(`${baseUrl}/delete-repository/`, {
+  const response = await apiFetch(`${baseUrl}/delete-repository/`, {
     method: "DELETE",
     headers,
     body: JSON.stringify(identifier),
@@ -573,13 +503,10 @@ export async function deleteRepository(identifier: { id?: number; url?: string }
 }
 
 export async function promoteRepositoryToNext(identifier: { id?: number; url?: string }): Promise<{ status: string; message: string; data?: Repository }> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return { status: "error", message: "API not configured" };
-  }
 
-  const response = await fetch(`${baseUrl}/promote-repository/`, {
+  const response = await apiFetch(`${baseUrl}/promote-repository/`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(identifier),
@@ -604,17 +531,14 @@ export async function promoteRepositoryToNext(identifier: { id?: number; url?: s
 }
 
 export async function updateRepositoryText(identifier: { id?: number; url?: string }, text: string): Promise<{ status: string; message: string; data?: { id: number; url: string; text: string; updated_at: string } }> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
   const settings = getApiSettings();
   const textLanguage = settings.displayLanguage || 'uk';
   
-  if (!isConfigured) {
-    return { status: "error", message: "API not configured" };
-  }
 
   const createRequest = (language: string) => {
     const fetchFunction = async () => {
-      const response = await fetch(`${baseUrl}/update-repository-text/`, {
+      const response = await apiFetch(`${baseUrl}/update-repository-text/`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ ...identifier, text, text_language: language }),
@@ -691,11 +615,8 @@ async function parseAlchemistEnvelope<T>(response: Response, action: string): Pr
 export async function archiveRepositories(
   identifiers: { ids: number[] } | { urls: string[] }
 ): Promise<ArchiveRepositoryResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return { status: "error", message: "API not configured", data: { archived: [], failed: [] } };
-  }
 
   const entries = 'ids' in identifiers ? identifiers.ids : identifiers.urls;
 
@@ -708,7 +629,7 @@ export async function archiveRepositories(
   }
 
   const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/archive-repository/`, {
+    const response = await apiFetch(`${baseUrl}/archive-repository/`, {
       method: "POST",
       headers,
       body: JSON.stringify(identifiers),
@@ -728,15 +649,8 @@ export async function archiveOldRepositories(
   days: number,
   dryRun: boolean
 ): Promise<ArchiveOldRepositoriesResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      message: "API not configured",
-      data: { archived_count: 0, dry_run: dryRun, archived: [] },
-    };
-  }
 
   if (!Number.isInteger(days) || days < 1) {
     throw new Error("Days must be a whole number greater than 0");
@@ -745,7 +659,7 @@ export async function archiveOldRepositories(
   const requestBody = { days, dry_run: dryRun };
 
   const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/archive-old-repositories/`, {
+    const response = await apiFetch(`${baseUrl}/archive-old-repositories/`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
@@ -764,18 +678,11 @@ export async function archiveOldRepositories(
 export async function getArchivedRepositories(
   requestBody: GetArchivedRepositoriesRequest
 ): Promise<GetArchivedRepositoriesResponse> {
-  const { baseUrl, headers, isConfigured } = getApiConfig();
+  const { baseUrl, headers } = getApiConfig();
 
-  if (!isConfigured) {
-    return {
-      status: "error",
-      message: "API not configured",
-      data: { all: 0, items: [], page: 1, page_size: 0, total_pages: 0, total_items: 0 },
-    };
-  }
 
   const fetchFunction = async () => {
-    const response = await fetch(`${baseUrl}/get-archived-repositories/`, {
+    const response = await apiFetch(`${baseUrl}/get-archived-repositories/`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),

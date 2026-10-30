@@ -1,17 +1,27 @@
 import { AlertCircle } from 'lucide-react';
 import type { ApiSettings } from '@/utils/api-settings';
+import type { ValidationResult } from '@/utils/language-validation';
 import { DATE_FORMAT_PRESETS, hasTime, sampleDate, stripSeconds, withSeconds } from '@/utils/date-format';
 import { Input } from '../base/input';
 import { Label } from '../base/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
+import { LanguageValidationIndicator } from './language-validation-indicator';
 
 interface SettingsGeneralTabProps {
   settings: ApiSettings;
   timezoneError: string | null;
+  languageValidation: ValidationResult;
+  isValidatingLanguage: boolean;
   updateSettings: (newSettings: Partial<ApiSettings>) => void;
 }
 
-export const SettingsGeneralTab = ({ settings, timezoneError, updateSettings }: SettingsGeneralTabProps) => {
+export const SettingsGeneralTab = ({
+  settings,
+  timezoneError,
+  languageValidation,
+  isValidatingLanguage,
+  updateSettings,
+}: SettingsGeneralTabProps) => {
   const baseDateFormat = stripSeconds(settings.dateFormat || 'DD.MM.YYYY HH:mm');
   const includeSeconds = (settings.dateFormat || '').includes('ss');
   const dateFormatOptions = DATE_FORMAT_PRESETS.includes(baseDateFormat)
@@ -73,6 +83,40 @@ export const SettingsGeneralTab = ({ settings, timezoneError, updateSettings }: 
             Europe/Kyiv, Europe/London, America/New_York
           </p>
         )}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="displayLanguage">Language Code</Label>
+        <div className="relative">
+          <Input
+            type="text"
+            id="displayLanguage"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="uk or en, uk, fr"
+            value={settings.displayLanguage}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
+            className={settings.displayLanguage.trim() ? 'pr-10' : ''}
+          />
+          {settings.displayLanguage.trim() && (
+            <LanguageValidationIndicator validation={languageValidation} isValidating={isValidatingLanguage} />
+          )}
+        </div>
+        <div className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 leading-snug mt-1">
+          <AlertCircle className="h-4 w-4 flex-shrink-0 mt-[2px]" />
+          <span className="whitespace-normal break-words">
+            Language code for displaying posts. Uses{' '}
+            <a
+              href="https://en.wikipedia.org/wiki/ISO_639-1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              ISO 639-1
+            </a>{' '}
+            standard.
+          </span>
+        </div>
       </div>
     </>
   );

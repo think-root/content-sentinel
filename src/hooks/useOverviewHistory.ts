@@ -4,11 +4,7 @@ import { getOverviewHistoryFromCache, saveOverviewHistoryToCache, getOverviewTim
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d';
 
-interface UseOverviewHistoryProps {
-  isApiReady: boolean;
-}
-
-export const useOverviewHistory = ({ isApiReady }: UseOverviewHistoryProps) => {
+export const useOverviewHistory = () => {
   // Initialize from cache if available
   const cachedResult = getOverviewHistoryFromCache();
   const cachedData = cachedResult?.data;
@@ -32,8 +28,6 @@ export const useOverviewHistory = ({ isApiReady }: UseOverviewHistoryProps) => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchHistory = useCallback(async (silent = false) => {
-    if (!isApiReady) return;
-
     // specific check to avoid "loading" flash if we already have data regarding this timerange request
     // But since date moves, we probably always want to fetch.
     
@@ -100,7 +94,7 @@ export const useOverviewHistory = ({ isApiReady }: UseOverviewHistoryProps) => {
             setLoading(false);
         }
     }
-  }, [timeRange, isApiReady, historyData.length, cachedData?.timeRange]);
+  }, [timeRange, historyData.length, cachedData?.timeRange]);
 
   // Initial fetch when timeRange changes or API is ready
   // Save preference whenever timeRange changes

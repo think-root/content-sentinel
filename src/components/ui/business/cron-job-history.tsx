@@ -19,7 +19,6 @@ interface CronJobHistoryProps {
   setNameFilter?: (nameFilter?: string) => void;
   setStatusFilter?: (statusFilter?: number) => void;
   resetFilters?: () => void;
-  isApiReady?: boolean;
   pageSize?: number;
   setPageSize?: (pageSize: number) => void;
   sortOrder?: 'asc' | 'desc';
@@ -44,7 +43,6 @@ export const CronJobHistory = ({
   setNameFilter,
   setStatusFilter,
   resetFilters,
-  isApiReady = true,
   pageSize = 10,
   setPageSize,
   sortOrder = 'desc',
@@ -83,10 +81,8 @@ export const CronJobHistory = ({
       }
     };
 
-    if (isApiReady) {
-      fetchJobs();
-    }
-  }, [isApiReady]);
+    fetchJobs();
+  }, []);
 
   const handleToggleFilters = () => {
     const newValue = !showFilters;
@@ -149,7 +145,6 @@ export const CronJobHistory = ({
       <CronHistoryList
         history={history}
         loading={loading}
-        isApiReady={isApiReady}
         retryingKey={retryingKey}
         retriedKeys={retriedKeys}
         onRetry={openRetryConfirm}

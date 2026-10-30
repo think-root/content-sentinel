@@ -7,7 +7,6 @@ import { Label } from '../base/label';
 export function ArchiveMobileView({
   items,
   loading,
-  isApiReady,
   totalItems,
   itemsPerPage,
   hasFilters,
@@ -37,14 +36,6 @@ export function ArchiveMobileView({
     <div className="bg-card border rounded-lg p-4 mb-4 text-center">
       <p className="text-sm text-muted-foreground">
         {hasFilters ? 'No archived repositories match these filters' : 'No archived repositories yet'}
-      </p>
-    </div>
-  );
-
-  const renderApiNotReady = () => (
-    <div className="bg-card border rounded-lg p-4 mb-4">
-      <p className="text-sm text-muted-foreground text-center">
-        Data could not be loaded because API keys are not configured
       </p>
     </div>
   );
@@ -101,8 +92,7 @@ export function ArchiveMobileView({
 
   return (
     <>
-      {!isApiReady ? renderApiNotReady() :
-       loading ? renderLoadingSkeleton() :
+      {loading ? renderLoadingSkeleton() :
        totalItems === 0 || items.length === 0 ? renderEmptyState() :
        renderCards()}
     </>

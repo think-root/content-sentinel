@@ -1,4 +1,4 @@
-import { getApiSettings, isApiConfigured } from "../utils/api-settings";
+import { API_BASE, apiFetch } from "./client";
 import { queueRequest, createRequestSignature } from "../lib/requestQueue";
 
 export interface CronJob {
@@ -58,18 +58,7 @@ export interface CronJobHistoryResponse {
 }
 
 export const getCronJobs = async (): Promise<CronJob[]> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return [];
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons`, {
-    headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-    },
-  });
+  const response = await apiFetch(`${API_BASE.maestro}/crons`);
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -90,22 +79,6 @@ export const getCronJobHistory = async (
   start_date?: string,
   end_date?: string
 ): Promise<CronJobHistoryResponse> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return {
-      data: [],
-      pagination: {
-        total_count: 0,
-        current_page: 1,
-        total_pages: 0,
-        has_next: false,
-        has_previous: false,
-      },
-    };
-  }
-
   const params = new URLSearchParams();
   if (name) params.append("name", name);
   params.append("page", page.toString());
@@ -115,13 +88,8 @@ export const getCronJobHistory = async (
   if (start_date && start_date.trim() !== '') params.append("start_date", start_date);
   if (end_date && end_date.trim() !== '') params.append("end_date", end_date);
 
-  const response = await fetch(
-    `${settings.contentMaestro.apiBaseUrl}/api/cron-history?${params.toString()}`,
-    {
-      headers: {
-        Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-      },
-    }
+  const response = await apiFetch(
+    `${API_BASE.maestro}/cron-history?${params.toString()}`
   );
 
   if (!response.ok) {
@@ -151,18 +119,10 @@ export const getCronJobHistory = async (
 };
 
 export const updateCronSchedule = async (name: string, schedule: string): Promise<void> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return;
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons/${name}/schedule`, {
+  const response = await apiFetch(`${API_BASE.maestro}/crons/${name}/schedule`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify({ schedule }),
   });
@@ -184,17 +144,10 @@ export const retryMessagePost = async (
   apis: string[],
   url?: string
 ): Promise<RetryMessageResult> => {
-  const settings = getApiSettings();
-
-  if (!isApiConfigured()) {
-    throw new Error("API not configured. Check the Content Maestro settings.");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/message/retry`, {
+  const response = await apiFetch(`${API_BASE.maestro}/message/retry`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify(url ? { apis, url } : { apis }),
   });
@@ -224,17 +177,10 @@ export const publishMessageNow = async (
   url: string,
   options?: { signal?: AbortSignal }
 ): Promise<RetryMessageResult> => {
-  const settings = getApiSettings();
-
-  if (!isApiConfigured()) {
-    throw new Error("API not configured. Check the Content Maestro settings.");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/message/publish`, {
+  const response = await apiFetch(`${API_BASE.maestro}/message/publish`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify({ url }),
     signal: options?.signal,
@@ -253,18 +199,10 @@ export const publishMessageNow = async (
 };
 
 export const updateCronStatus = async (name: string, is_active: boolean): Promise<void> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return;
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/crons/${name}/status`, {
+  const response = await apiFetch(`${API_BASE.maestro}/crons/${name}/status`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify({ is_active }),
   });
@@ -287,23 +225,8 @@ export interface CollectSettings {
 }
 
 export async function getCollectSettings(): Promise<CollectSettings> {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return {
-      max_repos: 10,
-      resource: "github",
-      since: "daily",
-      spoken_language_code: "en",
-      period: "past_24_hours",
-      language: "All",
-    };
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/collect-settings`, {
+  const response = await apiFetch(`${API_BASE.maestro}/collect-settings`, {
     headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
       "Content-Type": "application/json",
     },
   });
@@ -319,23 +242,12 @@ export async function getCollectSettings(): Promise<CollectSettings> {
 export async function updateCollectSettings(
   settings: CollectSettings
 ): Promise<{ status: string; message: string }> {
-  const apiSettings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return {
-      status: "error",
-      message: "API not configured",
-    };
-  }
-
-  const response = await fetch(
-    `${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings`,
+  const response = await apiFetch(
+    `${API_BASE.maestro}/collect-settings`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
       },
       body: JSON.stringify(settings),
     }
@@ -359,30 +271,14 @@ export interface PromptSettings {
 }
 
 export async function getPromptSettings(): Promise<PromptSettings> {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return {
-      use_direct_url: true,
-      llm_provider: "openai",
-      model: "gpt-4.1",
-      temperature: 0.5,
-      content:
-        "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories. Your main task is to create descriptions based on the URL.",
-      llm_output_language: "",
-    };
-  }
-
-  const url = `${settings.contentMaestro.apiBaseUrl}/api/prompt-settings`;
+  const url = `${API_BASE.maestro}/prompt-settings`;
   const headers = {
-    Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     "Content-Type": "application/json",
   };
 
   // Wrap the actual fetch logic in a function
   const fetchFunction = async () => {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       headers,
     });
 
@@ -401,23 +297,12 @@ export async function getPromptSettings(): Promise<PromptSettings> {
 export async function updatePromptSettings(
   settings: Partial<PromptSettings>
 ): Promise<{ status: string; message: string }> {
-  const apiSettings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return {
-      status: "error",
-      message: "API not configured",
-    };
-  }
-
-  const response = await fetch(
-    `${apiSettings.contentMaestro.apiBaseUrl}/api/prompt-settings`,
+  const response = await apiFetch(
+    `${API_BASE.maestro}/prompt-settings`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
       },
       body: JSON.stringify(settings),
     }

@@ -67,7 +67,6 @@ interface DashboardContentProps {
     period: string,
     language: string
   ) => Promise<ManualGenerateResponse>;
-  isApiReady: boolean;
   cronJobHistory?: CronJobHistoryType[];
   cronJobHistoryLoading?: boolean;
   cronJobHistoryPageSize?: number;
@@ -125,7 +124,6 @@ export const DashboardContent = ({
   fetchPreviews,
   handleManualGenerate,
   handleAutoGenerate,
-  isApiReady,
   cronJobHistory,
   cronJobHistoryLoading,
   cronJobHistoryPageSize,
@@ -253,19 +251,13 @@ export const DashboardContent = ({
 
   // Fetched once per session, on the first visit to either tab that shows archive numbers -
   // lazily rather than at startup so cold start stays under the API rate limit.
-  // Gated on isApiReady: without credentials the API layer returns an empty stub that would be
-  // cached as a legitimately empty archive, and the ref would then block the refetch after the
-  // user saves their settings.
   const archiveFetchedRef = useRef(false);
   useEffect(() => {
-    if (!isApiReady) {
-      return;
-    }
     if ((activeTab === 'archive' || activeTab === 'overview') && !archiveFetchedRef.current) {
       archiveFetchedRef.current = true;
       fetchArchive(false);
     }
-  }, [activeTab, fetchArchive, isApiReady]);
+  }, [activeTab, fetchArchive]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -298,13 +290,11 @@ export const DashboardContent = ({
                 title="Next post"
                 repository={nextPost}
                 loading={previewsLoading}
-                isApiReady={isApiReady}
               />
               <RepositoryPreview
                 title="Latest post"
                 repository={latestPost}
                 loading={previewsLoading}
-                isApiReady={isApiReady}
               />
 
               {/* Active Cron Jobs */}
@@ -415,7 +405,6 @@ export const DashboardContent = ({
               totalPages={pagination.totalPages}
               totalItems={pagination.totalItems}
               loading={loading}
-              isApiReady={isApiReady}
               onRepositoryArchived={refreshArchive}
             />
           </TabsContent>
@@ -423,7 +412,6 @@ export const DashboardContent = ({
           {/* Archive Tab */}
           <TabsContent value="archive" className="mt-0 space-y-6">
             <ArchiveOldRepositories
-              isApiReady={isApiReady}
               onArchived={onArchiveMutation}
             />
 
@@ -431,7 +419,6 @@ export const DashboardContent = ({
               items={archiveItems}
               all={archiveAll}
               loading={archiveLoading}
-              isApiReady={isApiReady}
               filters={archiveFilters}
               showFilters={archiveShowFilters}
               currentPage={archiveCurrentPage}
@@ -450,7 +437,6 @@ export const DashboardContent = ({
               jobs={cronJobs}
               onJobsUpdate={onCronJobsUpdate}
               loading={cronJobsLoading}
-              isApiReady={isApiReady}
             />
 
             {cronJobHistory && (
@@ -475,7 +461,6 @@ export const DashboardContent = ({
                 currentPage={cronJobHistoryCurrentPage}
                 setPage={cronJobHistorySetPage}
                 onRetryComplete={cronJobHistoryOnRetryComplete}
-                isApiReady={isApiReady}
               />
             )}
           </TabsContent>
@@ -487,7 +472,6 @@ export const DashboardContent = ({
               loading={apiConfigsLoading}
               saving={apiConfigsSaving}
               deleting={apiConfigsDeleting}
-              isApiReady={isApiReady}
               onAdd={addApiConfig}
               onEdit={editApiConfig}
               onDelete={removeApiConfig}
@@ -501,7 +485,6 @@ export const DashboardContent = ({
             className={activeTab !== 'settings' ? 'hidden' : 'mt-0'}
           >
             <PromptSettings
-              isApiReady={isApiReady}
               onUnsavedChangesChange={setHasUnsavedSettingsChanges}
             />
           </TabsContent>

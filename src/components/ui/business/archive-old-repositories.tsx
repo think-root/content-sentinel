@@ -74,7 +74,7 @@ const PreviewTable = memo(function PreviewTable({ items }: { items: ArchiveOpera
   );
 });
 
-export function ArchiveOldRepositories({ isApiReady, onArchived }: ArchiveOldRepositoriesProps) {
+export function ArchiveOldRepositories({ onArchived }: ArchiveOldRepositoriesProps) {
   const { getStoredValue, setStoredValue } = useRepositoryLocalStorage();
   const [days, setDays] = useState<string>(
     String(getStoredValue('archiveOlderThanDays', DEFAULT_ARCHIVE_DAYS))
@@ -169,7 +169,7 @@ export function ArchiveOldRepositories({ isApiReady, onArchived }: ArchiveOldRep
               step={1}
               value={days}
               onChange={(e) => handleDaysChange(e.target.value)}
-              disabled={!isApiReady || pending !== null}
+              disabled={pending !== null}
             />
           </div>
 
@@ -177,7 +177,7 @@ export function ArchiveOldRepositories({ isApiReady, onArchived }: ArchiveOldRep
             <Button
               variant="outline"
               onClick={handlePreview}
-              disabled={!isApiReady || !!daysError || pending !== null}
+              disabled={!!daysError || pending !== null}
               className="flex items-center gap-2"
             >
               <Eye className="h-4 w-4" />
@@ -186,7 +186,7 @@ export function ArchiveOldRepositories({ isApiReady, onArchived }: ArchiveOldRep
 
             <Button
               onClick={() => setShowConfirm(true)}
-              disabled={!isApiReady || !!daysError || pending !== null || !isPreviewCurrent || previewCount === 0}
+              disabled={!!daysError || pending !== null || !isPreviewCurrent || previewCount === 0}
               className="flex items-center gap-2"
             >
               <Archive className="h-4 w-4" />
@@ -200,12 +200,6 @@ export function ArchiveOldRepositories({ isApiReady, onArchived }: ArchiveOldRep
         </div>
 
         {daysError && <p className="text-xs text-destructive">{daysError}</p>}
-
-        {!isApiReady && (
-          <p className="text-sm text-muted-foreground">
-            Archiving is unavailable because API keys are not configured
-          </p>
-        )}
 
         {preview !== null && (
           previewCount === 0 ? (

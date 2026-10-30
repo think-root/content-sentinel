@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { getCronJobs, type CronJob } from '../api/maestro';
 import { saveCronJobsToCache, getCronJobsFromCache } from '../utils/cache-utils';
 import { compareCronJobs } from '../utils/data-comparison';
-import { isApiConfigured } from '../utils/api-settings';
 import { maestroErrorMessage } from '../utils/api-error';
 
 interface CronJobsState {
@@ -95,12 +94,8 @@ export const useCronJobs = ({ isCacheBust, setErrorWithScroll }: UseCronJobsProp
         setState(prev => ({ ...prev, stale: false }));
       }
     } catch (error) {
-      if (!isApiConfigured()) {
-        setState(prev => ({ ...prev, loading: false }));
-      } else {
-        setErrorWithScroll(maestroErrorMessage(error), 'content-maestro-error');
-        setState(prev => ({ ...prev, loading: false }));
-      }
+      setErrorWithScroll(maestroErrorMessage(error), 'content-maestro-error');
+      setState(prev => ({ ...prev, loading: false }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setErrorWithScroll, isCacheBust]);

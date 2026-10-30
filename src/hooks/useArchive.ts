@@ -10,7 +10,7 @@ import {
   normalizeArchiveSortOrder,
 } from '../utils/archiveUtils';
 import { getArchiveFromCache, saveArchiveToCache } from '../utils/cache-utils';
-import { getApiSettings, isApiConfigured } from '../utils/api-settings';
+import { getApiSettings } from '../utils/api-settings';
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import { storage } from '../lib/storage';
 
@@ -195,9 +195,7 @@ export const useArchive = ({ isCacheBust, setErrorWithScroll }: UseArchiveProps)
         return;
       }
 
-      if (isApiConfigured()) {
-        setErrorWithScroll(`Failed to fetch archived repositories: ${message}`, 'archive-error');
-      }
+      setErrorWithScroll(`Failed to fetch archived repositories: ${message}`, 'archive-error');
     } finally {
       if (requestId === latestRequestIdRef.current) {
         isFetching.current = false;

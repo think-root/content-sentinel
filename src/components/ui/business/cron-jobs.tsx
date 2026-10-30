@@ -27,7 +27,6 @@ const toastOptions = {
 interface CronJobsProps {
   jobs: CronJob[];
   loading: boolean;
-  isApiReady?: boolean;
   onJobsUpdate?: (jobs: CronJob[]) => void;
 }
 
@@ -205,7 +204,7 @@ const getHumanReadableCron = (cronExpression: string): string => {
   }
 };
 
-export const CronJobs = ({ jobs, loading, isApiReady = true, onJobsUpdate }: CronJobsProps) => {
+export const CronJobs = ({ jobs, loading, onJobsUpdate }: CronJobsProps) => {
   const [localJobs, setLocalJobs] = useState<CronJob[]>(jobs);
   const [editingSchedule, setEditingSchedule] = useState<{name: string; schedule: string} | null>(null);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -572,12 +571,6 @@ export const CronJobs = ({ jobs, loading, isApiReady = true, onJobsUpdate }: Cro
     </Table>
   );
 
-  const renderApiNotReady = () => (
-    <div className="text-center text-muted-foreground">
-      Data could not be loaded because API keys are not configured
-    </div>
-  );
-
   return (
     <Card>
       <CardHeader>
@@ -589,9 +582,7 @@ export const CronJobs = ({ jobs, loading, isApiReady = true, onJobsUpdate }: Cro
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {!isApiReady ? (
-          renderApiNotReady()
-        ) : loading ? (
+        {loading ? (
           renderLoadingState()
         ) : (
           <>

@@ -31,7 +31,6 @@ interface PublishRepositoryDialogProps {
   repository: Repository | null;
   /** True when this repository already sits at the head of the publication queue. */
   isNext: boolean;
-  isApiReady: boolean;
   /** The enabled integrations a publish-now will reach. */
   integrations: PublishIntegration[];
   /** True while the integration list is still being fetched. */
@@ -90,7 +89,6 @@ const toneStyles = {
 export function PublishRepositoryDialog({
   repository,
   isNext,
-  isApiReady,
   integrations,
   integrationsLoading = false,
   onClose,
@@ -286,13 +284,7 @@ export function PublishRepositoryDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          {!isApiReady && (
-            <p className="bg-warning/10 text-warning p-3 rounded-md text-sm">
-              Content Maestro API is not configured — check Settings.
-            </p>
-          )}
-
-          {phase === 'idle' && isApiReady && (
+          {phase === 'idle' && (
             <div className="space-y-1 text-sm text-muted-foreground">
               <p>
                 <span className="text-foreground font-medium">Publish next</span> moves this
@@ -334,7 +326,7 @@ export function PublishRepositoryDialog({
               </h4>
               <ul className="space-y-1 text-sm">{rows.map(renderRow)}</ul>
             </div>
-          ) : !isApiReady ? null : integrationsLoading ? (
+          ) : integrationsLoading ? (
             // An empty list while the configs are still loading is not the same as
             // no integration being enabled, and saying so would be wrong.
             <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -362,7 +354,7 @@ export function PublishRepositoryDialog({
               <Button
                 variant="outline"
                 onClick={handlePromote}
-                disabled={busy || isNext || !isApiReady}
+                disabled={busy || isNext}
                 title={isNext ? 'Already next in the queue' : undefined}
               >
                 {phase === 'promoting' ? (
@@ -374,7 +366,7 @@ export function PublishRepositoryDialog({
               </Button>
               <Button
                 onClick={handlePublishNow}
-                disabled={busy || !isApiReady || integrationsLoading || integrations.length === 0}
+                disabled={busy || integrationsLoading || integrations.length === 0}
               >
                 {phase === 'publishing' || phase === 'reconciling' ? (
                   <>

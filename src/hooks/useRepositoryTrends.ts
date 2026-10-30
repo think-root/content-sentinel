@@ -13,7 +13,7 @@ interface UseRepositoryTrendsResult {
   error: string | null;
 }
 
-export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean, sortBy: 'date_added' | 'date_posted' = 'date_added'): UseRepositoryTrendsResult => {
+export const useRepositoryTrends = (timeRange: TimeRange, sortBy: 'date_added' | 'date_posted' = 'date_added'): UseRepositoryTrendsResult => {
   const [trends, setTrends] = useState<TrendMetric[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,8 +109,6 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean, s
   }, []);
 
   const fetchTrends = useCallback(async () => {
-    if (!isApiReady) return;
-
     setLoading(true);
     setError(null);
 
@@ -205,7 +203,7 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean, s
         setLoading(false);
       }
     }
-  }, [timeRange, isApiReady, extractKeywords, sortBy]);
+  }, [timeRange, extractKeywords, sortBy]);
 
   useEffect(() => {
     fetchTrends();

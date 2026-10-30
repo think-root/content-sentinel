@@ -1,37 +1,23 @@
 import { storage } from '../lib/storage';
+
+// The name is historical: these used to include the service URLs and tokens,
+// which now live on the server (see api-proxy.js).
 export interface ApiSettings {
-  apiBaseUrl: string;
-  apiBearerToken: string;
   dateFormat: string;
   timezone: string;
   displayLanguage: string;
-  contentAlchemist: {
-    apiBaseUrl: string;
-    apiBearerToken: string;
-  };
-  contentMaestro: {
-    apiBaseUrl: string;
-    apiBearerToken: string;
-  };
 }
 
 export const LOCAL_STORAGE_KEY = "api_settings";
 
 const defaultSettings: ApiSettings = {
-  apiBaseUrl: "",
-  apiBearerToken: "",
   dateFormat: "DD.MM.YYYY HH:mm",
   timezone: "Europe/Kyiv",
   displayLanguage: "uk",
-  contentAlchemist: {
-    apiBaseUrl: "",
-    apiBearerToken: "",
-  },
-  contentMaestro: {
-    apiBaseUrl: "",
-    apiBearerToken: "",
-  },
 };
+
+// Fields older versions stored, bearer tokens included.
+const LEGACY_FIELDS = ['apiBaseUrl', 'apiBearerToken', 'contentAlchemist', 'contentMaestro'];
 
 export const getApiSettings = (): ApiSettings => {
   const settings = storage.get(LOCAL_STORAGE_KEY);
@@ -40,28 +26,17 @@ export const getApiSettings = (): ApiSettings => {
   }
 
   const parsedSettings = JSON.parse(settings);
+
+  // Drop the credentials an older version left in the browser.
+  if (LEGACY_FIELDS.some((field) => field in parsedSettings)) {
+    for (const field of LEGACY_FIELDS) delete parsedSettings[field];
+    storage.set(LOCAL_STORAGE_KEY, JSON.stringify(parsedSettings));
+  }
+
   return {
     ...defaultSettings,
     ...parsedSettings,
-    contentAlchemist: {
-      ...defaultSettings.contentAlchemist,
-      ...parsedSettings.contentAlchemist,
-    },
-    contentMaestro: {
-      ...defaultSettings.contentMaestro,
-      ...parsedSettings.contentMaestro,
-    },
   };
-};
-
-export const isApiConfigured = (): boolean => {
-  const settings = getApiSettings();
-  return !!(
-    settings.contentAlchemist?.apiBaseUrl && 
-    settings.contentAlchemist?.apiBearerToken && 
-    settings.contentMaestro?.apiBaseUrl && 
-    settings.contentMaestro?.apiBearerToken
-  );
 };
 
 const normalizeValue = (value: unknown): string => {
@@ -70,19 +45,9 @@ const normalizeValue = (value: unknown): string => {
 };
 
 const normalizeSettingsForCompare = (s: ApiSettings) => ({
-  apiBaseUrl: normalizeValue(s.apiBaseUrl),
-  apiBearerToken: normalizeValue(s.apiBearerToken),
   dateFormat: normalizeValue(s.dateFormat) || 'DD.MM.YYYY HH:mm',
   timezone: normalizeValue(s.timezone) || 'Europe/Kyiv',
   displayLanguage: (normalizeValue(s.displayLanguage) || 'uk').toLowerCase(),
-  contentAlchemist: {
-    apiBaseUrl: normalizeValue(s.contentAlchemist?.apiBaseUrl),
-    apiBearerToken: normalizeValue(s.contentAlchemist?.apiBearerToken),
-  },
-  contentMaestro: {
-    apiBaseUrl: normalizeValue(s.contentMaestro?.apiBaseUrl),
-    apiBearerToken: normalizeValue(s.contentMaestro?.apiBearerToken),
-  },
 });
 
 /**
@@ -93,14 +58,8 @@ export const areApiSettingsEqual = (oldSettings: ApiSettings, currentSettings: A
   const a = normalizeSettingsForCompare(oldSettings);
   const b = normalizeSettingsForCompare(currentSettings);
   return (
-    a.apiBaseUrl === b.apiBaseUrl &&
-    a.apiBearerToken === b.apiBearerToken &&
     a.dateFormat === b.dateFormat &&
     a.timezone === b.timezone &&
-    a.displayLanguage === b.displayLanguage &&
-    a.contentAlchemist.apiBaseUrl === b.contentAlchemist.apiBaseUrl &&
-    a.contentAlchemist.apiBearerToken === b.contentAlchemist.apiBearerToken &&
-    a.contentMaestro.apiBaseUrl === b.contentMaestro.apiBaseUrl &&
-    a.contentMaestro.apiBearerToken === b.contentMaestro.apiBearerToken
+    a.displayLanguage === b.displayLanguage
   );
 };

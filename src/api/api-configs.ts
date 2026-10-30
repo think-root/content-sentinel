@@ -1,4 +1,4 @@
-import { getApiSettings, isApiConfigured } from "../utils/api-settings";
+import { API_BASE, apiFetch } from "./client";
 
 export interface ApiConfig {
   id: number;
@@ -53,18 +53,7 @@ export interface UpdateApiConfigRequest {
 }
 
 export const getApiConfigs = async (): Promise<ApiConfig[]> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    return [];
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/api-configs`, {
-    headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-    },
-  });
+  const response = await apiFetch(`${API_BASE.maestro}/api-configs`);
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -77,18 +66,7 @@ export const getApiConfigs = async (): Promise<ApiConfig[]> => {
 };
 
 export const getApiConfig = async (name: string): Promise<ApiConfig> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    throw new Error("API not configured");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/api-configs/${name}`, {
-    headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-    },
-  });
+  const response = await apiFetch(`${API_BASE.maestro}/api-configs/${name}`);
 
   if (!response.ok) {
     if (response.status === 429) {
@@ -104,18 +82,10 @@ export const getApiConfig = async (name: string): Promise<ApiConfig> => {
 };
 
 export const createApiConfig = async (config: CreateApiConfigRequest): Promise<ApiConfig> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    throw new Error("API not configured");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/api-configs`, {
+  const response = await apiFetch(`${API_BASE.maestro}/api-configs`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify(config),
   });
@@ -138,18 +108,10 @@ export const updateApiConfig = async (
   name: string,
   updates: UpdateApiConfigRequest
 ): Promise<ApiConfig> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    throw new Error("API not configured");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/api-configs/${name}`, {
+  const response = await apiFetch(`${API_BASE.maestro}/api-configs/${name}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
     },
     body: JSON.stringify(updates),
   });
@@ -172,18 +134,8 @@ export const updateApiConfig = async (
 };
 
 export const deleteApiConfig = async (name: string): Promise<void> => {
-  const settings = getApiSettings();
-  const isConfigured = isApiConfigured();
-
-  if (!isConfigured) {
-    throw new Error("API not configured");
-  }
-
-  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/api-configs/${name}`, {
+  const response = await apiFetch(`${API_BASE.maestro}/api-configs/${name}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
-    },
   });
 
   if (!response.ok) {

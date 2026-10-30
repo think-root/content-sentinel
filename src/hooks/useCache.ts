@@ -7,7 +7,6 @@ import {
   getCronJobHistoryFromCache,
   isExpired,
 } from "../utils/cache-utils";
-import { isApiConfigured } from "../utils/api-settings";
 import { toast } from "../components/ui/common/toast-config";
 import { isRateLimited } from "../lib/requestQueue";
 import { isRateLimitError } from "../utils/api-error";
@@ -41,10 +40,6 @@ export const useCache = ({
   const maxRetries = 3;
 
   const checkCacheValidity = useCallback(async () => {
-    if (!isApiConfigured()) {
-      return;
-    }
-
     // Check if currently rate limited
     if (isRateLimited()) {
       console.log("Currently rate limited, skipping cache validation");
