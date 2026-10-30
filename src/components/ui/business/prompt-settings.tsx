@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { /*Bot,*/ Save, RotateCcw, AlertCircle, Loader2, RefreshCw, CheckCircle } from 'lucide-react';
+import { /*Bot,*/ Save, RotateCcw, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { usePromptSettings } from '@/hooks/usePromptSettings';
 import { toast } from '../common/toast-config';
 import { ConfirmDialog } from '../common/confirm-dialog';
-import { languageValidator, ValidationResult } from '@/utils/language-validation';
+import { useLanguageValidation } from '@/hooks/useLanguageValidation';
+import { LanguageValidationIndicator } from '../common/language-validation-indicator';
 import { Card, CardContent } from '../layout/card';
 import { Button } from '../base/button';
 import { Input } from '../base/input';
@@ -11,8 +12,7 @@ import { Textarea } from '../base/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 import { Switch } from '../base/switch';
 import { Label } from '../base/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
-import { storage } from '../../../lib/storage';
+import { TooltipProvider } from '../base/tooltip';
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -51,63 +51,12 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [temperatureError, setTemperatureError] = useState<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [languageValidation, setLanguageValidation] = useState<ValidationResult>({
-    isValid: true,
-    validCodes: [],
-    invalidCodes: []
-  });
-  const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
-
-  // The validator can report a valid code without listing it (e.g. when the
-  // available-languages list can't be fetched), so the tooltip always needs a
-  // fallback — otherwise hovering the icon shows an empty bubble.
-  const languageValidationTooltip = languageValidation.isValid
-    ? languageValidation.validCodes.length > 0
-      ? `Valid: ${languageValidation.validCodes.join(', ')}`
-      : 'Valid language code'
-    : languageValidation.message ||
-      (languageValidation.invalidCodes.length > 0
-        ? `Invalid: ${languageValidation.invalidCodes.join(', ')}`
-        : 'Invalid language code');
-
-  // Language validation cache helpers
-  const LANG_VALIDATION_CACHE_KEY = 'promptLanguageValidationCache';
-  const LANG_VALIDATION_TTL = 60 * 60 * 1000; // 1 hour
-
-  const normalizeCodesStr = (codes: string) =>
-    codes
-      .split(',')
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean)
-      .sort()
-      .join(',');
-
-  const getValidationCache = (): Record<string, { result: ValidationResult; ts: number }> => {
-    try {
-      const raw = storage.get(LANG_VALIDATION_CACHE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  };
-
-  const setValidationCache = (codesKey: string, result: ValidationResult) => {
-    try {
-      const cache = getValidationCache();
-      cache[codesKey] = { result, ts: Date.now() };
-      storage.set(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
-    } catch {
-      // no-op
-    }
-  };
-
-  const getValidationFromCache = (codesKey: string): ValidationResult | null => {
-    const cache = getValidationCache();
-    const entry = cache[codesKey];
-    if (!entry) return null;
-    if (Date.now() - entry.ts > LANG_VALIDATION_TTL) return null;
-    return entry.result;
-  };
+  const {
+    languageValidation,
+    isValidatingLanguage,
+    validateLanguageCodes,
+    resetLanguageValidation,
+  } = useLanguageValidation('promptLanguageValidationCache');
 
   useEffect(() => {
     if (isApiReady) {
@@ -131,32 +80,10 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
         llm_output_language: settings.llm_output_language || ''
       });
       setHasUnsavedChanges(false);
-      // Re-validate languages from cache immediately (no spinner), then background refresh
-      const codes = settings.llm_output_language || '';
-      const normalized = normalizeCodesStr(codes);
-      if (normalized) {
-        const cached = getValidationFromCache(normalized);
-        if (cached) {
-          setLanguageValidation(cached);
-          // Background refresh
-          (async () => {
-            try {
-              const result = await languageValidator.validateLanguageCodes(codes);
-              setLanguageValidation(result);
-              setValidationCache(normalized, result);
-            } catch (error) {
-              console.error('Language validation error (init background):', error);
-            }
-          })();
-        } else {
-          // Trigger standard validation flow
-          validateLanguageCodes(codes);
-        }
-      } else {
-        setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
-      }
+      // Re-validate languages: a cached result shows immediately, then refreshes in the background
+      validateLanguageCodes(settings.llm_output_language || '');
     }
-  }, [settings]);
+  }, [settings, validateLanguageCodes]);
 
   const validateTemperature = (value: number): boolean => {
     if (value < 0 || value > 2) {
@@ -166,52 +93,6 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
     setTemperatureError(null);
     return true;
   };
-
-  const validateLanguageCodes = useCallback(async (codes: string) => {
-    const raw = codes || '';
-    const normalized = normalizeCodesStr(raw);
-
-    if (!normalized) {
-      setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
-      return;
-    }
-
-    // Try cache first to avoid spinner/flicker
-    const cached = getValidationFromCache(normalized);
-    if (cached) {
-      setLanguageValidation(cached);
-      // Background refresh without spinner
-      (async () => {
-        try {
-          const result = await languageValidator.validateLanguageCodes(raw);
-          setLanguageValidation(result);
-          setValidationCache(normalized, result);
-        } catch (error) {
-          console.error('Language validation error (background):', error);
-        }
-      })();
-      return;
-    }
-
-    // No cache => show spinner and validate
-    setIsValidatingLanguage(true);
-    try {
-      const result = await languageValidator.validateLanguageCodes(raw);
-      setLanguageValidation(result);
-      setValidationCache(normalized, result);
-    } catch (error) {
-      console.error('Language validation error:', error);
-      setLanguageValidation({
-        isValid: false,
-        validCodes: [],
-        invalidCodes: [],
-        message: 'Validation service unavailable'
-      });
-    } finally {
-      setIsValidatingLanguage(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Debounced validation
   useEffect(() => {
@@ -288,11 +169,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
       });
       setHasUnsavedChanges(false);
       setTemperatureError(null);
-      setLanguageValidation({
-        isValid: true,
-        validCodes: [],
-        invalidCodes: []
-      });
+      resetLanguageValidation();
       toast.success('Changes reset successfully');
     }
   };
@@ -307,11 +184,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
       await resetToDefaults();
       setHasUnsavedChanges(false);
       setTemperatureError(null);
-      setLanguageValidation({
-        isValid: true,
-        validCodes: [],
-        invalidCodes: []
-      });
+      resetLanguageValidation();
       toast.success('Settings reset to defaults successfully');
     } catch (error) {
       console.error('Failed to reset to defaults:', error);
@@ -405,28 +278,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
                           className={localSettings.llm_output_language.trim() ? 'pr-10' : ''}
                         />
                         {localSettings.llm_output_language.trim() && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                            {isValidatingLanguage && (
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            )}
-                            {!isValidatingLanguage && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="cursor-help">
-                                    {languageValidation.isValid && (
-                                      <CheckCircle className="h-4 w-4 text-success" />
-                                    )}
-                                    {!languageValidation.isValid && (
-                                      <AlertCircle className="h-4 w-4 text-destructive" />
-                                    )}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div>{languageValidationTooltip}</div>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
+                          <LanguageValidationIndicator validation={languageValidation} isValidating={isValidatingLanguage} />
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">Comma-separated language codes</div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CronJobHistory } from '@/api/maestro';
-import { getLegacyFailedApis, getRetryTarget } from './message-retry';
+import { buildRetryConfirmMessage, getLegacyFailedApis, getRetryPlan, getRetryTarget } from './message-retry';
 
 const entry = (overrides: Partial<CronJobHistory>): CronJobHistory => ({
   name: 'message',
@@ -90,5 +90,38 @@ describe('getLegacyFailedApis', () => {
         output: 'Message sent to: telegram. Failed: twitter. Repository: https://github.com/a/b. Errors: boom',
       }))
     ).toEqual([]);
+  });
+});
+
+describe('getRetryPlan', () => {
+  it('uses the recorded target when there is one', () => {
+    expect(
+      getRetryPlan(entry({ details: { url: 'https://github.com/a/b', failed: ['threads'] } }))
+    ).toEqual({ failed: ['threads'], url: 'https://github.com/a/b' });
+  });
+
+  it('leaves the url to be resolved for legacy runs that never recorded it', () => {
+    expect(
+      getRetryPlan(entry({ output: 'Message sent to: bluesky. Failed: threads' }))
+    ).toEqual({ failed: ['threads'] });
+  });
+
+  it('returns null for runs that cannot be retried', () => {
+    expect(getRetryPlan(entry({ status: 1 }))).toBeNull();
+    expect(getRetryPlan(entry({ details: { failed: ['threads'] } }))).toBeNull();
+  });
+});
+
+describe('buildRetryConfirmMessage', () => {
+  it('names the recorded repository', () => {
+    expect(
+      buildRetryConfirmMessage({ failed: ['threads', 'x'], url: 'https://github.com/a/b', resolved: false })
+    ).toBe('Send https://github.com/a/b to threads, x?');
+  });
+
+  it('warns when the repository was resolved rather than recorded', () => {
+    expect(
+      buildRetryConfirmMessage({ failed: ['threads'], url: 'https://github.com/a/b', resolved: true })
+    ).toMatch(/did not record which repository.*latest published one will be used: https:\/\/github\.com\/a\/b\. Send it to threads\?/);
   });
 });

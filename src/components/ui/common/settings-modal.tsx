@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSwipeable } from 'react-swipeable';
-import { ApiSettings, LOCAL_STORAGE_KEY, getApiSettings } from '@/utils/api-settings';
+import { useState, useEffect, useRef } from 'react';
+import { ApiSettings, LOCAL_STORAGE_KEY, areApiSettingsEqual, getApiSettings } from '@/utils/api-settings';
 import { toast } from './toast-config';
-import { AlertCircle, Settings, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
-import { languageValidator, ValidationResult } from '@/utils/language-validation';
+import { Settings, Loader2 } from 'lucide-react';
 import { validateTimezone } from '@/utils/settings-validators';
-import { DATE_FORMAT_PRESETS, hasTime, sampleDate, stripSeconds, withSeconds } from '@/utils/date-format';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
+import { useLanguageValidation } from '@/hooks/useLanguageValidation';
+import { useDialogTabSwipe } from '@/hooks/useDialogTabSwipe';
+import { TooltipProvider } from '../base/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -20,54 +19,18 @@ import {
   TabsList,
   TabsTrigger,
 } from '../base/tabs';
-import { Input } from '../base/input';
-import { Label } from '../base/label';
 import { Button } from '../base/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 import { storage } from '../../../lib/storage';
+import { SettingsGeneralTab } from './settings-general-tab';
+import { SettingsApiTab } from './settings-api-tab';
+import { SettingsCacheTab } from './settings-cache-tab';
 
-// Normalize settings for comparison and equality check
-function normalizeValue(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  return String(value).trim();
-}
+type SettingsTab = 'general' | 'api' | 'cache';
 
-function normalizeSettingsForCompare(s: ApiSettings) {
-  return {
-    apiBaseUrl: normalizeValue(s.apiBaseUrl),
-    apiBearerToken: normalizeValue(s.apiBearerToken),
-    dateFormat: normalizeValue(s.dateFormat) || 'DD.MM.YYYY HH:mm',
-    timezone: normalizeValue(s.timezone) || 'Europe/Kyiv',
-    displayLanguage: (normalizeValue(s.displayLanguage) || 'uk').toLowerCase(),
-    contentAlchemist: {
-      apiBaseUrl: normalizeValue(s.contentAlchemist?.apiBaseUrl),
-      apiBearerToken: normalizeValue(s.contentAlchemist?.apiBearerToken),
-    },
-    contentMaestro: {
-      apiBaseUrl: normalizeValue(s.contentMaestro?.apiBaseUrl),
-      apiBearerToken: normalizeValue(s.contentMaestro?.apiBearerToken),
-    },
-  };
-}
+const TABS: SettingsTab[] = ['general', 'api', 'cache'];
 
-function areApiSettingsEqual(oldSettings: ApiSettings, currentSettings: ApiSettings): boolean {
-  const a = normalizeSettingsForCompare(oldSettings);
-  const b = normalizeSettingsForCompare(currentSettings);
-  return (
-    a.apiBaseUrl === b.apiBaseUrl &&
-    a.apiBearerToken === b.apiBearerToken &&
-    a.dateFormat === b.dateFormat &&
-    a.timezone === b.timezone &&
-    a.displayLanguage === b.displayLanguage &&
-    a.contentAlchemist.apiBaseUrl === b.contentAlchemist.apiBaseUrl &&
-    a.contentAlchemist.apiBearerToken === b.contentAlchemist.apiBearerToken &&
-    a.contentMaestro.apiBaseUrl === b.contentMaestro.apiBaseUrl &&
-    a.contentMaestro.apiBearerToken === b.contentMaestro.apiBearerToken
-  );
-}
-
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const toastOptions = {
+  id: 'unique-toast-settings'
 };
 
 interface SettingsModalProps {
@@ -77,136 +40,27 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
-  const [activeTab, setActiveTab] = useState<'general' | 'api' | 'cache'>('general');
-  const [clearingCache, setClearingCache] = useState(false);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [languageValidation, setLanguageValidation] = useState<ValidationResult>({
-    isValid: true,
-    validCodes: [],
-    invalidCodes: []
-  });
-  const [isValidatingLanguage, setIsValidatingLanguage] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
-
-  const baseDateFormat = stripSeconds(settings.dateFormat || 'DD.MM.YYYY HH:mm');
-  const includeSeconds = (settings.dateFormat || '').includes('ss');
-  const dateFormatOptions = DATE_FORMAT_PRESETS.includes(baseDateFormat)
-    ? DATE_FORMAT_PRESETS
-    : [baseDateFormat, ...DATE_FORMAT_PRESETS];
+  const {
+    languageValidation,
+    isValidatingLanguage,
+    validateLanguageCodes,
+    resetLanguageValidation,
+  } = useLanguageValidation('settingsLanguageValidationCache');
+  const { handlers, isSwiping, resetSwipe, animationClass } = useDialogTabSwipe(TABS, activeTab, setActiveTab);
 
   // Capture initial settings snapshot on open to detect no-op saves
   const initialSettingsRef = useRef<ApiSettings | null>(null);
 
-  // Track swipe-origin animations and direction (mobile-only)
-  const [lastSwipeDir, setLastSwipeDir] = useState<"left" | "right" | null>(null);
-  const [animateOnSwipe, setAnimateOnSwipe] = useState(false);
-  
-  const toastOptions = {
-    id: 'unique-toast-settings'
+  // Clear ephemeral UI state without touching persistence or tabs
+  const resetFormState = () => {
+    setTimezoneError(null);
+    resetLanguageValidation();
+    setIsSaving(false);
+    resetSwipe();
   };
-
-  // Language validation cache helpers
-  const LANG_VALIDATION_CACHE_KEY = 'settingsLanguageValidationCache';
-  const LANG_VALIDATION_TTL = 60 * 60 * 1000; // 1 hour
-
-  const normalizeCodesStr = (codes: string) =>
-    codes
-      .split(',')
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean)
-      .sort()
-      .join(',');
-
-  const getValidationCache = (): Record<string, { result: ValidationResult; ts: number }> => {
-    try {
-      const raw = storage.get(LANG_VALIDATION_CACHE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  };
-
-  const setValidationCache = (codesKey: string, result: ValidationResult) => {
-    try {
-      const cache = getValidationCache();
-      cache[codesKey] = { result, ts: Date.now() };
-      storage.set(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
-    } catch {
-      // no-op
-    }
-  };
-
-  const getValidationFromCache = (codesKey: string): ValidationResult | null => {
-    const cache = getValidationCache();
-    const entry = cache[codesKey];
-    if (!entry) return null;
-    if (Date.now() - entry.ts > LANG_VALIDATION_TTL) return null;
-    return entry.result;
-  };
-
-  const tabs: Array<'general' | 'api' | 'cache'> = ['general', 'api', 'cache'];
-
-  const handlers = useSwipeable({
-  onSwipeStart: (eventData) => {
-      // Ignore swipe if user is selecting text
-      const selection = window.getSelection();
-      if (selection && selection.toString().length > 0) return;
-
-  if (isMobileDevice()) {
-  // Only prevent swipe if it's a clear horizontal swipe, not vertical scrolling
-    const { deltaX, deltaY } = eventData;
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-        setIsSwiping(true);
-    }
-  }
-  },
-  onSwiped: () => {
-    if (isMobileDevice()) {
-    setIsSwiping(false);
-  }
-  },
-  onSwipedLeft: (eventData) => {
-    // Ignore swipe if user is selecting text
-    const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) return;
-
-  if (isMobileDevice()) {
-  const { deltaX, deltaY } = eventData;
-  // Only trigger tab change if it's clearly a horizontal swipe
-  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
-      setLastSwipeDir("left");
-        setAnimateOnSwipe(true);
-        const currentIndex = tabs.indexOf(activeTab);
-      if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1]);
-    }
-    setTimeout(() => setAnimateOnSwipe(false), 300);
-  }
-  }
-  },
-  onSwipedRight: (eventData) => {
-    // Ignore swipe if user is selecting text
-    const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) return;
-
-  if (isMobileDevice()) {
-      const { deltaX, deltaY } = eventData;
-      // Only trigger tab change if it's clearly a horizontal swipe
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
-          setLastSwipeDir("right");
-          setAnimateOnSwipe(true);
-          const currentIndex = tabs.indexOf(activeTab);
-          if (currentIndex > 0) {
-            setActiveTab(tabs[currentIndex - 1]);
-          }
-          setTimeout(() => setAnimateOnSwipe(false), 300);
-        }
-      }
-    },
-    preventScrollOnSwipe: false,
-    trackMouse: false
-  });
 
   // Rehydrate settings from storage on open, normalize displayLanguage, and clear ephemeral UI state
   useEffect(() => {
@@ -226,64 +80,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
     // Clear transient UI state so errors/spinners do not persist across opens
     resetFormState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-
-  // The validator can report a valid code without listing it (e.g. when the
-  // available-languages list can't be fetched), so the tooltip always needs a
-  // fallback — otherwise hovering the icon shows an empty bubble.
-  const languageValidationTooltip = languageValidation.isValid
-    ? languageValidation.validCodes.length > 0
-      ? `Valid: ${languageValidation.validCodes.join(', ')}`
-      : 'Valid language code'
-    : languageValidation.message ||
-      (languageValidation.invalidCodes.length > 0
-        ? `Invalid: ${languageValidation.invalidCodes.join(', ')}`
-        : 'Invalid language code');
-
-  const validateLanguageCodes = useCallback(async (codes: string) => {
-    const raw = codes || '';
-    const normalized = normalizeCodesStr(raw);
-
-    if (!normalized) {
-      setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
-      return;
-    }
-
-    // Try cache first to avoid spinner/flicker
-    const cached = getValidationFromCache(normalized);
-    if (cached) {
-      setLanguageValidation(cached);
-      // Background refresh without spinner
-      (async () => {
-        try {
-          const result = await languageValidator.validateLanguageCodes(raw);
-          setLanguageValidation(result);
-          setValidationCache(normalized, result);
-        } catch (error) {
-          console.error('Language validation error (background):', error);
-        }
-      })();
-      return;
-    }
-
-    // No cache => show spinner and validate
-    setIsValidatingLanguage(true);
-    try {
-      const result = await languageValidator.validateLanguageCodes(raw);
-      setLanguageValidation(result);
-      setValidationCache(normalized, result);
-    } catch (error) {
-      console.error('Language validation error:', error);
-      setLanguageValidation({
-        isValid: false,
-        validCodes: [],
-        invalidCodes: [],
-        message: 'Validation service unavailable'
-      });
-    } finally {
-      setIsValidatingLanguage(false);
-    }
-  }, []);
 
   // Debounced validation for display language
   useEffect(() => {
@@ -356,9 +154,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
       storage.set(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
 
-      // toast.dismiss('unique-toast-settings');
-      // toast.success('Settings successfully updated', toastOptions);
-
       // Notify app to perform a single foreground refresh after settings save
       window.dispatchEvent(new CustomEvent('content-sentinel:settings-saved'));
 
@@ -383,15 +178,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       ...prev,
       ...newSettings
     }));
-  };
-
-  // Clear ephemeral UI state without touching persistence or tabs
-  const resetFormState = () => {
-    setTimezoneError(null);
-    setLanguageValidation({ isValid: true, validCodes: [], invalidCodes: [] });
-    setIsValidatingLanguage(false);
-    setIsSaving(false);
-    setIsSwiping(false);
   };
 
   const updateContentAlchemist = (field: keyof ApiSettings['contentAlchemist'], value: string) => {
@@ -425,7 +211,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'general' | 'api' | 'cache')}>
+        <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as SettingsTab)}>
           <TabsList className="grid w-full grid-cols-3 shrink-0">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="api">API</TabsTrigger>
@@ -434,240 +220,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           <div
             {...handlers}
-            className={`mt-4 -mx-1 px-1 pb-1 min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin ${
-              isMobileDevice() && animateOnSwipe && lastSwipeDir === 'left' ? 'motion-safe:animate-slide-fade-in-from-left' : ''
-            } ${
-              isMobileDevice() && animateOnSwipe && lastSwipeDir === 'right' ? 'motion-safe:animate-slide-fade-in-from-right' : ''
-            }`}
+            className={`mt-4 -mx-1 px-1 pb-1 min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin ${animationClass}`}
           >
             <TabsContent value="general" className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="dateFormat">Date Format</Label>
-                <Select
-                  value={baseDateFormat}
-                  onValueChange={(value) => updateSettings({ dateFormat: withSeconds(value, includeSeconds) })}
-                >
-                  <SelectTrigger id="dateFormat">
-                    <SelectValue placeholder="Select date format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dateFormatOptions.map((format) => (
-                      <SelectItem key={format} value={format}>
-                        {format} <span className="text-muted-foreground">— {sampleDate(format)}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {hasTime(baseDateFormat) && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="dateFormatSeconds"
-                      className="h-4 w-4 accent-primary cursor-pointer"
-                      checked={includeSeconds}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ dateFormat: withSeconds(baseDateFormat, e.target.checked) })}
-                    />
-                    <Label htmlFor="dateFormatSeconds" className="cursor-pointer font-normal">Show seconds</Label>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="timezone">Timezone</Label>
-                <Input
-                  type="text"
-                  id="timezone"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Enter timezone (e.g. Europe/Kyiv)"
-                  value={settings.timezone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ timezone: e.target.value.trim() })}
-                />
-                {timezoneError ? (
-                  <p className="text-sm text-destructive flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    {timezoneError}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    Europe/Kyiv, Europe/London, America/New_York
-                  </p>
-                )}
-              </div>
+              <SettingsGeneralTab
+                settings={settings}
+                timezoneError={timezoneError}
+                updateSettings={updateSettings}
+              />
             </TabsContent>
 
             <TabsContent value="api" className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium border-b pb-2">Content Alchemist API</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="alchemistApiBaseUrl">API Base URL</Label>
-                  <Input
-                  type="text"
-                  id="alchemistApiBaseUrl"
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Enter API base URL"
-                  value={settings.contentAlchemist?.apiBaseUrl}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBaseUrl', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="alchemistApiBearerToken">API Bearer Token</Label>
-                  <Input
-                  type="password"
-                  id="alchemistApiBearerToken"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Enter API bearer token"
-                  value={settings.contentAlchemist?.apiBearerToken}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentAlchemist('apiBearerToken', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayLanguage">Language Code</Label>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        id="displayLanguage"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        placeholder="uk or en, uk, fr"
-                        value={settings.displayLanguage}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSettings({ displayLanguage: e.target.value.toLowerCase() })}
-                        className={settings.displayLanguage.trim() ? 'pr-10' : ''}
-                      />
-                      {settings.displayLanguage.trim() && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                          {isValidatingLanguage && (
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                          {!isValidatingLanguage && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="cursor-help">
-                                  {languageValidation.isValid && (
-                                    <CheckCircle className="h-4 w-4 text-success" />
-                                  )}
-                                  {!languageValidation.isValid && (
-                                    <AlertCircle className="h-4 w-4 text-destructive" />
-                                  )}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div>{languageValidationTooltip}</div>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 leading-snug mt-1">
-                      <AlertCircle className="h-4 w-4 flex-shrink-0 mt-[2px]" />
-                      <span className="whitespace-normal break-words">
-                        Language code for displaying posts. Uses{' '}
-                        <a
-                          href="https://en.wikipedia.org/wiki/ISO_639-1"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline"
-                        >
-                          ISO 639-1
-                        </a>{' '}
-                        standard.
-                      </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium border-b pb-2">Content Maestro API</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="maestroApiBaseUrl">API Base URL</Label>
-                  <Input
-                  type="text"
-                  id="maestroApiBaseUrl"
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Enter API base URL"
-                  value={settings.contentMaestro?.apiBaseUrl}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBaseUrl', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maestroApiBearerToken">API Bearer Token</Label>
-                  <Input
-                  type="password"
-                  id="maestroApiBearerToken"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Enter API bearer token"
-                  value={settings.contentMaestro?.apiBearerToken}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentMaestro('apiBearerToken', e.target.value)}
-                  />
-                </div>
-              </div>
+              <SettingsApiTab
+                settings={settings}
+                languageValidation={languageValidation}
+                isValidatingLanguage={isValidatingLanguage}
+                updateSettings={updateSettings}
+                updateContentAlchemist={updateContentAlchemist}
+                updateContentMaestro={updateContentMaestro}
+              />
             </TabsContent>
 
             <TabsContent value="cache" className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg">
-                <h3 className="text-sm font-medium mb-2">API Cache Management</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  The application caches API responses to improve performance and reduce loading times. Clear the cache to fetch fresh data. You can also clear the cache if you encounter errors when loading data.
-                </p>
-                <Button
-                  onClick={async () => {
-                    setClearingCache(true);
-                    try {
-                      let message = 'Cache cleared successfully';
-                      
-                      if (window.clearAllCaches) {
-                        message = window.clearAllCaches();
-                        console.log('Cache clearing completed:', message);
-                      }
-
-                      toast.success(message, toastOptions);
-
-                      setTimeout(() => {
-                        const currentUrl = window.location.href;
-                        const separator = currentUrl.includes('?') ? '&' : '?';
-                        const timestamp = Date.now();
-                        window.location.href = `${currentUrl}${separator}cache_bust=${timestamp}`;
-                      }, 1000);
-                    } catch (error) {
-                      console.error('Cache clearing failed:', error);
-                      toast.error('Failed to clear cache', toastOptions);
-                    } finally {
-                      setClearingCache(false);
-                    }
-                  }}
-                  disabled={clearingCache}
-                  className="w-full sm:w-auto"
-                  size="sm"
-                  variant="destructive"
-                >
-                  {clearingCache ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Clearing...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Clear API Cache
-                    </>
-                  )}
-                </Button>
-              </div>
+              <SettingsCacheTab />
             </TabsContent>
           </div>
         </Tabs>

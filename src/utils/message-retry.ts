@@ -95,3 +95,31 @@ export const getLegacyFailedApis = (entry: CronJobHistory): string[] => {
 /** Stable identity for a history row, which has no id of its own. */
 export const getHistoryEntryKey = (entry: CronJobHistory): string =>
   `${entry.name}-${entry.timestamp}`;
+
+/** A plan is retryable once the integrations and the repository are both known. */
+export interface RetryPlan {
+  failed: string[];
+  /** Absent for legacy runs that never recorded the item; resolved before sending. */
+  url?: string;
+}
+
+/** What the retry button of a history row would send, or null to hide it. */
+export const getRetryPlan = (entry: CronJobHistory): RetryPlan | null => {
+  const target = getRetryTarget(entry);
+  if (target) {
+    return target;
+  }
+
+  const legacyFailed = getLegacyFailedApis(entry);
+  return legacyFailed.length > 0 ? { failed: legacyFailed } : null;
+};
+
+export const buildRetryConfirmMessage = (confirm: { failed: string[]; url: string; resolved: boolean }): string => {
+  const integrations = confirm.failed.join(', ');
+
+  if (confirm.resolved) {
+    return `This run did not record which repository it published, so the latest published one will be used: ${confirm.url}. Send it to ${integrations}?`;
+  }
+
+  return `Send ${confirm.url} to ${integrations}?`;
+};
