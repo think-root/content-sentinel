@@ -1,20 +1,13 @@
-# [2.0.0](https://github.com/think-root/content-sentinel/compare/v1.52.0...v2.0.0) (2026-10-30)
+## [2.0.0](https://github.com/think-root/content-sentinel/compare/v1.52.0...v2.0.0) (2026-10-30)
 
+### ⚠ BREAKING CHANGES
 
-* feat(api)!: call the backend through the proxy ([6209e08](https://github.com/think-root/content-sentinel/commit/6209e0874f40e5ac7b41c36146f5719406af8d87))
-
+* **api:** the backend is configured on the server. Set `ALCHEMIST_URL`, `ALCHEMIST_TOKEN`, `MAESTRO_URL` and `MAESTRO_TOKEN` in `.env`, or in the Cloudflare Pages project together with `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`.
 
 ### Features
 
+* **api:** call the backend through the proxy ([6209e08](https://github.com/think-root/content-sentinel/commit/6209e0874f40e5ac7b41c36146f5719406af8d87))
 * **proxy:** proxy the backend APIs with server-side tokens ([3cc81ab](https://github.com/think-root/content-sentinel/commit/3cc81ab579a110a3dbc467f327654ab3142f4292))
-
-
-### BREAKING CHANGES
-
-* the backend is configured on the server. Set
-ALCHEMIST_URL, ALCHEMIST_TOKEN, MAESTRO_URL and MAESTRO_TOKEN in .env, or
-in the Cloudflare Pages project together with ACCESS_TEAM_DOMAIN and
-ACCESS_AUD.
 
 # [1.52.0](https://github.com/think-root/content-sentinel/compare/v1.51.3...v1.52.0) (2026-10-30)
 
