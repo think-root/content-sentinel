@@ -69,7 +69,6 @@ function TruncatedText({ text, maxChars = 150 }: { text: string; maxChars?: numb
 export function RepositoryTable({
   repositories,
   loading,
-  isApiReady,
   totalItems,
   itemsPerPage,
   searchTerm,
@@ -333,14 +332,6 @@ export function RepositoryTable({
     </TableRow>
   );
 
-  const renderApiNotReady = () => (
-    <TableRow>
-      <TableCell colSpan={5} className="text-center py-4 text-sm text-muted-foreground">
-        Data could not be loaded because API keys are not configured
-      </TableCell>
-    </TableRow>
-  );
-
   const renderRepositoryRows = () => (
     localRepositories.map((repo) => (
       <TableRow key={repo.id} className="group">
@@ -435,7 +426,7 @@ export function RepositoryTable({
                            variant="ghost"
                            size="icon"
                            onClick={() => setPublishTarget(repo)}
-                           disabled={!isApiReady || promotingId !== null || publishBusy}
+                           disabled={promotingId !== null || publishBusy}
                            aria-label={repo.id === nextPostId ? 'Publish (already next in the queue)' : 'Publish'}
                            className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
                          >
@@ -533,8 +524,7 @@ export function RepositoryTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {!isApiReady ? renderApiNotReady() :
-           loading ? renderLoadingSkeleton() :
+          {loading ? renderLoadingSkeleton() :
            totalItems === 0 || localRepositories.length === 0 ? renderEmptyState() :
            renderRepositoryRows()}
         </TableBody>
@@ -574,7 +564,6 @@ export function RepositoryTable({
       <PublishRepositoryDialog
         repository={publishTarget}
         isNext={publishTarget !== null && publishTarget.id === nextPostId}
-        isApiReady={isApiReady}
         integrations={enabledIntegrations(integrations ?? [])}
         integrationsLoading={integrationsLoading}
         onClose={() => setPublishTarget(null)}

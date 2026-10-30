@@ -27,7 +27,6 @@ interface RepositoryListProps {
   currentPage: number;
   pageSize: number;
   loading: boolean;
-  isApiReady?: boolean;
   onRepositoryArchived?: () => void | Promise<void>;
 }
 
@@ -43,7 +42,6 @@ export function RepositoryList({
   currentPage: initialPage, 
   pageSize: initialPageSize, 
   loading,
-  isApiReady = true,
   onRepositoryArchived
 }: RepositoryListProps) {
   const {
@@ -141,7 +139,6 @@ export function RepositoryList({
             <RepositoryTable
               repositories={filteredItems}
               loading={loading}
-              isApiReady={isApiReady}
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}
@@ -157,7 +154,6 @@ export function RepositoryList({
             <RepositoryMobileView
               repositories={filteredItems}
               loading={loading}
-              isApiReady={isApiReady}
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               searchTerm={searchTerm}

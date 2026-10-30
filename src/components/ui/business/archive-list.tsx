@@ -13,7 +13,6 @@ export function ArchiveList({
   items,
   all,
   loading,
-  isApiReady,
   filters,
   showFilters,
   currentPage,
@@ -33,7 +32,7 @@ export function ArchiveList({
         <div className="flex items-center flex-1">
           <Archive className="h-5 w-5 text-muted-foreground mr-2" />
           <CardTitle className="text-lg">Archived</CardTitle>
-          {isApiReady && all > 0 && (
+          {all > 0 && (
             <span className="ml-2 text-sm text-muted-foreground">{all} total</span>
           )}
         </div>
@@ -70,7 +69,6 @@ export function ArchiveList({
             <ArchiveTable
               items={items}
               loading={loading}
-              isApiReady={isApiReady}
               totalItems={totalItems}
               itemsPerPage={filters.pageSize}
               hasFilters={hasFilters}
@@ -81,7 +79,6 @@ export function ArchiveList({
             <ArchiveMobileView
               items={items}
               loading={loading}
-              isApiReady={isApiReady}
               totalItems={totalItems}
               itemsPerPage={filters.pageSize}
               hasFilters={hasFilters}

@@ -21,7 +21,6 @@ const toastOptions = {
 export function RepositoryMobileView({
   repositories,
   loading,
-  isApiReady,
   totalItems,
   itemsPerPage,
   searchTerm,
@@ -284,14 +283,6 @@ export function RepositoryMobileView({
     </div>
   );
 
-  const renderApiNotReady = () => (
-    <div className="bg-card border rounded-lg p-4 mb-4">
-      <p className="text-sm text-muted-foreground text-center">
-        Data could not be loaded because API keys are not configured
-      </p>
-    </div>
-  );
-
   const renderRepositoryCards = () => (
     localRepositories.map((repo, index) => (
       <div key={repo.id} className={`bg-card border ${index !== localRepositories.length - 1 ? 'border-b' : ''} p-4 group hover:bg-muted/50 transition-colors`}>
@@ -379,7 +370,7 @@ export function RepositoryMobileView({
                           variant="ghost"
                           size="icon"
                           onClick={() => setPublishTarget(repo)}
-                          disabled={!isApiReady || promotingId !== null || publishBusy}
+                          disabled={promotingId !== null || publishBusy}
                           aria-label={repo.id === nextPostId ? 'Publish (already next in the queue)' : 'Publish'}
                           className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50"
                           title={repo.id === nextPostId ? 'Publish (already next in the queue)' : 'Publish'}
@@ -446,8 +437,7 @@ export function RepositoryMobileView({
 
   return (
     <>
-      {!isApiReady ? renderApiNotReady() :
-       loading ? renderLoadingSkeleton() :
+      {loading ? renderLoadingSkeleton() :
        totalItems === 0 || localRepositories.length === 0 ? renderEmptyState() :
        renderRepositoryCards()}
 
@@ -485,7 +475,6 @@ export function RepositoryMobileView({
       <PublishRepositoryDialog
         repository={publishTarget}
         isNext={publishTarget !== null && publishTarget.id === nextPostId}
-        isApiReady={isApiReady}
         integrations={enabledIntegrations(integrations ?? [])}
         integrationsLoading={integrationsLoading}
         onClose={() => setPublishTarget(null)}

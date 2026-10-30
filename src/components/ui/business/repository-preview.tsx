@@ -1,7 +1,6 @@
 import { Repository } from '@/types';
 import { formatDate } from '@/utils/date-format';
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/card';
-import { Badge } from '../common/badge';
 import { Skeleton } from '../common/skeleton';
 import { RepositoryLink } from '../common/repository-link';
 
@@ -9,10 +8,9 @@ interface RepositoryPreviewProps {
   title: string;
   repository?: Repository;
   loading: boolean;
-  isApiReady?: boolean;
 }
 
-export function RepositoryPreview({ title, repository, loading, isApiReady = true }: RepositoryPreviewProps) {
+export function RepositoryPreview({ title, repository, loading }: RepositoryPreviewProps) {
   const Icon = title === "Latest post" ? (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-muted-foreground mr-2">
       <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -56,14 +54,7 @@ export function RepositoryPreview({ title, repository, loading, isApiReady = tru
       </CardHeader>
 
       <CardContent>
-        {!isApiReady ? (
-          <div className="text-muted-foreground text-sm">
-            <Badge variant="outline" className="mb-2">
-              API Not Configured
-            </Badge>
-            <p>Data could not be loaded because API keys are not configured</p>
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div className="space-y-3">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-20 w-full" />

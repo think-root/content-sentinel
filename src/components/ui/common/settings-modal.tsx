@@ -22,12 +22,11 @@ import {
 import { Button } from '../base/button';
 import { storage } from '../../../lib/storage';
 import { SettingsGeneralTab } from './settings-general-tab';
-import { SettingsApiTab } from './settings-api-tab';
 import { SettingsCacheTab } from './settings-cache-tab';
 
-type SettingsTab = 'general' | 'api' | 'cache';
+type SettingsTab = 'general' | 'cache';
 
-const TABS: SettingsTab[] = ['general', 'api', 'cache'];
+const TABS: SettingsTab[] = ['general', 'cache'];
 
 const toastOptions = {
   id: 'unique-toast-settings'
@@ -136,20 +135,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
     setIsSaving(true);
     try {
-      const settingsToSave = {
-        apiBaseUrl: settings.apiBaseUrl || "",
-        apiBearerToken: settings.apiBearerToken || "",
+      const settingsToSave: ApiSettings = {
         dateFormat: settings.dateFormat || "DD.MM.YYYY HH:mm",
         timezone: settings.timezone || "Europe/Kyiv",
         displayLanguage: (settings.displayLanguage || "uk").toLowerCase(),
-        contentAlchemist: {
-          apiBaseUrl: settings.contentAlchemist?.apiBaseUrl || "",
-          apiBearerToken: settings.contentAlchemist?.apiBearerToken || "",
-        },
-        contentMaestro: {
-          apiBaseUrl: settings.contentMaestro?.apiBaseUrl || "",
-          apiBearerToken: settings.contentMaestro?.apiBearerToken || "",
-        },
       };
 
       storage.set(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
@@ -180,26 +169,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }));
   };
 
-  const updateContentAlchemist = (field: keyof ApiSettings['contentAlchemist'], value: string) => {
-    setSettings((prev: ApiSettings) => ({
-      ...prev,
-      contentAlchemist: {
-        ...prev.contentAlchemist,
-        [field]: value
-      }
-    }));
-  };
-
-  const updateContentMaestro = (field: keyof ApiSettings['contentMaestro'], value: string) => {
-    setSettings((prev: ApiSettings) => ({
-      ...prev,
-      contentMaestro: {
-        ...prev.contentMaestro,
-        [field]: value
-      }
-    }));
-  };
-
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && !isSwiping && !isSaving && onClose()}>
@@ -212,9 +181,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </DialogHeader>
 
         <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as SettingsTab)}>
-          <TabsList className="grid w-full grid-cols-3 shrink-0">
+          <TabsList className="grid w-full grid-cols-2 shrink-0">
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="api">API</TabsTrigger>
             <TabsTrigger value="cache">Cache</TabsTrigger>
           </TabsList>
 
@@ -226,18 +194,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <SettingsGeneralTab
                 settings={settings}
                 timezoneError={timezoneError}
-                updateSettings={updateSettings}
-              />
-            </TabsContent>
-
-            <TabsContent value="api" className="space-y-6">
-              <SettingsApiTab
-                settings={settings}
                 languageValidation={languageValidation}
                 isValidatingLanguage={isValidatingLanguage}
                 updateSettings={updateSettings}
-                updateContentAlchemist={updateContentAlchemist}
-                updateContentMaestro={updateContentMaestro}
               />
             </TabsContent>
 

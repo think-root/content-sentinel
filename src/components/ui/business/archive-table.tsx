@@ -17,7 +17,6 @@ const COLUMN_COUNT = 6;
 export function ArchiveTable({
   items,
   loading,
-  isApiReady,
   totalItems,
   itemsPerPage,
   hasFilters,
@@ -51,14 +50,6 @@ export function ArchiveTable({
     <TableRow>
       <TableCell colSpan={COLUMN_COUNT} className="text-center py-8 text-sm text-muted-foreground">
         {hasFilters ? 'No archived repositories match these filters' : 'No archived repositories yet'}
-      </TableCell>
-    </TableRow>
-  );
-
-  const renderApiNotReady = () => (
-    <TableRow>
-      <TableCell colSpan={COLUMN_COUNT} className="text-center py-4 text-sm text-muted-foreground">
-        Data could not be loaded because API keys are not configured
       </TableCell>
     </TableRow>
   );
@@ -104,8 +95,7 @@ export function ArchiveTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {!isApiReady ? renderApiNotReady() :
-         loading ? renderLoadingSkeleton() :
+        {loading ? renderLoadingSkeleton() :
          totalItems === 0 || items.length === 0 ? renderEmptyState() :
          renderRows()}
       </TableBody>

@@ -3,7 +3,7 @@ import { getRepositories } from '../api/alchemist';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
-import { isApiConfigured, getApiSettings } from "../utils/api-settings";
+import { getApiSettings } from "../utils/api-settings";
 import { alchemistErrorMessage } from "../utils/api-error";
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import {
@@ -303,19 +303,15 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         forceFetch
       );
     } catch (error) {
-      if (!isApiConfigured()) {
-        setState(prev => ({ ...prev, loading: false }));
+      const message = (error as Error | undefined)?.message;
+      // Check if it's a language availability error
+      if (message?.includes('no text available for language')) {
+        console.log('[Language Fallback] Language error caught in useRepositories:', message);
+        // Don't show error toast for language errors - fallback should handle them
+        setState((prev) => ({ ...prev, loading: false }));
       } else {
-        const message = (error as Error | undefined)?.message;
-        // Check if it's a language availability error
-        if (message?.includes('no text available for language')) {
-          console.log('[Language Fallback] Language error caught in useRepositories:', message);
-          // Don't show error toast for language errors - fallback should handle them
-          setState((prev) => ({ ...prev, loading: false }));
-        } else {
-          setErrorWithScroll(alchemistErrorMessage(error), "content-alchemist-error");
-          setState((prev) => ({ ...prev, loading: false }));
-        }
+        setErrorWithScroll(alchemistErrorMessage(error), "content-alchemist-error");
+        setState((prev) => ({ ...prev, loading: false }));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -83,7 +83,15 @@ A dashboard to monitor and manage the [content-alchemist](https://github.com/thi
 
    ```bash
    PORT=3000
+   ALCHEMIST_URL=https://alchemist.example.com
+   ALCHEMIST_TOKEN=your-alchemist-token
+   MAESTRO_URL=https://maestro.example.com
+   MAESTRO_TOKEN=your-maestro-token
    ```
+
+   The browser never sees the URLs and tokens: it calls the dashboard's own `/proxy/` path, and the server adds them (see [How the API is reached](#how-the-api-is-reached)).
+
+   Anyone who can open the dashboard can use the backend through it, so `npm start` and Docker only proxy behind [Cloudflare Access](#cloudflare-pages) (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`). On a machine or network nobody else can reach, set `ALLOW_UNAUTHENTICATED_PROXY=true` instead. `npm run dev` and `npm run preview` listen on localhost and don't need either.
 
 5. Build the project
 
@@ -112,6 +120,26 @@ docker compose up -d --build
 
 The dashboard is served on the `PORT` from `.env` (3000 by default).
 
+### Cloudflare Pages
+
+Build command `npm run build`, output directory `dist`. The `functions/` directory deploys the proxy as a Pages Function.
+
+1. Put the dashboard behind [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-public-app/): a self-hosted application for `<project>.pages.dev` and `*.<project>.pages.dev`, so preview deployments are covered too.
+2. Add these variables to the Pages project, for production and preview; make the tokens secrets:
+
+   | Variable                                     | Value                                                         |
+   | -------------------------------------------- | ------------------------------------------------------------- |
+   | `ALCHEMIST_URL`, `ALCHEMIST_TOKEN`           | Content Alchemist URL and bearer token                        |
+   | `MAESTRO_URL`, `MAESTRO_TOKEN`               | Content Maestro URL and bearer token                          |
+   | `ACCESS_TEAM_DOMAIN`                         | Your team domain, e.g. `your-team.cloudflareaccess.com`       |
+   | `ACCESS_AUD`                                 | Application Audience (AUD) tag of the Access application      |
+
+The proxy checks the Access token of every request and refuses to work on Pages without `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`, since a `pages.dev` site is public.
+
+### How the API is reached
+
+The dashboard calls `/proxy/alchemist/api/...` and `/proxy/maestro/api/...` on its own origin. The proxy ([`api-proxy.js`](api-proxy.js)) forwards the request to the service with its bearer token, so the tokens stay on the server. It runs as the Pages Function on Cloudflare, inside `server.js` for `npm start` and Docker, and inside Vite for `npm run dev` and `npm run preview`. All of them read the variables above. Only `/proxy/<service>/api/...` is forwarded, and only requests that carry the dashboard's own `X-Content-Sentinel` header, which another site can't make the browser send.
+
 ### Development
 
 ```bash
@@ -123,18 +151,16 @@ npm test           # unit tests
 
 ### Configuration Settings
 
-For successful use, you must fill in some settings that can be found in the site header on the right, the "Settings" button.
+Display settings are in the site header on the right, the "Settings" button. The backend services are configured on the server, see [Installation](#installation).
 
 | Tab         | Setting                   | Description                                                                                                                                                        |
 | ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **General** | Date Format               | Pick a format from the list, e.g. `DD.MM.YYYY HH:mm`, `MM/DD/YYYY hh:mm A` or `YYYY-MM-DD HH:mm`; formats with time can also show seconds. **Default:** `DD.MM.YYYY HH:mm` |
 |             | Timezone                  | IANA timezone the dates are shown in (**default:** `Europe/Kyiv`)                                                                                                    |
-| **API**     | Content Alchemist API     | Base URL and bearer token of your Content Alchemist                                                                                                               |
 |             | Language Code             | [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) code of the post texts to display (**default:** `uk`)                                                         |
-|             | Content Maestro API       | Base URL and bearer token of your Content Maestro                                                                                                                 |
 | **Cache**   | Clear API Cache           | Drops cached API responses and reloads the data                                                                                                                    |
 
-All settings are automatically saved and persisted in your browser's local storage.
+These settings are saved in your browser's local storage.
 
 ## License
 

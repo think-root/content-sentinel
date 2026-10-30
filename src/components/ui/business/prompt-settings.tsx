@@ -22,11 +22,10 @@ const LLM_PROVIDERS = [
 ];
 
 interface PromptSettingsProps {
-  isApiReady?: boolean;
   onUnsavedChangesChange?: (hasChanges: boolean) => void;
 }
 
-export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: PromptSettingsProps) => {
+export const PromptSettings = ({ onUnsavedChangesChange }: PromptSettingsProps) => {
   const { settings, loading, saving, fetchSettings, updateSettings, resetToDefaults } = usePromptSettings();
 
   // Initialize local state from cached settings (when available) to avoid UI flicker on mount/tab switch
@@ -59,10 +58,8 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
   } = useLanguageValidation('promptLanguageValidationCache');
 
   useEffect(() => {
-    if (isApiReady) {
-      fetchSettings();
-    }
-  }, [fetchSettings, isApiReady]);
+    fetchSettings();
+  }, [fetchSettings]);
 
   // Notify parent component about unsaved changes
   useEffect(() => {
@@ -200,11 +197,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
     <TooltipProvider>
       <Card className="mb-8">
       <CardContent className="pt-6">
-        {!isApiReady ? (
-          <div className="text-muted-foreground text-sm text-center py-8">
-            Data could not be loaded because API keys are not configured
-          </div>
-        ) : loading && !settings ? (
+        {loading && !settings ? (
           <div className="space-y-6 animate-pulse">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

@@ -8,7 +8,6 @@ import {
   updateApiConfig,
   deleteApiConfig,
 } from '@/api/api-configs';
-import { isApiConfigured } from '@/utils/api-settings';
 import { saveApiConfigsToCache, getApiConfigsFromCache } from '@/utils/cache-utils';
 
 interface UseApiConfigsOptions {
@@ -44,13 +43,6 @@ export const useApiConfigs = (options: UseApiConfigsOptions = {}): UseApiConfigs
   const isFetching = useRef(false);
 
   const fetchConfigs = useCallback(async (forceFetch = false) => {
-    const isConfigured = isApiConfigured();
-    
-    if (!isConfigured) {
-      setLoading(false);
-      return;
-    }
-
     // Prevent concurrent fetches
     if (isFetching.current) {
       return;

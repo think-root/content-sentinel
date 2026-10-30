@@ -107,7 +107,6 @@ export interface ArchiveFiltersProps {
 export interface ArchiveTableProps {
   items: ArchivedRepository[];
   loading: boolean;
-  isApiReady: boolean;
   totalItems: number;
   itemsPerPage: number;
   hasFilters: boolean;
@@ -119,7 +118,6 @@ export interface ArchiveListProps {
   items: ArchivedRepository[];
   all: number;
   loading: boolean;
-  isApiReady: boolean;
   filters: ArchiveFilterState;
   showFilters: boolean;
   currentPage: number;
@@ -132,6 +130,5 @@ export interface ArchiveListProps {
 }
 
 export interface ArchiveOldRepositoriesProps {
-  isApiReady: boolean;
   onArchived: () => void | Promise<void>;
 }

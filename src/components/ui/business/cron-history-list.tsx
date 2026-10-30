@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 interface CronHistoryListProps {
   history: CronJobHistory[];
   loading: boolean;
-  isApiReady: boolean;
   retryingKey: string | null;
   retriedKeys: string[];
   onRetry: (entry: CronJobHistory, plan: RetryPlan) => void;
@@ -55,7 +54,6 @@ const StatusBadge = ({ status }: { status: number }) => (
 export const CronHistoryList = ({
   history,
   loading,
-  isApiReady,
   retryingKey,
   retriedKeys,
   onRetry,
@@ -75,7 +73,7 @@ export const CronHistoryList = ({
         variant="ghost"
         size={variant === 'desktop' ? 'icon' : 'sm'}
         onClick={() => onRetry(entry, plan)}
-        disabled={!isApiReady || retryingKey !== null}
+        disabled={retryingKey !== null}
         aria-label={label}
         title={label}
         className={variant === 'desktop'
@@ -102,34 +100,6 @@ export const CronHistoryList = ({
       </TooltipProvider>
     );
   };
-
-  if (!isApiReady) {
-    return (
-      <div className="overflow-x-auto">
-        <div className="md:block hidden">
-          <Table>
-            <HistoryTableHeader />
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  <div className="text-muted-foreground text-sm py-4">
-                    Data could not be loaded because API keys are not configured
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-        <div className="md:hidden">
-          <div className="bg-card border rounded-lg p-4 mb-4">
-            <div className="text-muted-foreground text-sm text-center">
-              Data could not be loaded because API keys are not configured
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (loading && history.length === 0) {
     return (

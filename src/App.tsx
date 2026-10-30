@@ -17,7 +17,6 @@ import { useOverviewHistory } from './hooks/useOverviewHistory';
 import { DashboardLayout } from './components/ui/layout/dashboard-layout';
 import { DashboardContent } from './components/ui/layout/dashboard-content';
 import { SettingsModal } from './components/ui/common/settings-modal';
-import { isApiConfigured } from './utils/api-settings';
 import { readSavedRepositoryQuery } from './utils/repositoryListUtils';
 
 function App() {
@@ -32,7 +31,6 @@ function App() {
 
   const toastPosition = useResponsiveToast();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
-  const isApiReady = isApiConfigured();
 
   const setErrorWithScroll = useCallback((errorMessage: string, toastId?: string) => {
     toast.error(errorMessage, {
@@ -124,7 +122,7 @@ function App() {
     historyData: overviewHistoryData,
     loading: overviewLoading,
     refresh: refreshOverviewHistory
-  } = useOverviewHistory({ isApiReady });
+  } = useOverviewHistory();
 
   const {
     fetchSettings: fetchPromptSettings
@@ -165,7 +163,7 @@ function App() {
   // Let's keep it simple for now and not hook into manual refresh button yet perfectly, 
   // or I can manually trigger it if needed.
   // But wait, the user wants "checks for updates in background".
-  // My hook useOverviewHistory fetches on mount (when App mounts? No, when isApiReady).
+  // My hook useOverviewHistory fetches on mount.
   // And it manages its own state.
   // If I want global refresh to work, I should pass it to useDataRefresh maybe?
   // But useDataRefresh expects specific new data flags.
@@ -197,13 +195,9 @@ function App() {
   }, [refreshArchive, fetchRepositories]);
 
   useEffect(() => {
-    if (!isApiReady) {
-      return;
-    }
-
     // Fetch prompt settings (this is the only part that's not handled by the hooks)
     fetchPromptSettings();
-  }, [fetchPromptSettings, isApiReady]);
+  }, [fetchPromptSettings]);
 
   // Listen for settings saved event to trigger a single foreground refresh
   useEffect(() => {
@@ -256,7 +250,6 @@ function App() {
                 handleManualRefresh={handleManualRefresh}
                 loading={loading}
                 previewsLoading={previewsLoading}
-                isApiReady={isApiReady}
               >
                 <DashboardContent
                   stats={stats}
@@ -274,7 +267,6 @@ function App() {
                   fetchPreviews={fetchPreviews}
                   handleManualGenerate={handleManualGenerate}
                   handleAutoGenerate={handleAutoGenerate}
-                  isApiReady={isApiReady}
                   cronJobHistory={history}
                   cronJobHistoryLoading={cronJobHistoryLoading}
                   cronJobHistoryPageSize={cronJobHistoryPageSize}

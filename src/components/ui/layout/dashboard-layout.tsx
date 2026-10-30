@@ -16,7 +16,6 @@ interface DashboardLayoutProps {
   handleManualRefresh: (showNotification?: boolean) => Promise<boolean>;
   loading: boolean;
   previewsLoading: boolean;
-  isApiReady: boolean;
 }
 
 export const DashboardLayout = ({

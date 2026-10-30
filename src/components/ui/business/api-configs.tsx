@@ -26,7 +26,6 @@ interface ApiConfigsProps {
   loading: boolean;
   saving: boolean;
   deleting: boolean;
-  isApiReady?: boolean;
   onAdd: (config: CreateApiConfigRequest) => Promise<ApiConfig>;
   onEdit: (name: string, updates: UpdateApiConfigRequest) => Promise<ApiConfig>;
   onDelete: (name: string) => Promise<void>;
@@ -37,7 +36,6 @@ export const ApiConfigs = ({
   loading,
   saving,
   deleting,
-  isApiReady = true,
   onAdd,
   onEdit,
   onDelete,
@@ -316,12 +314,6 @@ export const ApiConfigs = ({
     </Table>
   );
 
-  const renderApiNotReady = () => (
-    <div className="text-center text-muted-foreground">
-      Data could not be loaded because API keys are not configured
-    </div>
-  );
-
   return (
     <>
       <Card>
@@ -329,21 +321,17 @@ export const ApiConfigs = ({
           <CardTitle>
             Integrations
           </CardTitle>
-          {isApiReady && (
-            <Button onClick={handleAddClick} size="sm" disabled={saving || loading}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Add Integration
-            </Button>
-          )}
+          <Button onClick={handleAddClick} size="sm" disabled={saving || loading}>
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            Add Integration
+          </Button>
         </CardHeader>
         <CardContent>
-          {!isApiReady ? (
-            renderApiNotReady()
-          ) : loading ? (
+          {loading ? (
             renderLoadingState()
           ) : (
             <>
