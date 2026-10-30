@@ -1,3 +1,20 @@
+# [1.52.0](https://github.com/think-root/content-sentinel/compare/v1.51.3...v1.52.0) (2026-10-30)
+
+
+### Bug Fixes
+
+* **a11y:** name the settings button ([761b726](https://github.com/think-root/content-sentinel/commit/761b726491576dbc37079609a9353b02a57ea909))
+* **overview:** label chart axes with whole numbers only ([a0a90bc](https://github.com/think-root/content-sentinel/commit/a0a90bc7fc5ee6e9029169430e16f1667aaddab7))
+* **repositories:** type stored numbers as numbers, not the default's literal ([1afb2f3](https://github.com/think-root/content-sentinel/commit/1afb2f3b82c71962c1ca32fb2dac8602d5ee1050))
+* **server:** serve the app from the root, as the build expects ([ce7a710](https://github.com/think-root/content-sentinel/commit/ce7a71051a1eeff51e24abba23df415bc46d41e3))
+* **settings:** clear the language validation caches with the API cache ([ed42836](https://github.com/think-root/content-sentinel/commit/ed42836d024628bfd1baa7f7c695bdd63cceff39))
+* **settings:** recognize seconds after any separator ([5d2ff69](https://github.com/think-root/content-sentinel/commit/5d2ff6937f518ce39e9897ac43a836bd4233e79e))
+
+
+### Features
+
+* **settings:** pick date format from a preset list ([782967f](https://github.com/think-root/content-sentinel/commit/782967f7c4d065a795d26e653ac139db154a0b86))
+
 ## [1.51.3](https://github.com/think-root/content-sentinel/compare/v1.51.2...v1.51.3) (2026-10-17)
 
 
