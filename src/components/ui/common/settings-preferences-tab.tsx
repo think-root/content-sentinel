@@ -7,7 +7,7 @@ import { Label } from '../base/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 import { LanguageValidationIndicator } from './language-validation-indicator';
 
-interface SettingsGeneralTabProps {
+interface SettingsPreferencesTabProps {
   settings: ApiSettings;
   timezoneError: string | null;
   languageValidation: ValidationResult;
@@ -15,13 +15,13 @@ interface SettingsGeneralTabProps {
   updateSettings: (newSettings: Partial<ApiSettings>) => void;
 }
 
-export const SettingsGeneralTab = ({
+export const SettingsPreferencesTab = ({
   settings,
   timezoneError,
   languageValidation,
   isValidatingLanguage,
   updateSettings,
-}: SettingsGeneralTabProps) => {
+}: SettingsPreferencesTabProps) => {
   const baseDateFormat = stripSeconds(settings.dateFormat || 'DD.MM.YYYY HH:mm');
   const includeSeconds = (settings.dateFormat || '').includes('ss');
   const dateFormatOptions = DATE_FORMAT_PRESETS.includes(baseDateFormat)

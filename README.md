@@ -161,7 +161,7 @@ Display settings are in the site header on the right, the "Settings" button. The
 
 | Tab         | Setting                   | Description                                                                                                                                                        |
 | ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **General** | Date Format               | Pick a format from the list, e.g. `DD.MM.YYYY HH:mm`, `MM/DD/YYYY hh:mm A` or `YYYY-MM-DD HH:mm`; formats with time can also show seconds. **Default:** `DD.MM.YYYY HH:mm` |
+| **Preferences** | Date Format               | Pick a format from the list, e.g. `DD.MM.YYYY HH:mm`, `MM/DD/YYYY hh:mm A` or `YYYY-MM-DD HH:mm`; formats with time can also show seconds. **Default:** `DD.MM.YYYY HH:mm` |
 |             | Timezone                  | IANA timezone the dates are shown in (**default:** `Europe/Kyiv`)                                                                                                    |
 |             | Language Code             | [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) code of the post texts to display (**default:** `uk`)                                                         |
 | **Account** | Sign out                  | Who is signed in and how; shown when Cloudflare Access or the password login protects the dashboard                                                               |
