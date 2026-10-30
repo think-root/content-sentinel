@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/common/badge";
 import { Skeleton } from "@/components/ui/common/skeleton";
 import { Card } from "@/components/ui/layout/card";
 import { cn } from "@/lib/utils";
+import { storage } from '../../../lib/storage';
 
 interface CronJobHistoryProps {
   history?: CronJobHistoryType[];
@@ -100,7 +101,7 @@ export const CronJobHistory = ({
   const [startDateOpen, setStartDateOpen] = useState<boolean>(false);
   const [endDateOpen, setEndDateOpen] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(() => {
-    const saved = localStorage.getItem('cronHistoryShowFilters');
+    const saved = storage.get('cronHistoryShowFilters');
     return saved === 'true';
   });
   const [retryingKey, setRetryingKey] = useState<string | null>(null);
@@ -345,7 +346,7 @@ export const CronJobHistory = ({
   const handleToggleFilters = () => {
     const newValue = !showFilters;
     setShowFilters(newValue);
-    localStorage.setItem('cronHistoryShowFilters', newValue.toString());
+    storage.set('cronHistoryShowFilters', newValue.toString());
   };
 
   const handlePageChange = (page: number) => {

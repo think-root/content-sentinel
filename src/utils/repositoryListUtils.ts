@@ -1,5 +1,6 @@
 import type { Repository, RepositorySortBy, RepositorySortOrder, RepositoryStatusFilter } from '../types';
 import { formatDate } from './date-format';
+import { storage } from '../lib/storage';
 
 export const DEFAULT_REPOSITORY_STATUS_FILTER: RepositoryStatusFilter = 'all';
 export const DEFAULT_REPOSITORY_SORT_BY: RepositorySortBy = 'date_added';
@@ -101,6 +102,21 @@ export const normalizeRepositoryFilterState = (
     sortOrder,
   };
 };
+
+export const DEFAULT_REPOSITORY_ITEMS_PER_PAGE = 10;
+
+/**
+ * The repository list query the user last chose, as persisted by the filters:
+ * status, sort and page size (0 meaning "show all").
+ */
+export const readSavedRepositoryQuery = () => ({
+  ...normalizeRepositoryFilterState(
+    storage.get('dashboardStatusFilter') || DEFAULT_REPOSITORY_STATUS_FILTER,
+    storage.get('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY,
+    storage.get('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER
+  ),
+  itemsPerPage: storage.getInt('dashboardItemsPerPage', DEFAULT_REPOSITORY_ITEMS_PER_PAGE),
+});
 
 export const filterRepositories = (repositories: Repository[], searchTerm: string): Repository[] => {
   if (!searchTerm) return repositories;

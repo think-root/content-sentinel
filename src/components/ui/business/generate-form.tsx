@@ -10,6 +10,7 @@ import { Label } from '../base/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
 import { Button } from '../base/button';
 import { Textarea } from '../base/textarea';
+import { storage } from '../../../lib/storage';
 
 // First path segments of github.com that can never be a repository owner
 const RESERVED_GITHUB_PATHS = new Set([
@@ -104,26 +105,26 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
   const [url, setUrl] = useState('');
   const urlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [maxRepos, setMaxRepos] = useState<number | undefined>(() => {
-    const saved = localStorage.getItem('dashboardMaxRepos');
+    const saved = storage.get('dashboardMaxRepos');
     if (!saved) return 5;
     const parsed = parseInt(saved, 10);
     return Number.isNaN(parsed) ? 5 : parsed;
   });
   const [since, setSince] = useState(() => {
-    const saved = localStorage.getItem('dashboardSince');
+    const saved = storage.get('dashboardSince');
     return saved || 'daily';
   });
   const [spokenLanguageCode, setSpokenLanguageCode] = useState(() => {
-    const saved = localStorage.getItem('dashboardSpokenLanguageCode');
+    const saved = storage.get('dashboardSpokenLanguageCode');
     return saved || 'en';
   });
-  const [resource, setResource] = useState(() => normalizeResource(localStorage.getItem('dashboardResource')));
+  const [resource, setResource] = useState(() => normalizeResource(storage.get('dashboardResource')));
   const [period, setPeriod] = useState(() => {
-    const saved = localStorage.getItem('dashboardPeriod');
+    const saved = storage.get('dashboardPeriod');
     return saved || 'past_24_hours';
   });
   const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('dashboardLanguage');
+    const saved = storage.get('dashboardLanguage');
     return saved || 'All';
   });
   const [isManualLoading, setIsManualLoading] = useState(false);
@@ -140,7 +141,7 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
     try {
       const settings = await getCollectSettings();
 
-      const lastEdited = localStorage.getItem('dashboardLastEdited');
+      const lastEdited = storage.get('dashboardLastEdited');
       const isRecentEdit = lastEdited && (Date.now() - parseInt(lastEdited, 10) < 20000); // 20 seconds window
 
       if (!isRecentEdit) {
@@ -151,22 +152,22 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
         setPeriod(settings.period || 'past_24_hours');
         setLanguage(settings.language || 'All');
 
-        localStorage.setItem('dashboardMaxRepos', settings.max_repos.toString());
-        localStorage.setItem('dashboardSince', settings.since);
-        localStorage.setItem('dashboardSpokenLanguageCode', settings.spoken_language_code);
-        localStorage.setItem('dashboardResource', normalizeResource(settings.resource));
-        localStorage.setItem('dashboardPeriod', settings.period || 'past_24_hours');
-        localStorage.setItem('dashboardLanguage', settings.language || 'All');
+        storage.set('dashboardMaxRepos', settings.max_repos.toString());
+        storage.set('dashboardSince', settings.since);
+        storage.set('dashboardSpokenLanguageCode', settings.spoken_language_code);
+        storage.set('dashboardResource', normalizeResource(settings.resource));
+        storage.set('dashboardPeriod', settings.period || 'past_24_hours');
+        storage.set('dashboardLanguage', settings.language || 'All');
       }
     } catch {
       console.error('Failed to load collect settings');
 
-      const savedMaxRepos = localStorage.getItem('dashboardMaxRepos') || '5';
-      const savedSince = localStorage.getItem('dashboardSince') || 'daily';
-      const savedLanguageCode = localStorage.getItem('dashboardSpokenLanguageCode') || 'en';
-      const savedResource = normalizeResource(localStorage.getItem('dashboardResource'));
-      const savedPeriod = localStorage.getItem('dashboardPeriod') || 'past_24_hours';
-      const savedLanguage = localStorage.getItem('dashboardLanguage') || 'All';
+      const savedMaxRepos = storage.get('dashboardMaxRepos') || '5';
+      const savedSince = storage.get('dashboardSince') || 'daily';
+      const savedLanguageCode = storage.get('dashboardSpokenLanguageCode') || 'en';
+      const savedResource = normalizeResource(storage.get('dashboardResource'));
+      const savedPeriod = storage.get('dashboardPeriod') || 'past_24_hours';
+      const savedLanguage = storage.get('dashboardLanguage') || 'All';
 
       const parsedMaxRepos = parseInt(savedMaxRepos, 10);
       setMaxRepos(Number.isNaN(parsedMaxRepos) ? 5 : parsedMaxRepos);
@@ -176,21 +177,21 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       setPeriod(savedPeriod);
       setLanguage(savedLanguage);
 
-      if (!localStorage.getItem('dashboardMaxRepos')) {
-        localStorage.setItem('dashboardMaxRepos', '5');
+      if (!storage.get('dashboardMaxRepos')) {
+        storage.set('dashboardMaxRepos', '5');
       }
-      if (!localStorage.getItem('dashboardSince')) {
-        localStorage.setItem('dashboardSince', 'daily');
+      if (!storage.get('dashboardSince')) {
+        storage.set('dashboardSince', 'daily');
       }
-      if (!localStorage.getItem('dashboardSpokenLanguageCode')) {
-        localStorage.setItem('dashboardSpokenLanguageCode', 'en');
+      if (!storage.get('dashboardSpokenLanguageCode')) {
+        storage.set('dashboardSpokenLanguageCode', 'en');
       }
-      localStorage.setItem('dashboardResource', savedResource);
-      if (!localStorage.getItem('dashboardPeriod')) {
-        localStorage.setItem('dashboardPeriod', 'past_24_hours');
+      storage.set('dashboardResource', savedResource);
+      if (!storage.get('dashboardPeriod')) {
+        storage.set('dashboardPeriod', 'past_24_hours');
       }
-      if (!localStorage.getItem('dashboardLanguage')) {
-        localStorage.setItem('dashboardLanguage', 'All');
+      if (!storage.get('dashboardLanguage')) {
+        storage.set('dashboardLanguage', 'All');
       }
     } finally {
       setIsLoaded(true);
@@ -297,12 +298,12 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
       if (response.status === 'success') {
         // toast.success(response.message || 'Settings saved successfully');
 
-        localStorage.setItem('dashboardMaxRepos', maxRepos.toString());
-        localStorage.setItem('dashboardSince', since);
-        localStorage.setItem('dashboardSpokenLanguageCode', spokenLanguageCode);
-        localStorage.setItem('dashboardResource', resource);
-        localStorage.setItem('dashboardPeriod', period);
-        localStorage.setItem('dashboardLanguage', language);
+        storage.set('dashboardMaxRepos', maxRepos.toString());
+        storage.set('dashboardSince', since);
+        storage.set('dashboardSpokenLanguageCode', spokenLanguageCode);
+        storage.set('dashboardResource', resource);
+        storage.set('dashboardPeriod', period);
+        storage.set('dashboardLanguage', language);
       } else {
         throw new Error(response.message || 'Failed to save settings');
       }
@@ -595,16 +596,16 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                     if (!Number.isNaN(numValue) && numValue >= 1 && numValue <= 100) {
                       // Valid number - set state and persist to localStorage
                       setMaxRepos(numValue);
-                      localStorage.setItem('dashboardMaxRepos', numValue.toString());
-                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      storage.set('dashboardMaxRepos', numValue.toString());
+                      storage.set('dashboardLastEdited', Date.now().toString());
                     } else if (e.target.value === '') {
                       // Empty field - set to undefined, don't persist
                       setMaxRepos(undefined);
-                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      storage.set('dashboardLastEdited', Date.now().toString());
                     } else {
                       // Invalid input (NaN or out of bounds) - set to undefined, don't persist
                       setMaxRepos(undefined);
-                      localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                      storage.set('dashboardLastEdited', Date.now().toString());
                     }
                   }}
                   min="1"
@@ -622,8 +623,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                   value={resource}
                   onValueChange={(value: string) => {
                     setResource(value);
-                    localStorage.setItem('dashboardResource', value);
-                    localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                    storage.set('dashboardResource', value);
+                    storage.set('dashboardLastEdited', Date.now().toString());
                   }}
                   disabled={isAutoLoading}
                 >
@@ -649,8 +650,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       value={since}
                       onValueChange={(value: string) => {
                         setSince(value);
-                        localStorage.setItem('dashboardSince', value);
-                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                        storage.set('dashboardSince', value);
+                        storage.set('dashboardLastEdited', Date.now().toString());
                       }}
                       disabled={isAutoLoading}
                     >
@@ -673,8 +674,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       onValueChange={(value: string) => {
                         const languageCode = LANGUAGE_MAPPING[value as keyof typeof LANGUAGE_MAPPING];
                         setSpokenLanguageCode(languageCode);
-                        localStorage.setItem('dashboardSpokenLanguageCode', languageCode);
-                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                        storage.set('dashboardSpokenLanguageCode', languageCode);
+                        storage.set('dashboardLastEdited', Date.now().toString());
                       }}
                       disabled={isAutoLoading}
                     >
@@ -703,8 +704,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       value={period}
                       onValueChange={(value: string) => {
                         setPeriod(value);
-                        localStorage.setItem('dashboardPeriod', value);
-                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                        storage.set('dashboardPeriod', value);
+                        storage.set('dashboardLastEdited', Date.now().toString());
                       }}
                       disabled={isAutoLoading}
                     >
@@ -731,8 +732,8 @@ export function GenerateForm({ onManualGenerate, onAutoGenerate }: GenerateFormP
                       onChange={(e) => {
                         const value = e.target.value;
                         setLanguage(value);
-                        localStorage.setItem('dashboardLanguage', value);
-                        localStorage.setItem('dashboardLastEdited', Date.now().toString());
+                        storage.set('dashboardLanguage', value);
+                        storage.set('dashboardLastEdited', Date.now().toString());
                       }}
                       disabled={isAutoLoading}
                       className="mt-1"

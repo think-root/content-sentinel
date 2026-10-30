@@ -18,12 +18,7 @@ import { DashboardLayout } from './components/ui/layout/dashboard-layout';
 import { DashboardContent } from './components/ui/layout/dashboard-content';
 import { SettingsModal } from './components/ui/common/settings-modal';
 import { isApiConfigured } from './utils/api-settings';
-import {
-  DEFAULT_REPOSITORY_SORT_BY,
-  DEFAULT_REPOSITORY_SORT_ORDER,
-  DEFAULT_REPOSITORY_STATUS_FILTER,
-  normalizeRepositoryFilterState,
-} from './utils/repositoryListUtils';
+import { readSavedRepositoryQuery } from './utils/repositoryListUtils';
 
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -187,12 +182,7 @@ function App() {
   const handleArchiveMutation = useCallback(async () => {
     await refreshArchive();
 
-    const savedFilters = normalizeRepositoryFilterState(
-      localStorage.getItem('dashboardStatusFilter') || DEFAULT_REPOSITORY_STATUS_FILTER,
-      localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY,
-      localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER
-    );
-    const savedItemsPerPage = parseInt(localStorage.getItem('dashboardItemsPerPage') || '10', 10);
+    const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
 
     await fetchRepositories(
       savedFilters.posted,

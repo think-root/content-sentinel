@@ -12,6 +12,7 @@ import {
 import { getArchiveFromCache, saveArchiveToCache } from '../utils/cache-utils';
 import { getApiSettings, isApiConfigured } from '../utils/api-settings';
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
+import { storage } from '../lib/storage';
 
 const CACHE_KEY_STORAGE = 'cache_archive_key';
 
@@ -112,7 +113,7 @@ export const useArchive = ({ isCacheBust, setErrorWithScroll }: UseArchiveProps)
 
     const cacheResult = getArchiveFromCache();
     const hasCache = cacheResult?.data !== undefined;
-    const storedCacheKey = localStorage.getItem(CACHE_KEY_STORAGE);
+    const storedCacheKey = storage.get(CACHE_KEY_STORAGE);
     const isBackgroundFetch = hasCache && storedCacheKey === cacheKey && !forceFetch;
 
     try {
@@ -148,7 +149,7 @@ export const useArchive = ({ isCacheBust, setErrorWithScroll }: UseArchiveProps)
             totalItems: data.total_items || data.items.length,
           };
 
-      localStorage.setItem(CACHE_KEY_STORAGE, cacheKey);
+      storage.set(CACHE_KEY_STORAGE, cacheKey);
 
       const cachePayload = {
         items: data.items,
