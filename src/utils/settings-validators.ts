@@ -26,11 +26,13 @@ export function validateTimezone(tz: string): ValidationResult {
 
   const normalizedValue = normalizeTimezoneForIntl(value);
 
-  const hasSupportedValuesOf =
-    typeof (Intl as any).supportedValuesOf === "function";
-  if (hasSupportedValuesOf) {
+  // Intl.supportedValuesOf is ES2022, newer than the lib this project targets.
+  const intl = Intl as typeof Intl & {
+    supportedValuesOf?: (key: "timeZone") => string[];
+  };
+  if (typeof intl.supportedValuesOf === "function") {
     try {
-      const supported = (Intl as any).supportedValuesOf("timeZone") as string[];
+      const supported = intl.supportedValuesOf("timeZone");
       if (!supported.includes(normalizedValue)) {
         return {
           isValid: false,
@@ -39,6 +41,7 @@ export function validateTimezone(tz: string): ValidationResult {
       }
       return { isValid: true };
     } catch {
+      // Fall through to the DateTimeFormat check below.
     }
   }
 

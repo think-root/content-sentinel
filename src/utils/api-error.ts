@@ -20,6 +20,29 @@ const apiErrorMessage = (error: unknown, service: string): string => {
   return `${service}: ${detail}`;
 };
 
+/**
+ * Whether an error is a rate limit rejection. The API helpers throw a plain
+ * Error with a "Rate limit exceeded" message; a numeric status is checked too
+ * for errors that carry one.
+ */
+export const isRateLimitError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const { status, statusCode, message } = error as {
+    status?: unknown;
+    statusCode?: unknown;
+    message?: unknown;
+  };
+
+  return (
+    status === 429 ||
+    statusCode === 429 ||
+    (typeof message === 'string' && message.includes('Rate limit exceeded'))
+  );
+};
+
 export const alchemistErrorMessage = (error: unknown): string =>
   apiErrorMessage(error, 'Content Alchemist');
 

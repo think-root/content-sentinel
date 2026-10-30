@@ -30,28 +30,34 @@ export type RepositoryStorageKey =
   | 'archiveShowFilters'
   | 'archiveOlderThanDays';
 
+/**
+ * A stored number or boolean can be any value of its type, not just the
+ * default's literal: `getStoredValue(key, 10)` returns `number`, not `10`.
+ */
+type StoredValue<T> = T extends number ? number : T extends boolean ? boolean : T;
+
 export function useRepositoryLocalStorage() {
-  const getStoredValue = useCallback(<T>(key: RepositoryStorageKey, defaultValue: T): T => {
+  const getStoredValue = useCallback(<T>(key: RepositoryStorageKey, defaultValue: T): StoredValue<T> => {
     try {
       const saved = localStorage.getItem(key);
-      if (saved === null) return defaultValue;
+      if (saved === null) return defaultValue as StoredValue<T>;
       
       // Handle boolean values
       if (typeof defaultValue === 'boolean') {
-        return (saved === 'true') as T;
+        return (saved === 'true') as StoredValue<T>;
       }
       
       // Handle number values
       if (typeof defaultValue === 'number') {
         const parsed = parseInt(saved, 10);
-        return isNaN(parsed) ? defaultValue : (parsed as T);
+        return (isNaN(parsed) ? defaultValue : parsed) as StoredValue<T>;
       }
       
       // Handle string values
-      return saved as T;
+      return saved as StoredValue<T>;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      return defaultValue;
+      return defaultValue as StoredValue<T>;
     }
   }, []);
 

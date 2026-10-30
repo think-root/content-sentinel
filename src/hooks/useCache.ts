@@ -10,6 +10,7 @@ import {
 import { isApiConfigured } from "../utils/api-settings";
 import { toast } from "../components/ui/common/toast-config";
 import { isRateLimited } from "../lib/requestQueue";
+import { isRateLimitError } from "../utils/api-error";
 import type { RepositorySortBy, RepositorySortOrder } from "../types";
 import {
   DEFAULT_REPOSITORY_SORT_BY,
@@ -143,7 +144,7 @@ export const useCache = ({
       const err = error as Error;
       
       // If we hit a rate limit, implement exponential backoff
-      if ((err.message.includes("Rate limit exceeded") || (err as any).status === 429) && retryCountRef.current < maxRetries) {
+      if (isRateLimitError(err) && retryCountRef.current < maxRetries) {
         retryCountRef.current++;
         const backoffTime = Math.min(30000, 1000 * Math.pow(2, retryCountRef.current)); // Max 30 seconds
         

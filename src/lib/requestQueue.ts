@@ -2,7 +2,7 @@
 // Centralized request queue manager for API request deduplication and rate limiting
 
 // Map to store in-flight requests by their signature (URL + method + body hash)
-const inFlightRequests = new Map<string, Promise<any>>();
+const inFlightRequests = new Map<string, Promise<unknown>>();
 
 // Rate limiting tracking
 let lastRateLimitTimestamp: number | null = null;
@@ -11,17 +11,17 @@ const MAX_RETRY_DELAY = 300000; // 5 minutes maximum delay
 
 // Request queue for rate-limited requests
 const requestQueue: Array<{
-  requestFn: () => Promise<any>;
+  requestFn: () => Promise<unknown>;
   signature: string;
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
   retryCount: number;
 }> = [];
 
 /**
  * Generate a hash for request body to use in signature
  */
-async function generateBodyHash(body: any): Promise<string> {
+async function generateBodyHash(body: unknown): Promise<string> {
   if (!body) return '';
   
   try {
@@ -30,7 +30,7 @@ async function generateBodyHash(body: any): Promise<string> {
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  } catch (error) {
+  } catch {
     // Fallback to JSON string if crypto is not available
     return JSON.stringify(body);
   }
@@ -42,7 +42,7 @@ async function generateBodyHash(body: any): Promise<string> {
 export async function createRequestSignature(
   url: string,
   method: string,
-  body?: any
+  body?: unknown
 ): Promise<string> {
   const bodyHash = await generateBodyHash(body);
   return `${method.toUpperCase()}:${url}:${bodyHash}`;
@@ -93,11 +93,11 @@ function processQueue(): void {
 /**
  * Execute a request with rate limit handling
  */
-async function executeRequest(
-  requestFn: () => Promise<any>,
+async function executeRequest<T>(
+  requestFn: () => Promise<T>,
   signature: string,
   retryCount: number = 0
-): Promise<any> {
+): Promise<T> {
   try {
     const result = await requestFn();
     
@@ -108,13 +108,14 @@ async function executeRequest(
     processQueue();
     
     return result;
-  } catch (error: any) {
+  } catch (error) {
     // Handle rate limiting (HTTP 429)
-    if (error?.status === 429 || error?.statusCode === 429) {
+    const { status, statusCode } = (error ?? {}) as { status?: unknown; statusCode?: unknown };
+    if (status === 429 || statusCode === 429) {
       lastRateLimitTimestamp = Date.now();
       
       // Queue the request for retry after cooldown
-      return new Promise((resolve, reject) => {
+      return new Promise<T>((resolve, reject) => {
         setTimeout(() => {
           executeRequest(requestFn, signature, retryCount + 1)
             .then(resolve)
@@ -147,7 +148,7 @@ export async function queueRequest<T>(
   // Check if request is already in flight (deduplication)
   const existingRequest = inFlightRequests.get(signature);
   if (existingRequest) {
-    return existingRequest;
+    return existingRequest as Promise<T>;
   }
 
   // Check if we're rate limited
@@ -157,7 +158,7 @@ export async function queueRequest<T>(
       requestQueue.push({
         requestFn,
         signature,
-        resolve,
+        resolve: resolve as (value: unknown) => void,
         reject,
         retryCount: 0
       });
