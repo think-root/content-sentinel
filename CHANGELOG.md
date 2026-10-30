@@ -1,3 +1,9 @@
+## [2.2.1](https://github.com/think-root/content-sentinel/compare/v2.2.0...v2.2.1) (2026-10-30)
+
+### Bug Fixes
+
+* **settings:** show Save and Cancel only on the Preferences tab ([8ae044e](https://github.com/think-root/content-sentinel/commit/8ae044efb2b5eaf9aaf6d0b4689d1bb5f4693089))
+
 ## [2.2.0](https://github.com/think-root/content-sentinel/compare/v2.1.0...v2.2.0) (2026-10-30)
 
 ### Features
