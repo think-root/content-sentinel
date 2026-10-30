@@ -263,7 +263,8 @@ export const clearAllCaches = () => {
     'cache_cron_job_history',
     'cache_api_configs',
     'cache_overview_history',
-    'language_validation_cache'
+    'promptLanguageValidationCache',
+    'settingsLanguageValidationCache'
   ];
   
   cacheKeys.forEach(key => {

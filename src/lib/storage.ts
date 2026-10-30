@@ -68,7 +68,6 @@ export const STORAGE_KEYS = [
   'cache_overview_history',
   'promptLanguageValidationCache',
   'settingsLanguageValidationCache',
-  'language_validation_cache',
 ] as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[number];
