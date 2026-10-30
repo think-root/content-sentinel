@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/think-root/content-sentinel/compare/v2.1.0...v2.2.0) (2026-10-30)
+
+### Features
+
+* **auth:** show who is signed in and sign out ([39a0e39](https://github.com/think-root/content-sentinel/commit/39a0e39714c9c305104af9fe80f807beb117b9df))
+
 ## [2.1.0](https://github.com/think-root/content-sentinel/compare/v2.0.0...v2.1.0) (2026-10-30)
 
 ### Features
