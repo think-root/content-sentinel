@@ -91,7 +91,13 @@ A dashboard to monitor and manage the [content-alchemist](https://github.com/thi
 
    The browser never sees the URLs and tokens: it calls the dashboard's own `/proxy/` path, and the server adds them (see [How the API is reached](#how-the-api-is-reached)).
 
-   Anyone who can open the dashboard can use the backend through it, so `npm start` and Docker only proxy behind [Cloudflare Access](#cloudflare-pages) (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`). On a machine or network nobody else can reach, set `ALLOW_UNAUTHENTICATED_PROXY=true` instead. `npm run dev` and `npm run preview` listen on localhost and don't need either.
+   Anyone who can open the dashboard can use the backend through it, so `npm start` and Docker only proxy when the dashboard is protected. Pick one:
+
+   - [Cloudflare Access](#cloudflare-pages): set `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`.
+   - A password: set `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`, and the browser asks for them before showing the dashboard. Use a long random password, and HTTPS if the server is reachable from the internet, since Basic Auth sends the password with every request.
+   - Nothing, on a machine or network nobody else can reach: set `ALLOW_UNAUTHENTICATED_PROXY=true`.
+
+   `npm run dev` and `npm run preview` listen on localhost and need none of them.
 
 5. Build the project
 
