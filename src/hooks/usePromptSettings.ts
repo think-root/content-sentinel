@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getPromptSettings, updatePromptSettings, PromptSettings } from '../api';
+import { getPromptSettings, updatePromptSettings, PromptSettings } from '../api/maestro';
 
 interface UsePromptSettingsReturn {
   settings: PromptSettings | null;

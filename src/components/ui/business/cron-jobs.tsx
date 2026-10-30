@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { updateCronStatus, updateCronSchedule, CronJob } from '@/api/index';
+import { updateCronStatus, updateCronSchedule, CronJob } from '@/api/maestro';
 import { X, Pencil, Check, AlertCircle } from 'lucide-react';
 import { formatDate } from '@/utils/date-format';
 import { getApiSettings } from '@/utils/api-settings';

@@ -1,5 +1,5 @@
 import type { Repository } from '../types';
-import type { CronJob } from '../api/index';
+import type { CronJob } from '../api/maestro';
 
 export const compareRepositories = (
   newData: {

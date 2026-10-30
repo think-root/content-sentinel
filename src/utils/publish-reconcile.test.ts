@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CronJobHistory } from '@/api/index';
+import type { CronJobHistory } from '@/api/maestro';
 import { classifyPublishFailure, reconcilePublish } from './publish-reconcile';
 
 const URL = 'https://github.com/owner/repo';

@@ -8,7 +8,7 @@ import { Skeleton } from '../common/skeleton';
 import { 
   Activity, ArrowUpRight, ArrowDownRight, CalendarPlus, CalendarClock
 } from 'lucide-react';
-import { type CronJob, type CronJobHistory } from '../../../api/index';
+import { type CronJob, type CronJobHistory } from '../../../api/maestro';
 import type { ApiConfig } from '../../../api/api-configs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
 import { useRepositoryTrends } from '../../../hooks/useRepositoryTrends';

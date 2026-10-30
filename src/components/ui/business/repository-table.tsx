@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { RepositoryTableProps } from '@/types/repositoryList';
 import { Repository } from '@/types';
 import { formatDate } from '@/utils/date-format';
-import { archiveRepositories, deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api';
+import { archiveRepositories, deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api/alchemist';
 import { Pencil, Check, X, Trash2, AlertCircle, Archive, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { describeArchiveFailure, isStaleArchiveFailure, summarizeArchiveResult } from '@/utils/archiveUtils';
 import { toast } from '../common/toast-config';

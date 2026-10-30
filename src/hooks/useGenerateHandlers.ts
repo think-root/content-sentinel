@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api';
+import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api/alchemist';
 import { alchemistErrorMessage } from '../utils/api-error';
 import type { RepositorySortBy, RepositorySortOrder } from '../types';
 import {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getCronJobHistory, type CronJobHistory } from '../api/index';
+import { getCronJobHistory, type CronJobHistory } from '../api/maestro';
 import { saveCronJobHistoryToCache, getCronJobHistoryFromCache } from '../utils/cache-utils';
 
 interface CronJobHistoryState {

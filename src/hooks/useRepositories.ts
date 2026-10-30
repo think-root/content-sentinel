@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getRepositories } from '../api';
+import { getRepositories } from '../api/alchemist';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';

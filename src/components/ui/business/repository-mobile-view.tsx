@@ -3,7 +3,7 @@ import { RepositoryMobileViewProps } from '@/types/repositoryList';
 import { Repository } from '@/types';
 import { TruncatedText } from '@/components/ui/common/truncated-text';
 import { formatDate } from '@/utils/date-format';
-import { archiveRepositories, deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api';
+import { archiveRepositories, deleteRepository, promoteRepositoryToNext, updateRepositoryText } from '@/api/alchemist';
 import { Pencil, Check, X, Trash2, AlertCircle, Archive, Send } from 'lucide-react';
 import { describeArchiveFailure, isStaleArchiveFailure, summarizeArchiveResult } from '@/utils/archiveUtils';
 import { toast } from '@/components/ui/common/toast-config';

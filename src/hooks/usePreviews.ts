@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getLatestPostedRepository, getNextRepository } from '../api';
+import { getLatestPostedRepository, getNextRepository } from '../api/alchemist';
 import type { Repository } from '../types';
 import { savePreviewsToCache, getPreviewsFromCache } from '../utils/cache-utils';
 import { comparePreviews } from '../utils/data-comparison';

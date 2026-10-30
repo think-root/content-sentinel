@@ -1,5 +1,5 @@
 import type { ApiConfig } from '../api/api-configs';
-import type { RetryMessageResult } from '../api/index';
+import type { RetryMessageResult } from '../api/maestro';
 
 export interface PublishIntegration {
   name: string;

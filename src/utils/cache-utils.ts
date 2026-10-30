@@ -1,6 +1,6 @@
 import type { Repository } from '../types';
 import type { ArchivedRepository } from '../types/archive';
-import type { CronJob, CronJobHistory } from '../api/index';
+import type { CronJob, CronJobHistory } from '../api/maestro';
 import type { ApiConfig } from '../api/api-configs';
 
 interface RepositoriesCache {

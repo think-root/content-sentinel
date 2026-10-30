@@ -1,4 +1,5 @@
 import { getApiSettings, isApiConfigured } from "../utils/api-settings";
+import { queueRequest, createRequestSignature } from "../lib/requestQueue";
 
 export interface CronJob {
   name: string;
@@ -275,3 +276,156 @@ export const updateCronStatus = async (name: string, is_active: boolean): Promis
     throw new Error(`Failed to update cron status: ${response.status}`);
   }
 };
+
+export interface CollectSettings {
+  max_repos: number;
+  resource: string;
+  since: string;
+  spoken_language_code: string;
+  period: string;
+  language: string;
+}
+
+export async function getCollectSettings(): Promise<CollectSettings> {
+  const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return {
+      max_repos: 10,
+      resource: "github",
+      since: "daily",
+      spoken_language_code: "en",
+      period: "past_24_hours",
+      language: "All",
+    };
+  }
+
+  const response = await fetch(`${settings.contentMaestro.apiBaseUrl}/api/collect-settings`, {
+    headers: {
+      Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch collect settings`);
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+export async function updateCollectSettings(
+  settings: CollectSettings
+): Promise<{ status: string; message: string }> {
+  const apiSettings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return {
+      status: "error",
+      message: "API not configured",
+    };
+  }
+
+  const response = await fetch(
+    `${apiSettings.contentMaestro.apiBaseUrl}/api/collect-settings`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
+      },
+      body: JSON.stringify(settings),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update collect settings`);
+  }
+
+  return response.json();
+}
+
+export interface PromptSettings {
+  use_direct_url: boolean;
+  llm_provider: string;
+  model: string;
+  temperature: number;
+  content: string;
+  llm_output_language?: string;
+  updated_at?: string;
+}
+
+export async function getPromptSettings(): Promise<PromptSettings> {
+  const settings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return {
+      use_direct_url: true,
+      llm_provider: "openai",
+      model: "gpt-4.1",
+      temperature: 0.5,
+      content:
+        "You are an AI assistant specializing in the creation of short descriptions of GitHub repositories. Your main task is to create descriptions based on the URL.",
+      llm_output_language: "",
+    };
+  }
+
+  const url = `${settings.contentMaestro.apiBaseUrl}/api/prompt-settings`;
+  const headers = {
+    Authorization: `Bearer ${settings.contentMaestro.apiBearerToken}`,
+    "Content-Type": "application/json",
+  };
+
+  // Wrap the actual fetch logic in a function
+  const fetchFunction = async () => {
+    const response = await fetch(url, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch prompt settings`);
+    }
+
+    const data = await response.json();
+    return data;
+  };
+
+  // Create a unique request signature and queue the request
+  return createRequestSignature(url, "GET").then(signature => queueRequest(fetchFunction, signature));
+}
+
+export async function updatePromptSettings(
+  settings: Partial<PromptSettings>
+): Promise<{ status: string; message: string }> {
+  const apiSettings = getApiSettings();
+  const isConfigured = isApiConfigured();
+
+  if (!isConfigured) {
+    return {
+      status: "error",
+      message: "API not configured",
+    };
+  }
+
+  const response = await fetch(
+    `${apiSettings.contentMaestro.apiBaseUrl}/api/prompt-settings`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiSettings.contentMaestro.apiBearerToken}`,
+      },
+      body: JSON.stringify(settings),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update prompt settings`);
+  }
+
+  return response.json();
+}

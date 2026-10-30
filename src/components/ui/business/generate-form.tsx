@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, GitPullRequest, Play, AlertCircle, FolderDown, Zap, Clipboard } from 'lucide-react';
 import { ResultDialog } from '../common/result-dialog';
-import { getCollectSettings, updateCollectSettings, ManualGenerateResponse } from '@/api';
+import { ManualGenerateResponse } from '@/api/alchemist';
+import { getCollectSettings, updateCollectSettings } from '@/api/maestro';
 import { toast } from '../common/toast-config';
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/card';
 import { Input } from '../base/input';

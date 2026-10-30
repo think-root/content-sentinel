@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { getArchivedRepositories } from '../api';
+import { getArchivedRepositories } from '../api/alchemist';
 import type { ArchiveFilterKey, ArchiveFilterState, ArchivedRepository } from '../types/archive';
 import {
   DEFAULT_ARCHIVE_FILTERS,
