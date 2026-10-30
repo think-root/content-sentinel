@@ -12,12 +12,7 @@ import { toast } from "../components/ui/common/toast-config";
 import { isRateLimited } from "../lib/requestQueue";
 import { isRateLimitError } from "../utils/api-error";
 import type { RepositorySortBy, RepositorySortOrder } from "../types";
-import {
-  DEFAULT_REPOSITORY_SORT_BY,
-  DEFAULT_REPOSITORY_SORT_ORDER,
-  DEFAULT_REPOSITORY_STATUS_FILTER,
-  normalizeRepositoryFilterState,
-} from "../utils/repositoryListUtils";
+import { readSavedRepositoryQuery } from '../utils/repositoryListUtils';
 
 interface UseCacheProps {
   fetchRepositories: (
@@ -73,12 +68,7 @@ export const useCache = ({
     // Fetch repositories if cache is expired or stale
     if (isExpired('cache_repositories') || (repoCache && repoCache.isStale)) {
       console.log("Repositories cache expired or stale, refreshing...");
-      const savedFilters = normalizeRepositoryFilterState(
-        localStorage.getItem("dashboardStatusFilter") || DEFAULT_REPOSITORY_STATUS_FILTER,
-        localStorage.getItem("dashboardSortBy") || DEFAULT_REPOSITORY_SORT_BY,
-        localStorage.getItem("dashboardSortOrder") || DEFAULT_REPOSITORY_SORT_ORDER
-      );
-      const savedItemsPerPage = parseInt(localStorage.getItem("dashboardItemsPerPage") || "10", 10);
+      const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
       
       fetchPromises.push(
         fetchRepositories(

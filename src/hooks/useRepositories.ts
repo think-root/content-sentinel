@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getRepositories } from '../api';
+import { getRepositories } from '../api/alchemist';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../types';
 import { saveRepositoriesToCache, getRepositoriesFromCache } from '../utils/cache-utils';
 import { compareRepositories } from '../utils/data-comparison';
@@ -7,12 +7,11 @@ import { isApiConfigured, getApiSettings } from "../utils/api-settings";
 import { alchemistErrorMessage } from "../utils/api-error";
 import { useRepositoryLocalStorage } from './useRepositoryLocalStorage';
 import {
-  DEFAULT_REPOSITORY_SORT_BY,
-  DEFAULT_REPOSITORY_SORT_ORDER,
-  DEFAULT_REPOSITORY_STATUS_FILTER,
   getRepositoryStatusFilterFromPosted,
   normalizeRepositoryFilterState,
+  readSavedRepositoryQuery,
 } from '../utils/repositoryListUtils';
+import { storage } from '../lib/storage';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -131,7 +130,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
           page,
           textLanguage,
         });
-        localStorage.setItem('cache_repositories_key', cacheKey);
+        storage.set('cache_repositories_key', cacheKey);
 
         const newData = {
           repositories: processedItems,
@@ -277,7 +276,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
         page,
         textLanguage,
       });
-      const currentCacheKey = localStorage.getItem("cache_repositories_key");
+      const currentCacheKey = storage.get("cache_repositories_key");
       const cacheResult = getRepositoriesFromCache();
       const hasCache = cacheResult?.data !== undefined;
       
@@ -354,7 +353,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
             isFetching: isFetching.current,
             pagination: state.pagination,
             stale: state.stale,
-            cacheKey: localStorage.getItem('cache_repositories_key') || null,
+            cacheKey: storage.get('cache_repositories_key') || null,
           });
         }
         // Prevent repeated warnings during the same loading session
@@ -379,16 +378,11 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
 
   useEffect(() => {
     // Load initial data with saved filter values using centralized storage utilities
-    const savedFilters = normalizeRepositoryFilterState(
-      getStoredValue('dashboardStatusFilter', DEFAULT_REPOSITORY_STATUS_FILTER),
-      getStoredValue('dashboardSortBy', DEFAULT_REPOSITORY_SORT_BY),
-      getStoredValue('dashboardSortOrder', DEFAULT_REPOSITORY_SORT_ORDER)
-    );
-    const savedItemsPerPage = getStoredValue('dashboardItemsPerPage', 10);
+    const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
 
-    localStorage.setItem('dashboardStatusFilter', savedFilters.statusFilter);
-    localStorage.setItem('dashboardSortBy', savedFilters.sortBy);
-    localStorage.setItem('dashboardSortOrder', savedFilters.sortOrder);
+    storage.set('dashboardStatusFilter', savedFilters.statusFilter);
+    storage.set('dashboardSortBy', savedFilters.sortBy);
+    storage.set('dashboardSortOrder', savedFilters.sortOrder);
     
     // Validate cache key against current parameters
     const settings = getApiSettings();
@@ -402,7 +396,7 @@ export const useRepositories = ({ isCacheBust, setErrorWithScroll }: UseReposito
       page: 1,
       textLanguage,
     });
-    const currentCacheKey = localStorage.getItem('cache_repositories_key');
+    const currentCacheKey = storage.get('cache_repositories_key');
     
     // Force fetch if cache key doesn't match current parameters
     const shouldForceFetch = currentCacheKey !== expectedCacheKey;

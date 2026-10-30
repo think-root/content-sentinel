@@ -1,13 +1,8 @@
 import { useCallback } from 'react';
-import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api';
+import { manualGenerate, autoGenerate, ManualGenerateResponse } from '../api/alchemist';
 import { alchemistErrorMessage } from '../utils/api-error';
 import type { RepositorySortBy, RepositorySortOrder } from '../types';
-import {
-  DEFAULT_REPOSITORY_SORT_BY,
-  DEFAULT_REPOSITORY_SORT_ORDER,
-  DEFAULT_REPOSITORY_STATUS_FILTER,
-  normalizeRepositoryFilterState,
-} from '../utils/repositoryListUtils';
+import { readSavedRepositoryQuery } from '../utils/repositoryListUtils';
 
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 
@@ -37,13 +32,7 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
           const scrollPosition = window.scrollY;
 
           // Read current filters from localStorage
-          const savedFilters = normalizeRepositoryFilterState(
-            localStorage.getItem('dashboardStatusFilter') || DEFAULT_REPOSITORY_STATUS_FILTER,
-            localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY,
-            localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER
-          );
-          const itemsStr = localStorage.getItem('dashboardItemsPerPage');
-          const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
+          const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
 
           // Foreground fetch with current filters and forceFetch=true; use page=1
           await fetchRepositories(
@@ -81,13 +70,7 @@ export const useGenerateHandlers = ({ fetchRepositories, setErrorWithScroll }: U
       const response = await autoGenerate(maxRepos, resource, since, spokenLanguageCode, period, language);
       if (response.status === 'ok') {
         // Read current filters from localStorage
-        const savedFilters = normalizeRepositoryFilterState(
-          localStorage.getItem('dashboardStatusFilter') || DEFAULT_REPOSITORY_STATUS_FILTER,
-          localStorage.getItem('dashboardSortBy') || DEFAULT_REPOSITORY_SORT_BY,
-          localStorage.getItem('dashboardSortOrder') || DEFAULT_REPOSITORY_SORT_ORDER
-        );
-        const itemsStr = localStorage.getItem('dashboardItemsPerPage');
-        const savedItemsPerPage = itemsStr !== null ? Number(itemsStr) : undefined;
+        const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
 
         // Foreground fetch with current filters and forceFetch=true; use page=1
         await fetchRepositories(

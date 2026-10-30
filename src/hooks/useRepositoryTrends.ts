@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getRepositories } from '../api';
+import { getRepositories } from '../api/alchemist';
 import type { TimeRange } from './useOverviewHistory';
 
 interface TrendMetric {

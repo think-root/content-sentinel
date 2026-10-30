@@ -1,4 +1,4 @@
-import type { CronJobHistory, RetryMessageResult } from '../api/index';
+import type { CronJobHistory, RetryMessageResult } from '../api/maestro';
 import { maestroErrorMessage } from './api-error';
 
 /**

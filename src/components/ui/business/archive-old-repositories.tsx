@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { Archive, CalendarClock, Eye } from 'lucide-react';
-import { archiveOldRepositories } from '@/api';
+import { archiveOldRepositories } from '@/api/alchemist';
 import type {
   ArchiveOldRepositoriesProps,
   ArchiveOldRepositoriesResponse,

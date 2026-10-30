@@ -3,12 +3,7 @@ import { toast } from '../components/ui/common/toast-config';
 import { isRateLimited } from '../lib/requestQueue';
 import { isRateLimitError } from '../utils/api-error';
 import type { RepositorySortBy, RepositorySortOrder } from '../types';
-import {
-  DEFAULT_REPOSITORY_SORT_BY,
-  DEFAULT_REPOSITORY_SORT_ORDER,
-  DEFAULT_REPOSITORY_STATUS_FILTER,
-  normalizeRepositoryFilterState,
-} from '../utils/repositoryListUtils';
+import { readSavedRepositoryQuery } from '../utils/repositoryListUtils';
 
 interface UseDataRefreshProps {
   fetchRepositories: (
@@ -86,15 +81,7 @@ export const useDataRefresh = ({
       setIsRefreshing(true);
 
       try {
-        const savedFilters = normalizeRepositoryFilterState(
-          localStorage.getItem("dashboardStatusFilter") || DEFAULT_REPOSITORY_STATUS_FILTER,
-          localStorage.getItem("dashboardSortBy") || DEFAULT_REPOSITORY_SORT_BY,
-          localStorage.getItem("dashboardSortOrder") || DEFAULT_REPOSITORY_SORT_ORDER
-        );
-        const savedItemsPerPage = parseInt(
-          localStorage.getItem("dashboardItemsPerPage") || "10",
-          10
-        );
+        const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
 
         // Execute API calls concurrently without artificial delays.
         // Each task swallows 429 (rate limit) errors locally; non-429 errors bubble up.

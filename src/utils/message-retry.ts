@@ -1,4 +1,4 @@
-import type { CronJobHistory } from '@/api/index';
+import type { CronJobHistory } from '@/api/maestro';
 
 export interface RetryTarget {
   /** Integrations the run did not reach. */

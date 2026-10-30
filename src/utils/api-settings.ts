@@ -1,3 +1,4 @@
+import { storage } from '../lib/storage';
 export interface ApiSettings {
   apiBaseUrl: string;
   apiBearerToken: string;
@@ -33,7 +34,7 @@ const defaultSettings: ApiSettings = {
 };
 
 export const getApiSettings = (): ApiSettings => {
-  const settings = localStorage.getItem(LOCAL_STORAGE_KEY);
+  const settings = storage.get(LOCAL_STORAGE_KEY);
   if (!settings) {
     return defaultSettings;
   }

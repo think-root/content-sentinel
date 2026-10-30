@@ -21,8 +21,8 @@ import { useSwipeable } from 'react-swipeable';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import type { Repository, RepositorySortBy, RepositorySortOrder } from '../../../types';
 import type { ArchiveFilterKey, ArchiveFilterState, ArchivedRepository } from '../../../types/archive';
-import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/index';
-import type { ManualGenerateResponse } from '../../../api';
+import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/maestro';
+import type { ManualGenerateResponse } from '../../../api/alchemist';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
 

@@ -1,7 +1,8 @@
 import type { Repository } from '../types';
 import type { ArchivedRepository } from '../types/archive';
-import type { CronJob, CronJobHistory } from '../api/index';
+import type { CronJob, CronJobHistory } from '../api/maestro';
 import type { ApiConfig } from '../api/api-configs';
+import { storage, type StorageKey } from '../lib/storage';
 
 interface RepositoriesCache {
   repositories: Repository[];
@@ -64,8 +65,8 @@ interface OverviewHistoryCache {
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
 // Check if cache is expired without deleting the data
-export const isExpired = (key: string): boolean => {
-  const cachedData = localStorage.getItem(key);
+export const isExpired = (key: StorageKey): boolean => {
+  const cachedData = storage.get(key);
   if (!cachedData) return true;
 
   try {
@@ -77,14 +78,14 @@ export const isExpired = (key: string): boolean => {
 };
 
 export const saveRepositoriesToCache = (data: RepositoriesCache) => {
-  localStorage.setItem('cache_repositories', JSON.stringify({
+  storage.set('cache_repositories', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getRepositoriesFromCache = (): CacheResult<RepositoriesCache> | null => {
-  const cachedData = localStorage.getItem('cache_repositories');
+  const cachedData = storage.get('cache_repositories');
   if (!cachedData) return null;
 
   try {
@@ -101,14 +102,14 @@ export const getRepositoriesFromCache = (): CacheResult<RepositoriesCache> | nul
 };
 
 export const saveArchiveToCache = (data: ArchiveCache) => {
-  localStorage.setItem('cache_archive', JSON.stringify({
+  storage.set('cache_archive', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getArchiveFromCache = (): CacheResult<ArchiveCache> | null => {
-  const cachedData = localStorage.getItem('cache_archive');
+  const cachedData = storage.get('cache_archive');
   if (!cachedData) return null;
 
   try {
@@ -125,14 +126,14 @@ export const getArchiveFromCache = (): CacheResult<ArchiveCache> | null => {
 };
 
 export const savePreviewsToCache = (data: PreviewsCache) => {
-  localStorage.setItem('cache_previews', JSON.stringify({
+  storage.set('cache_previews', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getPreviewsFromCache = (): CacheResult<PreviewsCache> | null => {
-  const cachedData = localStorage.getItem('cache_previews');
+  const cachedData = storage.get('cache_previews');
   if (!cachedData) return null;
 
   try {
@@ -149,14 +150,14 @@ export const getPreviewsFromCache = (): CacheResult<PreviewsCache> | null => {
 };
 
 export const saveCronJobsToCache = (data: CronJobsCache) => {
-  localStorage.setItem('cache_cron_jobs', JSON.stringify({
+  storage.set('cache_cron_jobs', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getCronJobsFromCache = (): CacheResult<CronJobsCache> | null => {
-  const cachedData = localStorage.getItem('cache_cron_jobs');
+  const cachedData = storage.get('cache_cron_jobs');
   if (!cachedData) return null;
 
   try {
@@ -173,14 +174,14 @@ export const getCronJobsFromCache = (): CacheResult<CronJobsCache> | null => {
 };
 
 export const saveCronJobHistoryToCache = (data: CronJobHistoryCache) => {
-  localStorage.setItem('cache_cron_job_history', JSON.stringify({
+  storage.set('cache_cron_job_history', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getCronJobHistoryFromCache = (): CacheResult<CronJobHistoryCache> | null => {
-  const cachedData = localStorage.getItem('cache_cron_job_history');
+  const cachedData = storage.get('cache_cron_job_history');
   if (!cachedData) return null;
 
   try {
@@ -197,14 +198,14 @@ export const getCronJobHistoryFromCache = (): CacheResult<CronJobHistoryCache> |
 };
 
 export const saveApiConfigsToCache = (data: ApiConfigsCache) => {
-  localStorage.setItem('cache_api_configs', JSON.stringify({
+  storage.set('cache_api_configs', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getApiConfigsFromCache = (): CacheResult<ApiConfigsCache> | null => {
-  const cachedData = localStorage.getItem('cache_api_configs');
+  const cachedData = storage.get('cache_api_configs');
   if (!cachedData) return null;
 
   try {
@@ -221,14 +222,14 @@ export const getApiConfigsFromCache = (): CacheResult<ApiConfigsCache> | null =>
 };
 
 export const saveOverviewHistoryToCache = (data: OverviewHistoryCache) => {
-  localStorage.setItem('cache_overview_history', JSON.stringify({
+  storage.set('cache_overview_history', JSON.stringify({
     ...data,
     timestamp: Date.now()
   }));
 };
 
 export const getOverviewHistoryFromCache = (): CacheResult<OverviewHistoryCache> | null => {
-  const cachedData = localStorage.getItem('cache_overview_history');
+  const cachedData = storage.get('cache_overview_history');
   if (!cachedData) return null;
 
   try {
@@ -245,16 +246,16 @@ export const getOverviewHistoryFromCache = (): CacheResult<OverviewHistoryCache>
 };
 
 export const saveOverviewTimeRangePreference = (range: string) => {
-  localStorage.setItem('pref_overview_time_range', range);
+  storage.set('pref_overview_time_range', range);
 };
 
 export const getOverviewTimeRangePreference = (): string | null => {
-  return localStorage.getItem('pref_overview_time_range');
+  return storage.get('pref_overview_time_range');
 };
 
 export const clearAllCaches = () => {
   const clearedCaches: string[] = [];
-  const cacheKeys = [
+  const cacheKeys: StorageKey[] = [
     'cache_repositories',
     'cache_archive',
     'cache_previews',
@@ -262,12 +263,13 @@ export const clearAllCaches = () => {
     'cache_cron_job_history',
     'cache_api_configs',
     'cache_overview_history',
-    'language_validation_cache'
+    'promptLanguageValidationCache',
+    'settingsLanguageValidationCache'
   ];
   
   cacheKeys.forEach(key => {
-    if (localStorage.getItem(key)) {
-      localStorage.removeItem(key);
+    if (storage.get(key)) {
+      storage.remove(key);
       clearedCaches.push(key);
       console.log(`✓ Cleared cache: ${key}`);
     }

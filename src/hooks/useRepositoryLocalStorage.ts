@@ -5,6 +5,7 @@ import {
   DEFAULT_REPOSITORY_STATUS_FILTER,
   normalizeRepositoryFilterState,
 } from '../utils/repositoryListUtils';
+import { storage } from '../lib/storage';
 
 /**
  * Typed storage keys used by repository dashboard
@@ -38,43 +39,26 @@ type StoredValue<T> = T extends number ? number : T extends boolean ? boolean : 
 
 export function useRepositoryLocalStorage() {
   const getStoredValue = useCallback(<T>(key: RepositoryStorageKey, defaultValue: T): StoredValue<T> => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved === null) return defaultValue as StoredValue<T>;
-      
-      // Handle boolean values
-      if (typeof defaultValue === 'boolean') {
-        return (saved === 'true') as StoredValue<T>;
-      }
-      
-      // Handle number values
-      if (typeof defaultValue === 'number') {
-        const parsed = parseInt(saved, 10);
-        return (isNaN(parsed) ? defaultValue : parsed) as StoredValue<T>;
-      }
-      
-      // Handle string values
-      return saved as StoredValue<T>;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return defaultValue as StoredValue<T>;
+    const saved = storage.get(key);
+    if (saved === null) return defaultValue as StoredValue<T>;
+
+    if (typeof defaultValue === 'boolean') {
+      return (saved === 'true') as StoredValue<T>;
     }
+
+    if (typeof defaultValue === 'number') {
+      return storage.getInt(key, defaultValue) as StoredValue<T>;
+    }
+
+    return saved as StoredValue<T>;
   }, []);
 
   const setStoredValue = useCallback(<T>(key: RepositoryStorageKey, value: T): void => {
-    try {
-      localStorage.setItem(key, String(value));
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
+    storage.set(key, String(value));
   }, []);
 
   const removeStoredValue = useCallback((key: RepositoryStorageKey): void => {
-    try {
-      localStorage.removeItem(key);
-    } catch (error) {
-      console.warn(`Error removing localStorage key "${key}":`, error);
-    }
+    storage.remove(key);
   }, []);
 
   /**

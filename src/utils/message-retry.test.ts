@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CronJobHistory } from '@/api/index';
+import type { CronJobHistory } from '@/api/maestro';
 import { getLegacyFailedApis, getRetryTarget } from './message-retry';
 
 const entry = (overrides: Partial<CronJobHistory>): CronJobHistory => ({

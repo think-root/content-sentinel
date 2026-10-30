@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCronJobHistory, type CronJobHistory } from '../api/index';
+import { getCronJobHistory, type CronJobHistory } from '../api/maestro';
 import { getOverviewHistoryFromCache, saveOverviewHistoryToCache, getOverviewTimeRangePreference, saveOverviewTimeRangePreference } from '../utils/cache-utils';
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d';

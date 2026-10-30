@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/base/button';
 import { Calendar } from '@/components/ui/base/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/base/popover';
+import { storage } from '../../../lib/storage';
 
 interface CustomDateInputProps {
   value: string;
@@ -67,7 +68,7 @@ export const CustomDateInput: React.FC<CustomDateInputProps> = ({
 
   const getDateFormatFromSettings = () => {
     try {
-      const settings = localStorage.getItem('api_settings');
+      const settings = storage.get('api_settings');
       if (settings) {
         const parsedSettings = JSON.parse(settings);
         if (parsedSettings.dateFormat) {

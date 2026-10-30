@@ -8,11 +8,12 @@ import { Skeleton } from '../common/skeleton';
 import { 
   Activity, ArrowUpRight, ArrowDownRight, CalendarPlus, CalendarClock
 } from 'lucide-react';
-import { type CronJob, type CronJobHistory } from '../../../api/index';
+import { type CronJob, type CronJobHistory } from '../../../api/maestro';
 import type { ApiConfig } from '../../../api/api-configs';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
 import { useRepositoryTrends } from '../../../hooks/useRepositoryTrends';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { storage } from '../../../lib/storage';
 
 interface ChartTooltipProps {
   active?: boolean;
@@ -50,12 +51,12 @@ export function OverviewCharts({
   // --- Derived Stats (Memoized) ---
 
   const [trendSortBy, setTrendSortBy] = useState<'date_added' | 'date_posted'>(() => {
-    const saved = localStorage.getItem('repository_trends_sort');
+    const saved = storage.get('repository_trends_sort');
     return (saved === 'date_added' || saved === 'date_posted') ? saved : 'date_added';
   });
 
   useEffect(() => {
-    localStorage.setItem('repository_trends_sort', trendSortBy);
+    storage.set('repository_trends_sort', trendSortBy);
   }, [trendSortBy]);
 
   const totalRepos = posted + unposted;

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getCronJobHistory, type CronJobHistory } from '../api/index';
+import { getCronJobHistory, type CronJobHistory } from '../api/maestro';
 import { saveCronJobHistoryToCache, getCronJobHistoryFromCache } from '../utils/cache-utils';
+import { storage } from '../lib/storage';
 
 interface CronJobHistoryState {
   history: CronJobHistory[];
@@ -34,23 +35,23 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
     loading: !cachedHistory,
     stale: isStale,
     page: 1,
-    pageSize: parseInt(localStorage.getItem('cronHistoryPageSize') || '10', 10),
-    sortOrder: (localStorage.getItem('cronHistorySortOrder') as 'asc' | 'desc') || 'desc',
+    pageSize: parseInt(storage.get('cronHistoryPageSize') || '10', 10),
+    sortOrder: (storage.get('cronHistorySortOrder') as 'asc' | 'desc') || 'desc',
     startDate: (() => {
-      const saved = localStorage.getItem('cronHistoryStartDate');
+      const saved = storage.get('cronHistoryStartDate');
       return saved && saved.trim() !== '' ? saved : undefined;
     })(),
     endDate: (() => {
-      const saved = localStorage.getItem('cronHistoryEndDate');
+      const saved = storage.get('cronHistoryEndDate');
       return saved && saved.trim() !== '' ? saved : undefined;
     })(),
     newDataAvailable: false,
     hasMore: true,
     totalItems: cachedHistory?.total || 0,
-    totalPages: cachedHistory ? Math.ceil(cachedHistory.total / parseInt(localStorage.getItem('cronHistoryPageSize') || '10', 10)) : 0,
-    nameFilter: localStorage.getItem('cronHistoryJobFilter') === 'all' ? undefined : localStorage.getItem('cronHistoryJobFilter') || undefined,
+    totalPages: cachedHistory ? Math.ceil(cachedHistory.total / parseInt(storage.get('cronHistoryPageSize') || '10', 10)) : 0,
+    nameFilter: storage.get('cronHistoryJobFilter') === 'all' ? undefined : storage.get('cronHistoryJobFilter') || undefined,
     statusFilter: (() => {
-      const saved = localStorage.getItem('cronHistoryStatusFilter');
+      const saved = storage.get('cronHistoryStatusFilter');
       if (!saved || saved === 'all') return undefined;
       const parsed = parseInt(saved, 10);
       return isNaN(parsed) ? undefined : parsed;
@@ -185,7 +186,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
 
   const setNameFilter = (nameFilter?: string) => {
     const filterValue = nameFilter || 'all';
-    localStorage.setItem('cronHistoryJobFilter', filterValue);
+    storage.set('cronHistoryJobFilter', filterValue);
     
     setState(prev => ({
       ...prev,
@@ -210,7 +211,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
 
   const setStatusFilter = (statusFilter?: number) => {
     const filterValue = statusFilter === undefined ? 'all' : statusFilter.toString();
-    localStorage.setItem('cronHistoryStatusFilter', filterValue);
+    storage.set('cronHistoryStatusFilter', filterValue);
     
     setState(prev => ({
       ...prev,
@@ -249,9 +250,9 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
 
   const setStartDate = (startDate?: string) => {
     if (startDate) {
-      localStorage.setItem('cronHistoryStartDate', startDate);
+      storage.set('cronHistoryStartDate', startDate);
     } else {
-      localStorage.removeItem('cronHistoryStartDate');
+      storage.remove('cronHistoryStartDate');
     }
     
     setState(prev => ({
@@ -277,9 +278,9 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
 
   const setEndDate = (endDate?: string) => {
     if (endDate) {
-      localStorage.setItem('cronHistoryEndDate', endDate);
+      storage.set('cronHistoryEndDate', endDate);
     } else {
-      localStorage.removeItem('cronHistoryEndDate');
+      storage.remove('cronHistoryEndDate');
     }
     
     setState(prev => ({
@@ -304,11 +305,11 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
   };
 
   const resetFilters = () => {
-    localStorage.setItem('cronHistoryJobFilter', 'all');
-    localStorage.setItem('cronHistoryStatusFilter', 'all');
-    localStorage.setItem('cronHistorySortOrder', 'desc');
-    localStorage.removeItem('cronHistoryStartDate');
-    localStorage.removeItem('cronHistoryEndDate');
+    storage.set('cronHistoryJobFilter', 'all');
+    storage.set('cronHistoryStatusFilter', 'all');
+    storage.set('cronHistorySortOrder', 'desc');
+    storage.remove('cronHistoryStartDate');
+    storage.remove('cronHistoryEndDate');
     
     setState(prev => ({
       ...prev,
@@ -335,7 +336,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
   };
 
   const setPageSize = (pageSize: number) => {
-    localStorage.setItem('cronHistoryPageSize', pageSize.toString());
+    storage.set('cronHistoryPageSize', pageSize.toString());
     
     setState(prev => ({
       ...prev,
@@ -378,7 +379,7 @@ export const useCronJobHistory = ({ isCacheBust, setErrorWithScroll }: UseCronJo
   };
 
   const setSortOrder = (sortOrder: 'asc' | 'desc') => {
-    localStorage.setItem('cronHistorySortOrder', sortOrder);
+    storage.set('cronHistorySortOrder', sortOrder);
     
     setState(prev => ({
       ...prev,

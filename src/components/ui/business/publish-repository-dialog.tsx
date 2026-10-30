@@ -10,8 +10,8 @@ import {
 } from '../base/dialog';
 import { Button } from '../base/button';
 import { IntegrationIcon, getLanguageFlag } from './integration-icons';
-import { getCronJobHistory, publishMessageNow, type RetryMessageResult } from '../../../api/index';
-import { getRepositoryByUrl } from '../../../api';
+import { getCronJobHistory, publishMessageNow, type RetryMessageResult } from '../../../api/maestro';
+import { getRepositoryByUrl } from '../../../api/alchemist';
 import {
   classifyPublishFailure,
   reconcilePublish,

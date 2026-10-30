@@ -1,10 +1,11 @@
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '../base/button';
+import { storage } from '../../../lib/storage';
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = storage.get('theme');
     if (savedTheme) {
       return savedTheme === 'dark';
     }
@@ -16,14 +17,14 @@ export function ThemeToggle() {
     
     if (isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      storage.set('theme', 'dark');
       if (metaThemeColor) {
         // Updated soft dark theme color
         metaThemeColor.setAttribute('content', '#1a1a1a');
       }
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      storage.set('theme', 'light');
       if (metaThemeColor) {
         metaThemeColor.setAttribute('content', '#ffffff');
       }

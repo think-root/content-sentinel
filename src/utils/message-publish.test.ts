@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiConfig } from '@/api/api-configs';
-import type { RetryMessageResult } from '@/api/index';
+import type { RetryMessageResult } from '@/api/maestro';
 import {
   buildPublishRows,
   enabledIntegrations,

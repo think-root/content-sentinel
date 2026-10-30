@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../base/switch';
 import { Label } from '../base/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../base/tooltip';
+import { storage } from '../../../lib/storage';
 
 const LLM_PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -83,7 +84,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
 
   const getValidationCache = (): Record<string, { result: ValidationResult; ts: number }> => {
     try {
-      const raw = localStorage.getItem(LANG_VALIDATION_CACHE_KEY);
+      const raw = storage.get(LANG_VALIDATION_CACHE_KEY);
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
@@ -94,7 +95,7 @@ export const PromptSettings = ({ isApiReady = true, onUnsavedChangesChange }: Pr
     try {
       const cache = getValidationCache();
       cache[codesKey] = { result, ts: Date.now() };
-      localStorage.setItem(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
+      storage.set(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
     } catch {
       // no-op
     }

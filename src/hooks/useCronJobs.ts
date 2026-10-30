@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getCronJobs, type CronJob } from '../api/index';
+import { getCronJobs, type CronJob } from '../api/maestro';
 import { saveCronJobsToCache, getCronJobsFromCache } from '../utils/cache-utils';
 import { compareCronJobs } from '../utils/data-comparison';
 import { isApiConfigured } from '../utils/api-settings';

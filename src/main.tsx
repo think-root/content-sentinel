@@ -1,4 +1,4 @@
-const savedTheme = localStorage.getItem('theme');
+const savedTheme = storage.get('theme');
 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
 
@@ -13,6 +13,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { storage } from './lib/storage';
 
 if (import.meta.env.DEV) {
   // Warns when any field would trigger iOS focus-zoom. Dev-only, tree-shaken out of prod.

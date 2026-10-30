@@ -24,6 +24,7 @@ import { Input } from '../base/input';
 import { Label } from '../base/label';
 import { Button } from '../base/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../base/select';
+import { storage } from '../../../lib/storage';
 
 // Normalize settings for comparison and equality check
 function normalizeValue(value: unknown): string {
@@ -119,7 +120,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const getValidationCache = (): Record<string, { result: ValidationResult; ts: number }> => {
     try {
-      const raw = localStorage.getItem(LANG_VALIDATION_CACHE_KEY);
+      const raw = storage.get(LANG_VALIDATION_CACHE_KEY);
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
@@ -130,7 +131,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     try {
       const cache = getValidationCache();
       cache[codesKey] = { result, ts: Date.now() };
-      localStorage.setItem(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
+      storage.set(LANG_VALIDATION_CACHE_KEY, JSON.stringify(cache));
     } catch {
       // no-op
     }
@@ -353,7 +354,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         },
       };
 
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
+      storage.set(LOCAL_STORAGE_KEY, JSON.stringify(settingsToSave));
 
       // toast.dismiss('unique-toast-settings');
       // toast.success('Settings successfully updated', toastOptions);

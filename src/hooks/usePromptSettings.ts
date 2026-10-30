@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getPromptSettings, updatePromptSettings, PromptSettings } from '../api';
+import { getPromptSettings, updatePromptSettings, PromptSettings } from '../api/maestro';
+import { storage } from '../lib/storage';
 
 interface UsePromptSettingsReturn {
   settings: PromptSettings | null;
@@ -24,7 +25,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
   // Initialize from cache when available to avoid showing skeletons on tab switch
   const cached = (() => {
     try {
-      const raw = localStorage.getItem('promptSettings');
+      const raw = storage.get('promptSettings');
       return raw ? (JSON.parse(raw) as PromptSettings) : null;
     } catch {
       return null;
@@ -50,7 +51,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
     // Set fetching flag
     isFetching.current = true;
 
-    const hasCache = Boolean(settings || localStorage.getItem('promptSettings'));
+    const hasCache = Boolean(settings || storage.get('promptSettings'));
     const isBackgroundFetch = hasCache && !forceFetch;
 
     try {
@@ -63,7 +64,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
       setSettings(data);
 
       // Cache the settings
-      localStorage.setItem('promptSettings', JSON.stringify(data));
+      storage.set('promptSettings', JSON.stringify(data));
     } catch (err) {
       // Handle 429 errors silently (rate limiting)
       const isRateLimitError = err instanceof Error && (
@@ -80,7 +81,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
 
       // Try to load from cache or use defaults if we don't already have settings
       if (!hasCache || !settings) {
-        const cachedRaw = localStorage.getItem('promptSettings');
+        const cachedRaw = storage.get('promptSettings');
         if (cachedRaw) {
           try {
             setSettings(JSON.parse(cachedRaw));
@@ -135,7 +136,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
           
           if (response.status === 'success') {
             // Update cache
-            localStorage.setItem('promptSettings', JSON.stringify(newSettings));
+            storage.set('promptSettings', JSON.stringify(newSettings));
           } else {
             throw new Error(response.message || 'Failed to update prompt settings');
           }
@@ -171,7 +172,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
       
       if (response.status === 'success') {
         // Update cache with defaults
-        localStorage.setItem('promptSettings', JSON.stringify(defaultSettings));
+        storage.set('promptSettings', JSON.stringify(defaultSettings));
       } else {
         throw new Error(response.message || 'Failed to reset to defaults');
       }
@@ -180,7 +181,7 @@ export function usePromptSettings(): UsePromptSettingsReturn {
       try {
         const data = await getPromptSettings();
         setSettings(data);
-        localStorage.setItem('promptSettings', JSON.stringify(data));
+        storage.set('promptSettings', JSON.stringify(data));
       } catch (fetchErr) {
         // If fetch also fails, keep the defaults but show error
         console.error('Failed to fetch settings after reset error:', fetchErr);
