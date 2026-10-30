@@ -234,7 +234,7 @@ export const CronJobHistory = ({
     const fetchJobs = async () => {
       try {
         const jobs = await getCronJobs();
-        setCronJobs(jobs.map((job: any) => job.name));
+        setCronJobs(jobs.map((job) => job.name));
       } catch {
         console.log('Failed to fetch cron jobs.');
       }

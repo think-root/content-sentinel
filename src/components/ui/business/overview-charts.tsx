@@ -14,6 +14,12 @@ import type { TimeRange } from '../../../hooks/useOverviewHistory';
 import { useRepositoryTrends } from '../../../hooks/useRepositoryTrends';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number | string; color?: string }>;
+  label?: string | number;
+}
+
 interface OverviewChartsProps {
   posted: number;
   unposted: number;
@@ -164,12 +170,12 @@ export function OverviewCharts({
 
 
   // Render Helpers
-  const CustomTooltip = ({ active, payload, label }: any) => { // Type 'any' for quick recharts tooltip props
+  const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-popover border border-border rounded-md shadow-md p-2 text-xs">
           <p className="font-semibold mb-1">{label}</p>
-          {payload.map((p: any, idx: number) => (
+          {payload.map((p, idx) => (
             <div key={idx} className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
               <span className="capitalize">{p.name}:</span>

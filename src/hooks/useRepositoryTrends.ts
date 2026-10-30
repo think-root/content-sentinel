@@ -195,8 +195,8 @@ export const useRepositoryTrends = (timeRange: TimeRange, isApiReady: boolean, s
 
       setTrends(sortedTrends);
 
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
         console.error("Failed to fetch repository trends:", err);
         setError("Failed to load trends");
       }

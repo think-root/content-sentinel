@@ -629,8 +629,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     try {
                       let message = 'Cache cleared successfully';
                       
-                      if ((window as any).clearAllCaches) {
-                        message = (window as any).clearAllCaches();
+                      if (window.clearAllCaches) {
+                        message = window.clearAllCaches();
                         console.log('Cache clearing completed:', message);
                       }
 

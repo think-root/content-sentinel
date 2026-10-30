@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { toast } from '../components/ui/common/toast-config';
 import { isRateLimited } from '../lib/requestQueue';
+import { isRateLimitError } from '../utils/api-error';
 import type { RepositorySortBy, RepositorySortOrder } from '../types';
 import {
   DEFAULT_REPOSITORY_SORT_BY,
@@ -109,8 +110,8 @@ export const useDataRefresh = ({
               1,
               false
             );
-          } catch (error: any) {
-            if (!(error?.status === 429 || error?.statusCode === 429)) {
+          } catch (error) {
+            if (!isRateLimitError(error)) {
               throw error;
             }
           }
@@ -119,8 +120,8 @@ export const useDataRefresh = ({
         const previewsTask = (async () => {
           try {
             await fetchPreviews(false);
-          } catch (error: any) {
-            if (!(error?.status === 429 || error?.statusCode === 429)) {
+          } catch (error) {
+            if (!isRateLimitError(error)) {
               throw error;
             }
           }
@@ -129,8 +130,8 @@ export const useDataRefresh = ({
         const cronJobsTask = fetchCronJobs ? (async () => {
           try {
             await fetchCronJobs(false);
-          } catch (error: any) {
-            if (!(error?.status === 429 || error?.statusCode === 429)) {
+          } catch (error) {
+            if (!isRateLimitError(error)) {
               throw error;
             }
           }
@@ -139,8 +140,8 @@ export const useDataRefresh = ({
         const cronHistoryTask = fetchCronJobHistory ? (async () => {
           try {
             await fetchCronJobHistory(false);
-          } catch (error: any) {
-            if (!(error?.status === 429 || error?.statusCode === 429)) {
+          } catch (error) {
+            if (!isRateLimitError(error)) {
               throw error;
             }
           }
@@ -149,8 +150,8 @@ export const useDataRefresh = ({
         const overviewHistoryTask = refreshOverviewHistory ? (async () => {
           try {
             await refreshOverviewHistory();
-          } catch (error: any) {
-            if (!(error?.status === 429 || error?.statusCode === 429)) {
+          } catch (error) {
+            if (!isRateLimitError(error)) {
               throw error;
             }
           }
@@ -164,11 +165,7 @@ export const useDataRefresh = ({
         const non429Errors = results
           .filter(r => r.status === 'rejected')
           .map(r => (r as PromiseRejectedResult).reason)
-          .filter((err: any) =>
-            !(err?.status === 429 ||
-              err?.statusCode === 429 ||
-              (typeof err?.message === 'string' && err.message.includes('Rate limit exceeded')))
-          );
+          .filter(err => !isRateLimitError(err));
 
         if (non429Errors.length > 0) {
           throw non429Errors[0];
@@ -197,14 +194,10 @@ export const useDataRefresh = ({
 
         return true;
       } catch (error) {
-        const err = error as Error;
-
         // Only show error messages for non-rate limit errors
-        if (!(err.message.includes("Rate limit exceeded") ||
-              (err as any)?.status === 429 ||
-              (err as any)?.statusCode === 429)) {
+        if (!isRateLimitError(error)) {
           setErrorWithScroll(
-            "Failed to refresh data: " + (err.message || "Unknown error"),
+            "Failed to refresh data: " + ((error as Error)?.message || "Unknown error"),
             "refresh-error"
           );
         }
