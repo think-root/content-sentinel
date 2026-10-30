@@ -325,7 +325,7 @@ export function OverviewCharts({
                         fontSize={12} 
                         tickLine={false} 
                         axisLine={false}
-                        tickFormatter={(value) => Math.floor(value).toString()} // Integer only
+                        allowDecimals={false}
                       />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
@@ -476,6 +476,7 @@ export function OverviewCharts({
                           fontSize={12}
                           tickLine={false}
                           axisLine={false}
+                          allowDecimals={false}
                         />
                         <YAxis
                           dataKey="keyword"
