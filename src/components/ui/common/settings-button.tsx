@@ -15,6 +15,7 @@ export const SettingsButton: React.FC<SettingsButtonProps> = ({ onOpen }) => {
             variant="ghost"
             size="icon"
             onClick={onOpen}
+            aria-label="Settings"
             className="h-8 w-8 sm:h-10 sm:w-10"
           >
             <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
