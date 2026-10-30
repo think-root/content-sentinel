@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { ApiSettings, LOCAL_STORAGE_KEY, areApiSettingsEqual, getApiSettings } from '@/utils/api-settings';
 import { toast } from './toast-config';
 import { Settings, Loader2 } from 'lucide-react';
@@ -23,10 +23,10 @@ import { Button } from '../base/button';
 import { storage } from '../../../lib/storage';
 import { SettingsGeneralTab } from './settings-general-tab';
 import { SettingsCacheTab } from './settings-cache-tab';
+import { SettingsAccountTab } from './settings-account-tab';
+import { getSession, type Session } from '@/api/session';
 
-type SettingsTab = 'general' | 'cache';
-
-const TABS: SettingsTab[] = ['general', 'cache'];
+type SettingsTab = 'general' | 'account' | 'cache';
 
 const toastOptions = {
   id: 'unique-toast-settings'
@@ -42,13 +42,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
+  const [session, setSession] = useState<Session>({ method: 'none' });
+  // The Account tab only exists when something protects the dashboard
+  const tabs = useMemo<SettingsTab[]>(
+    () => (session.method === 'none' ? ['general', 'cache'] : ['general', 'account', 'cache']),
+    [session.method]
+  );
   const {
     languageValidation,
     isValidatingLanguage,
     validateLanguageCodes,
     resetLanguageValidation,
   } = useLanguageValidation('settingsLanguageValidationCache');
-  const { handlers, isSwiping, resetSwipe, animationClass } = useDialogTabSwipe(TABS, activeTab, setActiveTab);
+  const { handlers, isSwiping, resetSwipe, animationClass } = useDialogTabSwipe(tabs, activeTab, setActiveTab);
 
   // Capture initial settings snapshot on open to detect no-op saves
   const initialSettingsRef = useRef<ApiSettings | null>(null);
@@ -80,6 +86,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     // Clear transient UI state so errors/spinners do not persist across opens
     resetFormState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Who is signed in, asked once on the first open
+  const sessionRequestedRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen || sessionRequestedRef.current) return;
+    sessionRequestedRef.current = true;
+    getSession().then(setSession);
   }, [isOpen]);
 
   // Debounced validation for display language
@@ -181,8 +195,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </DialogHeader>
 
         <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as SettingsTab)}>
-          <TabsList className="grid w-full grid-cols-2 shrink-0">
+          <TabsList className={`grid w-full shrink-0 ${tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="general">General</TabsTrigger>
+            {session.method !== 'none' && <TabsTrigger value="account">Account</TabsTrigger>}
             <TabsTrigger value="cache">Cache</TabsTrigger>
           </TabsList>
 
@@ -199,6 +214,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 updateSettings={updateSettings}
               />
             </TabsContent>
+
+            {session.method !== 'none' && (
+              <TabsContent value="account" className="space-y-4">
+                <SettingsAccountTab session={session} />
+              </TabsContent>
+            )}
 
             <TabsContent value="cache" className="space-y-4">
               <SettingsCacheTab />

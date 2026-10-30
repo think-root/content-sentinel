@@ -94,7 +94,7 @@ A dashboard to monitor and manage the [content-alchemist](https://github.com/thi
    Anyone who can open the dashboard can use the backend through it, so `npm start` and Docker only proxy when the dashboard is protected. Pick one:
 
    - [Cloudflare Access](#cloudflare-pages): set `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`.
-   - A password: set `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`, and the browser asks for them before showing the dashboard. Use a long random password, and HTTPS if the server is reachable from the internet, since Basic Auth sends the password with every request.
+   - A password: set `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`, and the dashboard opens with a login page. A session lasts 30 days; Settings → Account signs out, and changing the password signs everyone out. Use a long random password, and HTTPS if the server is reachable from the internet.
    - Nothing, on a machine or network nobody else can reach: set `ALLOW_UNAUTHENTICATED_PROXY=true`.
 
    `npm run dev` and `npm run preview` listen on localhost and need none of them.
@@ -164,6 +164,7 @@ Display settings are in the site header on the right, the "Settings" button. The
 | **General** | Date Format               | Pick a format from the list, e.g. `DD.MM.YYYY HH:mm`, `MM/DD/YYYY hh:mm A` or `YYYY-MM-DD HH:mm`; formats with time can also show seconds. **Default:** `DD.MM.YYYY HH:mm` |
 |             | Timezone                  | IANA timezone the dates are shown in (**default:** `Europe/Kyiv`)                                                                                                    |
 |             | Language Code             | [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) code of the post texts to display (**default:** `uk`)                                                         |
+| **Account** | Sign out                  | Who is signed in and how; shown when Cloudflare Access or the password login protects the dashboard                                                               |
 | **Cache**   | Clear API Cache           | Drops cached API responses and reloads the data                                                                                                                    |
 
 These settings are saved in your browser's local storage.

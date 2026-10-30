@@ -41,19 +41,29 @@ async function accessKeys(issuer) {
   return keys;
 }
 
-/** Whether the request carries a valid Cloudflare Access token for this application. */
-async function hasAccessIdentity(request, env) {
+/** Whether Cloudflare Access is configured for this deployment. */
+export const isAccessConfigured = (env) => Boolean(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD);
+
+/**
+ * The claims of the request's Cloudflare Access token (`email` for a person,
+ * `common_name` for a service token), or null when it has no valid one.
+ *
+ * @param {Request} request
+ * @param {Record<string, string | undefined>} env
+ * @returns {Promise<Record<string, unknown> | null>}
+ */
+export async function accessIdentity(request, env) {
   const token = request.headers.get('cf-access-jwt-assertion');
-  if (!token) return false;
+  if (!token) return null;
 
   // Accept the team domain with or without the scheme and trailing slash.
   const issuer = `https://${env.ACCESS_TEAM_DOMAIN.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
   try {
-    await jwtVerify(token, await accessKeys(issuer), { issuer, audience: env.ACCESS_AUD });
-    return true;
+    const { payload } = await jwtVerify(token, await accessKeys(issuer), { issuer, audience: env.ACCESS_AUD });
+    return payload;
   } catch (cause) {
     console.warn('[proxy] Access token rejected:', cause?.code ?? cause?.message ?? cause);
-    return false;
+    return null;
   }
 }
 
@@ -100,8 +110,8 @@ export async function proxyRequest(request, env, { requireAccess }) {
     return error(403, `Missing the ${PROXY_REQUEST_HEADER} header`);
   }
 
-  if (env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD) {
-    if (!(await hasAccessIdentity(request, env))) return error(403, 'Forbidden');
+  if (isAccessConfigured(env)) {
+    if (!(await accessIdentity(request, env))) return error(403, 'Forbidden');
   } else if (requireAccess) {
     return error(403, 'Cloudflare Access is not configured: set ACCESS_TEAM_DOMAIN and ACCESS_AUD');
   }

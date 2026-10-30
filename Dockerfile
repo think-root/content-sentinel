@@ -18,7 +18,7 @@ ENV PORT=3000
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY server.js api-proxy.js basic-auth.js ./
+COPY server.js api-proxy.js password-auth.js ./
 COPY --from=build /app/dist ./dist
 
 USER node

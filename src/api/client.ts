@@ -14,17 +14,20 @@ const RELOAD_KEY = 'sessionReloadAt';
 const RELOAD_COOLDOWN_MS = 30_000;
 
 /**
- * `fetch` for proxy requests. When the Cloudflare Access session has expired,
- * Access answers with a redirect to its login page, which `fetch` can't follow
- * across origins; reload the page so the browser signs in again. Reload once
- * per cooldown, so a redirect that isn't the login can't loop.
+ * `fetch` for the dashboard's own server. When the session has expired, reload
+ * the page so the browser signs in again: Cloudflare Access answers with a
+ * redirect to its login page, which `fetch` can't follow across origins, and
+ * the password login (password-auth.js) with a 401 marked by a header. Reload
+ * once per cooldown, so a response that only looks like this can't loop.
  */
 export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   headers.set(PROXY_REQUEST_HEADER, '1');
 
   const response = await fetch(input, { ...init, headers, redirect: 'manual' });
-  if (response.type === 'opaqueredirect') {
+  const sessionExpired = response.type === 'opaqueredirect'
+    || (response.status === 401 && response.headers.get('x-content-sentinel-auth') === 'login');
+  if (sessionExpired) {
     const lastReload = Number(sessionStorage.getItem(RELOAD_KEY));
     if (!lastReload || Date.now() - lastReload > RELOAD_COOLDOWN_MS) {
       sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
