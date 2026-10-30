@@ -18,7 +18,7 @@ ENV PORT=3000
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY server.js ./
+COPY server.js api-proxy.js ./
 COPY --from=build /app/dist ./dist
 
 USER node

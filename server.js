@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { PROXY_PREFIX, handleNodeProxyRequest } from './api-proxy.js';
 
 dotenv.config();
 
@@ -13,6 +14,12 @@ const PORT = process.env.PORT || process.env.VITE_PORT || 3000;
 // The app used to live under /dashboard/; keep old bookmarks working.
 app.get(/^\/dashboard(\/.*)?$/, (req, res) => {
   res.redirect(301, req.params[0] || '/');
+});
+
+// The proxy holds the backend tokens, so it only runs open when that is asked for.
+const proxyOptions = { requireAccess: process.env.ALLOW_UNAUTHENTICATED_PROXY !== 'true' };
+app.use(PROXY_PREFIX, (req, res, next) => {
+  handleNodeProxyRequest(req, res, process.env, proxyOptions).catch(next);
 });
 
 app.use(express.static(distDir));
