@@ -1,43 +1,15 @@
 import { useState, useEffect } from 'react';
-import { formatDate, formatDateOnly } from '@/utils/date-format';
-import { getCronJobs, retryMessagePost } from '@/api/maestro';
-import { getLatestPostedRepository } from '@/api/alchemist';
-import { Filter, ChevronDown, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { getCronJobs } from '@/api/maestro';
+import { Filter, ChevronDown, Clock } from 'lucide-react';
 import type { CronJobHistory as CronJobHistoryType } from '@/api/maestro';
-import { getHistoryEntryKey, getLegacyFailedApis, getRetryTarget } from '@/utils/message-retry';
-import { TruncatedText } from '@/components/ui/common/truncated-text';
+import { buildRetryConfirmMessage } from '@/utils/message-retry';
+import { useHistoryRetry } from '@/hooks/useHistoryRetry';
 import { ConfirmDialog } from '@/components/ui/common/confirm-dialog';
-import { toast } from '@/components/ui/common/toast-config';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/base/tooltip";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/base/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/base/select";
 import { Button } from "@/components/ui/base/button";
-import { Calendar } from "@/components/ui/base/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/base/popover";
-import { Badge } from "@/components/ui/common/badge";
-import { Skeleton } from "@/components/ui/common/skeleton";
-import { Card } from "@/components/ui/layout/card";
-import { cn } from "@/lib/utils";
 import { storage } from '../../../lib/storage';
+import { CronHistoryFilters } from './cron-history-filters';
+import { CronHistoryList } from './cron-history-list';
+import { CronHistoryPagination } from './cron-history-pagination';
 
 interface CronJobHistoryProps {
   history?: CronJobHistoryType[];
@@ -88,148 +60,18 @@ export const CronJobHistory = ({
   onRetryComplete
 }: CronJobHistoryProps) => {
   const [cronJobs, setCronJobs] = useState<string[]>([]);
-  const [selectedJob, setSelectedJob] = useState<string>(
-    nameFilter || 'all'
-  );
-  const [selectedStatus, setSelectedStatus] = useState<string>(
-    statusFilter === undefined ? 'all' : statusFilter.toString()
-  );
-  const [selectedPageSize, setSelectedPageSize] = useState<number>(pageSize);
-  const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>(sortOrder);
-  const [selectedStartDate, setSelectedStartDate] = useState<string>(startDate || '');
-  const [selectedEndDate, setSelectedEndDate] = useState<string>(endDate || '');
-  const [startDateOpen, setStartDateOpen] = useState<boolean>(false);
-  const [endDateOpen, setEndDateOpen] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(() => {
     const saved = storage.get('cronHistoryShowFilters');
     return saved === 'true';
   });
-  const [retryingKey, setRetryingKey] = useState<string | null>(null);
-  const [retriedKeys, setRetriedKeys] = useState<string[]>([]);
-  const [retryConfirm, setRetryConfirm] = useState<{
-    key: string;
-    failed: string[];
-    url: string;
-    /** True when the url was resolved for the run rather than recorded by it. */
-    resolved: boolean;
-  } | null>(null);
-
-  const openRetryConfirm = async (entry: CronJobHistoryType, plan: RetryPlan) => {
-    const key = getHistoryEntryKey(entry);
-
-    if (plan.url) {
-      setRetryConfirm({ key, failed: plan.failed, url: plan.url, resolved: false });
-      return;
-    }
-
-    // Runs recorded before Content Maestro tracked the item carry no url, so it
-    // has to be resolved here and pinned into the request: leaving that to the
-    // backend would publish whatever is latest at confirm time, which a cron run
-    // in between would have changed.
-    setRetryingKey(key);
-    try {
-      const response = await getLatestPostedRepository();
-      const resolvedUrl = response.data?.items?.[0]?.url;
-      if (!resolvedUrl) {
-        toast.error('Could not determine which repository to publish', { id: `retry-${key}` });
-        return;
-      }
-      setRetryConfirm({ key, failed: plan.failed, url: resolvedUrl, resolved: true });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to connect to Content Alchemist API';
-      toast.error(message, { id: `retry-${key}` });
-    } finally {
-      setRetryingKey(null);
-    }
-  };
-
-  const handleRetry = async (key: string, failed: string[], url: string) => {
-    const toastId = `retry-${key}`;
-    setRetryingKey(key);
-    toast.loading(`Re-sending to ${failed.join(', ')}...`, { id: toastId });
-
-    let published = false;
-    try {
-      const result = await retryMessagePost(failed, url);
-      const succeeded = result.succeeded ?? [];
-      const failures = result.failed ?? [];
-      published = succeeded.length > 0;
-
-      if (failures.length === 0) {
-        toast.success(`Sent to ${succeeded.join(', ')}`, { id: toastId });
-      } else {
-        const reasons = (result.outcomes ?? [])
-          .filter(outcome => !outcome.success)
-          .map(outcome => `${outcome.api_name}: ${outcome.error ?? 'unknown error'}`)
-          .join('; ');
-        toast.error(reasons || `Failed to send to ${failures.join(', ')}`, { id: toastId });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to connect to Content Maestro API';
-      toast.error(message, { id: toastId });
-    } finally {
-      setRetryingKey(null);
-    }
-
-    if (published) {
-      // Rows are immutable, so the original run keeps looking retryable. Remember
-      // the ones already handled to keep a second click from publishing twice.
-      setRetriedKeys(previous => [...previous, key]);
-    }
-
-    // Refreshing is a separate concern: a failure here must not overwrite the
-    // result of the publish that just happened.
-    if (onRetryComplete) {
-      try {
-        await onRetryComplete();
-      } catch {
-        // useCronJobHistory already surfaces its own fetch errors.
-      }
-    }
-  };
-
-  const renderRetryButton = (entry: CronJobHistoryType, variant: 'desktop' | 'mobile') => {
-    const plan = getRetryPlan(entry);
-    const key = getHistoryEntryKey(entry);
-    if (!plan || retriedKeys.includes(key)) {
-      return null;
-    }
-
-    const isRetrying = retryingKey === key;
-    const label = `Publish to ${plan.failed.join(', ')}`;
-
-    const button = (
-      <Button
-        variant="ghost"
-        size={variant === 'desktop' ? 'icon' : 'sm'}
-        onClick={() => openRetryConfirm(entry, plan)}
-        disabled={!isApiReady || retryingKey !== null}
-        aria-label={label}
-        title={label}
-        className={variant === 'desktop'
-          ? 'h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-50'
-          : 'flex items-center gap-2'}
-      >
-        <RefreshCw className={cn('h-4 w-4', isRetrying && 'animate-spin')} />
-        {variant === 'mobile' && <span>{isRetrying ? 'Sending...' : 'Publish again'}</span>}
-      </Button>
-    );
-
-    if (variant === 'mobile') {
-      return button;
-    }
-
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>{button}</span>
-          </TooltipTrigger>
-          <TooltipContent>{label}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
+  const {
+    retryingKey,
+    retriedKeys,
+    retryConfirm,
+    openRetryConfirm,
+    confirmRetry,
+    cancelRetry,
+  } = useHistoryRetry(onRetryComplete);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -246,103 +88,6 @@ export const CronJobHistory = ({
     }
   }, [isApiReady]);
 
-  useEffect(() => {
-    setSelectedJob(nameFilter || 'all');
-  }, [nameFilter]);
-
-  useEffect(() => {
-    setSelectedStatus(
-      statusFilter === undefined ? 'all' : statusFilter.toString()
-    );
-  }, [statusFilter]);
-
-  useEffect(() => {
-    setSelectedPageSize(pageSize);
-  }, [pageSize]);
-
-  useEffect(() => {
-    setSelectedSortOrder(sortOrder);
-  }, [sortOrder]);
-
-  useEffect(() => {
-    setSelectedStartDate(startDate || '');
-  }, [startDate]);
-
-  useEffect(() => {
-    setSelectedEndDate(endDate || '');
-  }, [endDate]);
-
-  const handleJobFilterChange = (jobName: string) => {
-    setSelectedJob(jobName);
-    const filterValue = jobName === 'all' ? undefined : jobName;
-
-    if (setNameFilter) {
-      setNameFilter(filterValue);
-    }
-  };
-
-  const handleStatusFilterChange = (status: string) => {
-    setSelectedStatus(status);
-    let filterValue: number | undefined;
-
-    if (status === '1') {
-      filterValue = 1;
-    } else if (status === '0') {
-      filterValue = 0;
-    } else if (status === '2') {
-      filterValue = 2;
-    } else {
-      filterValue = undefined;
-    }
-
-    if (setStatusFilter) {
-      setStatusFilter(filterValue);
-    }
-  };
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setSelectedPageSize(newPageSize);
-
-    if (setPageSize) {
-      setPageSize(newPageSize);
-    }
-  };
-
-  const handleSortOrderChange = (newSortOrder: 'asc' | 'desc') => {
-    setSelectedSortOrder(newSortOrder);
-
-    if (setSortOrder) {
-      setSortOrder(newSortOrder);
-    }
-  };
-
-  const handleStartDateChange = (date: string) => {
-    setSelectedStartDate(date);
-
-    if (setStartDate) {
-      setStartDate(date && date.trim() !== '' ? date : undefined);
-    }
-  };
-
-  const handleEndDateChange = (date: string) => {
-    setSelectedEndDate(date);
-
-    if (setEndDate) {
-      setEndDate(date && date.trim() !== '' ? date : undefined);
-    }
-  };
-
-  const handleClearFilters = () => {
-    setSelectedJob('all');
-    setSelectedStatus('all');
-    setSelectedSortOrder('desc');
-    setSelectedStartDate('');
-    setSelectedEndDate('');
-    if (resetFilters) {
-      resetFilters();
-    }
-  };
-
   const handleToggleFilters = () => {
     const newValue = !showFilters;
     setShowFilters(newValue);
@@ -354,60 +99,7 @@ export const CronJobHistory = ({
     setPage(page);
   };
 
-  const displayHistory = history;
-
   const hasActiveFilters = nameFilter || statusFilter !== undefined || startDate || endDate;
-
-  const renderDatePicker = (date: string, onChange: (date: string) => void, placeholder: string, isOpen: boolean, setIsOpen: (open: boolean) => void) => {
-    const selectedDate = date ? new Date(date) : undefined;
-    
-    return (
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal text-foreground hover:text-foreground hover:bg-background"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? formatDateOnly(date) : placeholder}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              if (date) {
-                const year = date.getFullYear();
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const day = date.getDate().toString().padStart(2, '0');
-                onChange(`${year}-${month}-${day}`);
-                setIsOpen(false);
-              }
-            }}
-            initialFocus
-          />
-          {date && (
-            <div className="p-3 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  onChange('');
-                  setIsOpen(false);
-                }}
-              >
-                Clear date
-              </Button>
-            </div>
-          )}
-        </PopoverContent>
-      </Popover>
-    );
-  };
 
   return (
     <div className="bg-card border rounded-lg p-6 mb-8 relative">
@@ -418,463 +110,59 @@ export const CronJobHistory = ({
         </div>
 
         <Button
-                  onClick={handleToggleFilters}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filters
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                  {hasActiveFilters && (
-                    <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+          onClick={handleToggleFilters}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+          <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          {hasActiveFilters && (
+            <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
               {[nameFilter, statusFilter !== undefined, startDate, endDate].filter(Boolean).length}
-                    </span>
-                  )}
-                </Button>
+            </span>
+          )}
+        </Button>
       </div>
 
-      {/* Filters panel */}
       {showFilters && (
-        <Card className="mb-6 p-4">
-          <div className="flex flex-col gap-4">
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Job filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Cron Job
-                </label>
-                <Select value={selectedJob} onValueChange={handleJobFilterChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Jobs" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Jobs</SelectItem>
-                    <SelectItem value="collect">Collect</SelectItem>
-                    <SelectItem value="message">Message</SelectItem>
-                    {cronJobs.filter(job => !['collect', 'message'].includes(job)).map((jobName) => (
-                      <SelectItem key={jobName} value={jobName}>
-                        {jobName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Status
-                </label>
-                <Select value={selectedStatus} onValueChange={handleStatusFilterChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="1">Success</SelectItem>
-                    <SelectItem value="0">Failed</SelectItem>
-                    <SelectItem value="2">Partial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Page Size filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Page Size
-                </label>
-                <Select value={selectedPageSize.toString()} onValueChange={(value) => handlePageSizeChange(parseInt(value, 10))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Page Size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sort Order filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Sort by Date
-                </label>
-                <Select value={selectedSortOrder} onValueChange={(value) => handleSortOrderChange(value as 'asc' | 'desc')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort Order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="desc">Newest First</SelectItem>
-                    <SelectItem value="asc">Oldest First</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Date filters row */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Start Date filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Start Date
-                </label>
-                {renderDatePicker(selectedStartDate, handleStartDateChange, "Select start date", startDateOpen, setStartDateOpen)}
-              </div>
-
-              {/* End Date filter */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  End Date
-                </label>
-                {renderDatePicker(selectedEndDate, handleEndDateChange, "Select end date", endDateOpen, setEndDateOpen)}
-              </div>
-            </div>
-
-            {/* Clear filters button */}
-            {hasActiveFilters && (
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleClearFilters}
-                  variant="outline"
-                  className="text-foreground"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
+        <CronHistoryFilters
+          cronJobs={cronJobs}
+          nameFilter={nameFilter}
+          statusFilter={statusFilter}
+          pageSize={pageSize}
+          sortOrder={sortOrder}
+          startDate={startDate}
+          endDate={endDate}
+          hasActiveFilters={Boolean(hasActiveFilters)}
+          setNameFilter={setNameFilter}
+          setStatusFilter={setStatusFilter}
+          setPageSize={setPageSize}
+          setSortOrder={setSortOrder}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
+          resetFilters={resetFilters}
+        />
       )}
 
-      {!isApiReady ? (
-        <div className="overflow-x-auto">
-          <div className="md:block hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/5">Date</TableHead>
-                  <TableHead className="w-1/6">Status</TableHead>
-                  <TableHead className="w-5/12">Output</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    <div className="text-muted-foreground text-sm py-4">
-                      Data could not be loaded because API keys are not configured
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-          <div className="md:hidden">
-            <div className="bg-card border rounded-lg p-4 mb-4">
-              <div className="text-muted-foreground text-sm text-center">
-                Data could not be loaded because API keys are not configured
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : loading && history.length === 0 ? (
-        <div className="overflow-x-auto">
-          <div className="md:block hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/5">Date</TableHead>
-                  <TableHead className="w-1/6">Status</TableHead>
-                  <TableHead className="w-5/12">Output</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[1, 2, 3].map((i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-3/4" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-1/2" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-1/4" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-1/2" />
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="md:hidden">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card border rounded-lg p-4 mb-4 animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
-                <div className="h-4 bg-muted rounded w-1/2 mb-3"></div>
-                <div className="h-4 bg-muted rounded w-1/4 mb-3"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <div className="md:block hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/6">Name</TableHead>
-                  <TableHead className="w-1/5">Date</TableHead>
-                  <TableHead className="w-1/6">Status</TableHead>
-                  <TableHead className="w-5/12">Output</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
+      <CronHistoryList
+        history={history}
+        loading={loading}
+        isApiReady={isApiReady}
+        retryingKey={retryingKey}
+        retriedKeys={retriedKeys}
+        onRetry={openRetryConfirm}
+      />
 
-              {displayHistory && displayHistory.length > 0 ? (
-                <TableBody>
-                  {displayHistory.map((entry, index) => (
-                    <TableRow key={index} className="group">
-                      <TableCell className="font-medium">{entry.name}</TableCell>
-                      <TableCell>
-                        <div className="overflow-hidden">
-                          <p className="whitespace-normal break-words">{formatDate(entry.timestamp)}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={entry.status === 1 ? "success" : entry.status === 2 ? "warning" : "destructive"}
-                          className="text-xs"
-                        >
-                          {entry.status === 1 ? 'Success' : entry.status === 2 ? 'Partial' : 'Failed'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="overflow-hidden">
-                          <TruncatedText text={entry.output || 'None'} maxChars={65} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end">
-                          {renderRetryButton(entry, 'desktop')}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              ) : (
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">
-                      <div className="text-muted-foreground text-sm py-4">
-                        No data available
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              )}
-            </Table>
-          </div>
-
-          <div className="md:hidden block">
-            {history && history.length > 0 ? (
-              history.map((entry, index) => (
-                <div key={index} className={`bg-card border ${index !== history.length - 1 ? 'border-b' : ''} p-4 group hover:bg-muted/50`}>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Name</span>
-                      <div className="mt-1 text-sm text-foreground">{entry.name}</div>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Date</span>
-                      <div className="mt-1 text-sm text-foreground">
-                        <p className="whitespace-normal break-words">{formatDate(entry.timestamp)}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Status</span>
-                      <div className="mt-1">
-                        <Badge
-                          variant={entry.status === 1 ? "success" : entry.status === 2 ? "warning" : "destructive"}
-                          className="text-xs"
-                        >
-                          {entry.status === 1 ? 'Success' : entry.status === 2 ? 'Partial' : 'Failed'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground uppercase">Output</span>
-                      <div className="mt-1 text-sm text-foreground">
-                        <TruncatedText text={entry.output || 'None'} maxChars={65} />
-                      </div>
-                    </div>
-
-                    {renderRetryButton(entry, 'mobile')}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-muted-foreground text-sm text-center py-4">
-                No data available
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {history.length > 0 && (
-        <>
-          <div className="mt-4 pt-4 border-t md:block hidden">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
-              <div className="text-sm text-muted-foreground">
-                <p>
-                  Showing <span className="font-medium">
-                    {Math.min((currentPage - 1) * pageSize + 1, totalItems || history.length)}
-                  </span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * pageSize, totalItems || history.length)}
-                  </span>{' '}
-                  of <span className="font-medium">{totalItems || history.length}</span> results
-                </p>
-              </div>
-
-              {pageSize > 0 && (totalItems || history.length) > pageSize && (
-                <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    title="Previous page"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-
-                  {Array.from({ length: Math.min(5, totalPages || Math.ceil((totalItems || history.length) / pageSize)) }, (_, i) => {
-                    let pageNum;
-                    const effectiveTotalPages = totalPages || Math.ceil((totalItems || history.length) / pageSize);
-                    if (effectiveTotalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= effectiveTotalPages - 2) {
-                      pageNum = effectiveTotalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        title={`Go to page ${pageNum}`}
-                        className="min-w-[40px]"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === (totalPages || Math.ceil((totalItems || history.length) / pageSize))}
-                    title="Next page"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile pagination */}
-          <div className="mt-4 pt-4 border-t md:hidden block">
-            <div className="flex flex-col gap-4">
-              <div className="text-sm text-muted-foreground text-center">
-                <p>
-                  Showing <span className="font-medium">
-                    {Math.min((currentPage - 1) * pageSize + 1, totalItems || history.length)}
-                  </span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * pageSize, totalItems || history.length)}
-                  </span>{' '}
-                  of <span className="font-medium">{totalItems || history.length}</span> results
-                </p>
-              </div>
-
-              {pageSize > 0 && (totalItems || history.length) > pageSize && (
-                <div className="flex items-center gap-1 overflow-x-auto max-w-full py-1 px-4 w-full justify-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    title="Previous page"
-                    className="min-w-[32px] flex-shrink-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {Array.from({ length: Math.min(5, totalPages || Math.ceil((totalItems || history.length) / pageSize)) }, (_, i) => {
-                    let pageNum;
-                    const effectiveTotalPages = totalPages || Math.ceil((totalItems || history.length) / pageSize);
-                    if (effectiveTotalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= effectiveTotalPages - 2) {
-                      pageNum = effectiveTotalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        title={`Go to page ${pageNum}`}
-                        className="min-w-[32px] flex-shrink-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === (totalPages || Math.ceil((totalItems || history.length) / pageSize))}
-                    title="Next page"
-                    className="min-w-[32px] flex-shrink-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+      <CronHistoryPagination
+        itemCount={history.length}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+      />
 
       <ConfirmDialog
         isOpen={retryConfirm !== null}
@@ -883,41 +171,9 @@ export const CronJobHistory = ({
         confirmText="Publish"
         cancelText="Cancel"
         variant="info"
-        onConfirm={() => {
-          if (retryConfirm) {
-            handleRetry(retryConfirm.key, retryConfirm.failed, retryConfirm.url);
-          }
-          setRetryConfirm(null);
-        }}
-        onCancel={() => setRetryConfirm(null)}
+        onConfirm={confirmRetry}
+        onCancel={cancelRetry}
       />
     </div>
   );
-};
-
-/** A plan is retryable once the integrations and the repository are both known. */
-interface RetryPlan {
-  failed: string[];
-  /** Absent for legacy runs that never recorded the item; resolved before sending. */
-  url?: string;
-}
-
-const getRetryPlan = (entry: CronJobHistoryType): RetryPlan | null => {
-  const target = getRetryTarget(entry);
-  if (target) {
-    return target;
-  }
-
-  const legacyFailed = getLegacyFailedApis(entry);
-  return legacyFailed.length > 0 ? { failed: legacyFailed } : null;
-};
-
-const buildRetryConfirmMessage = (confirm: { failed: string[]; url: string; resolved: boolean }): string => {
-  const integrations = confirm.failed.join(', ');
-
-  if (confirm.resolved) {
-    return `This run did not record which repository it published, so the latest published one will be used: ${confirm.url}. Send it to ${integrations}?`;
-  }
-
-  return `Send ${confirm.url} to ${integrations}?`;
 };
