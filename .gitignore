@@ -28,3 +28,6 @@ dist-ssr
 .kilocode/
 .agents/skills/adhd/SKILL.md
 .claude/skills/adhd
+
+# TypeScript build info
+*.tsbuildinfo
