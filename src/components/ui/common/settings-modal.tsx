@@ -21,12 +21,12 @@ import {
 } from '../base/tabs';
 import { Button } from '../base/button';
 import { storage } from '../../../lib/storage';
-import { SettingsGeneralTab } from './settings-general-tab';
+import { SettingsPreferencesTab } from './settings-preferences-tab';
 import { SettingsCacheTab } from './settings-cache-tab';
 import { SettingsAccountTab } from './settings-account-tab';
 import { getSession, type Session } from '@/api/session';
 
-type SettingsTab = 'general' | 'account' | 'cache';
+type SettingsTab = 'preferences' | 'account' | 'cache';
 
 const toastOptions = {
   id: 'unique-toast-settings'
@@ -39,13 +39,13 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<ApiSettings>(getApiSettings());
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
   const [isSaving, setIsSaving] = useState(false);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
   const [session, setSession] = useState<Session>({ method: 'none' });
   // The Account tab only exists when something protects the dashboard
   const tabs = useMemo<SettingsTab[]>(
-    () => (session.method === 'none' ? ['general', 'cache'] : ['general', 'account', 'cache']),
+    () => (session.method === 'none' ? ['preferences', 'cache'] : ['preferences', 'account', 'cache']),
     [session.method]
   );
   const {
@@ -196,7 +196,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         <Tabs className="flex flex-col min-h-0 flex-1" value={activeTab} onValueChange={(value: string) => setActiveTab(value as SettingsTab)}>
           <TabsList className={`grid w-full shrink-0 ${tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
             {session.method !== 'none' && <TabsTrigger value="account">Account</TabsTrigger>}
             <TabsTrigger value="cache">Cache</TabsTrigger>
           </TabsList>
@@ -205,8 +205,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             {...handlers}
             className={`mt-4 -mx-1 px-1 pb-1 min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin ${animationClass}`}
           >
-            <TabsContent value="general" className="space-y-3">
-              <SettingsGeneralTab
+            <TabsContent value="preferences" className="space-y-3">
+              <SettingsPreferencesTab
                 settings={settings}
                 timezoneError={timezoneError}
                 languageValidation={languageValidation}
@@ -227,31 +227,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </Tabs>
 
-        <DialogFooter className="shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => { resetFormState(); onClose(); }}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving || !!timezoneError || (!languageValidation.isValid && !!settings.displayLanguage.trim())}
-            aria-busy={isSaving ? 'true' : undefined}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save'
-            )}
-          </Button>
-        </DialogFooter>
+        {/* Only Preferences has something to save; Account and Cache act right away */}
+        {activeTab === 'preferences' && (
+          <DialogFooter className="shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { resetFormState(); onClose(); }}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving || !!timezoneError || (!languageValidation.isValid && !!settings.displayLanguage.trim())}
+              aria-busy={isSaving ? 'true' : undefined}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
     </TooltipProvider>
