@@ -1,3 +1,9 @@
+## [2.1.0](https://github.com/think-root/content-sentinel/compare/v2.0.0...v2.1.0) (2026-10-30)
+
+### Features
+
+* **server:** optional password protection without Cloudflare ([9c4f5ba](https://github.com/think-root/content-sentinel/commit/9c4f5ba5ed883f164c7a4dc000a03c8498ced5bf))
+
 ## [2.0.0](https://github.com/think-root/content-sentinel/compare/v1.52.0...v2.0.0) (2026-10-30)
 
 ### ⚠ BREAKING CHANGES
