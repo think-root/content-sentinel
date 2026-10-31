@@ -13,9 +13,14 @@ import type { GenerateResult } from './generate-form';
 const DEBUG_DELAY = import.meta.env.DEV ? Number(import.meta.env.VITE_DEBUG_DELAY) || 0 : 0;
 const CLIPBOARD_TEXT_MIME_TYPES = ['text/plain', 'text/uri-list'] as const;
 
-const readClipboardItemText = async () => {
+/**
+ * The clipboard's text in one request. Each call to the Async Clipboard API
+ * makes iOS show its own Paste prompt, so asking with readText first and read
+ * after (a copied link can be text/uri-list only) put two prompts in a row.
+ */
+const readClipboardText = async () => {
   if (!navigator.clipboard?.read) {
-    return '';
+    return (await navigator.clipboard.readText()).trim();
   }
 
   const clipboardItems = await navigator.clipboard.read();
@@ -63,29 +68,27 @@ export function ManualGenerateCard({ onManualGenerate, onResult }: ManualGenerat
 
     const textarea = urlTextareaRef.current;
 
-    const focusTextareaForNativePaste = () => {
+    // Without clipboard access the field itself is the way to paste.
+    const focusTextarea = () => {
       if (!textarea) return;
 
       requestAnimationFrame(() => {
         textarea.focus();
         const caretPosition = textarea.value.length;
         textarea.setSelectionRange(caretPosition, caretPosition);
-        resizeUrlTextarea(textarea);
       });
     };
 
     if (!navigator.clipboard?.readText) {
-      focusTextareaForNativePaste();
-      toast.info('Use native paste', { duration: 3000 });
+      focusTextarea();
       return;
     }
 
     try {
-      const clipboardText = (await navigator.clipboard.readText()).trim() || (await readClipboardItemText());
+      const clipboardText = await readClipboardText();
 
       if (!clipboardText) {
-        focusTextareaForNativePaste();
-        toast.error('Clipboard is empty');
+        toast.error('Clipboard has no text');
         return;
       }
 
@@ -108,9 +111,12 @@ export function ManualGenerateCard({ onManualGenerate, onResult }: ManualGenerat
         urlTextareaRef.current.setSelectionRange(nextCursor, nextCursor);
         resizeUrlTextarea(urlTextareaRef.current);
       });
-    } catch {
-      focusTextareaForNativePaste();
-      toast.info('Use native paste', { duration: 3000 });
+    } catch (error) {
+      // NotAllowedError: the Paste prompt was dismissed, nothing to report.
+      if (error instanceof DOMException && error.name === 'NotAllowedError') return;
+      console.error('Clipboard read failed:', error);
+      focusTextarea();
+      toast.error("Couldn't read the clipboard, paste into the field instead");
     }
   }, [isManualLoading, resizeUrlTextarea, url]);
 

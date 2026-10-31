@@ -35,6 +35,11 @@ interface PublishRepositoryDialogProps {
   integrations: PublishIntegration[];
   /** True while the integration list is still being fetched. */
   integrationsLoading?: boolean;
+  /**
+   * Start publishing as soon as the integrations are known, for a Publish now
+   * already chosen elsewhere (the manual generation result).
+   */
+  autoPublish?: boolean;
   onClose: () => void;
   /**
    * Reports whether a request is in flight, so the caller can stop the row
@@ -91,6 +96,7 @@ export function PublishRepositoryDialog({
   isNext,
   integrations,
   integrationsLoading = false,
+  autoPublish = false,
   onClose,
   onBusyChange,
   onPromote,
@@ -209,6 +215,15 @@ export function PublishRepositoryDialog({
       }
     }
   };
+
+  // Once per repository, so closing and reopening never publishes twice.
+  const autoPublishedIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!autoPublish || !repository || phase !== 'idle' || integrationsLoading || integrations.length === 0) return;
+    if (autoPublishedIdRef.current === repository.id) return;
+    autoPublishedIdRef.current = repository.id;
+    void handlePublishNow();
+  });
 
   const renderRow = (row: PublishRow) => {
     const flag = getLanguageFlag(row.textLanguage);
