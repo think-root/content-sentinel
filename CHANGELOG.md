@@ -1,3 +1,13 @@
+## [2.3.0](https://github.com/think-root/content-sentinel/compare/v2.2.2...v2.3.0) (2026-10-31)
+
+### Features
+
+* **generate:** publish a manually added repository right away ([b47fe0a](https://github.com/think-root/content-sentinel/commit/b47fe0ab74afadf4e79c81e723a57dbe439cdb98))
+
+### Bug Fixes
+
+* **generate:** read the clipboard with a single paste prompt ([7a20f16](https://github.com/think-root/content-sentinel/commit/7a20f166ebf33301f7bace3f502a7ec3005bef4b))
+
 ## [2.2.2](https://github.com/think-root/content-sentinel/compare/v2.2.1...v2.2.2) (2026-10-31)
 
 ### Bug Fixes
