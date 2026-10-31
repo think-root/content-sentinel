@@ -37,7 +37,13 @@ export const SettingsAccountTab = ({ session }: SettingsAccountTabProps) => {
           <p className="text-xs text-muted-foreground">Signed in with {METHOD_LABELS[session.method]}</p>
         </div>
       </div>
-      <Button onClick={handleSignOut} disabled={signingOut} className="w-full sm:w-auto" size="sm" variant="outline">
+      <Button
+        onClick={handleSignOut}
+        disabled={signingOut}
+        className="w-full sm:w-auto bg-transparent text-destructive shadow-[inset_0_0_0_1px_hsl(var(--destructive)/0.5)] hover:bg-destructive/10 hover:text-destructive"
+        size="sm"
+        variant="outline"
+      >
         {signingOut ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
