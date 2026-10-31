@@ -1,3 +1,9 @@
+## [2.2.2](https://github.com/think-root/content-sentinel/compare/v2.2.1...v2.2.2) (2026-10-31)
+
+### Bug Fixes
+
+* **settings:** give the Sign out button a red outline ([81aceb1](https://github.com/think-root/content-sentinel/commit/81aceb1d404754bfbafe9baad657d270290db274))
+
 ## [2.2.1](https://github.com/think-root/content-sentinel/compare/v2.2.0...v2.2.1) (2026-10-30)
 
 ### Bug Fixes
