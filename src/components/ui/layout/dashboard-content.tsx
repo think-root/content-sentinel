@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { OverviewCharts } from '../business/overview-charts';
 import { Card, CardContent } from '../layout/card';
 import { Clock, Server } from 'lucide-react';
@@ -24,6 +24,7 @@ import type { ArchiveFilterKey, ArchiveFilterState, ArchivedRepository } from '.
 import type { CronJob, CronJobHistory as CronJobHistoryType } from '../../../api/maestro';
 import type { ManualGenerateResponse } from '../../../api/alchemist';
 import { useApiConfigs } from '../../../hooks/useApiConfigs';
+import { readSavedRepositoryQuery } from '../../../utils/repositoryListUtils';
 import type { TimeRange } from '../../../hooks/useOverviewHistory';
 
 interface DashboardContentProps {
@@ -165,6 +166,25 @@ export const DashboardContent = ({
   onArchiveMutation
 }: DashboardContentProps) => {
   const { activeTab, setActiveTab } = useTabPersistence('overview');
+
+  // After publishing from the manual generation result: the list and the
+  // next/latest previews both change.
+  const refreshRepositoriesAndPreviews = useCallback(async () => {
+    const { itemsPerPage: savedItemsPerPage, ...savedFilters } = readSavedRepositoryQuery();
+    await Promise.all([
+      fetchRepositories(
+        savedFilters.posted,
+        false,
+        savedItemsPerPage === 0,
+        savedItemsPerPage,
+        savedFilters.sortBy,
+        savedFilters.sortOrder,
+        pagination.currentPage,
+        true
+      ),
+      fetchPreviews(true),
+    ]);
+  }, [fetchRepositories, fetchPreviews, pagination.currentPage]);
 
   // API Configs hook for Integrations tab
   const {
@@ -391,6 +411,10 @@ export const DashboardContent = ({
             <GenerateForm
               onManualGenerate={handleManualGenerate}
               onAutoGenerate={handleAutoGenerate}
+              nextPostId={nextPost?.id}
+              integrations={apiConfigs}
+              integrationsLoading={apiConfigsLoading}
+              onRepositoryUpdate={refreshRepositoriesAndPreviews}
             />
             
             <RepositoryList

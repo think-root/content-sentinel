@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { 
   Dialog,
   DialogContent,
@@ -18,9 +18,11 @@ interface ResultDialogProps {
   errorMessages?: Record<string, string>;
   context?: 'manual' | 'collect';
   title?: string;
+  /** Extra buttons next to Close. */
+  actions?: ReactNode;
 }
 
-export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, context, title }: ResultDialogProps) {
+export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, context, title, actions }: ResultDialogProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -130,11 +132,13 @@ export function ResultDialog({ isOpen, onClose, added, notAdded, errorMessages, 
         
         <DialogFooter className="border-t border-border pt-4">
           <Button
+            variant={actions ? 'outline' : 'default'}
             onClick={onClose}
             className="px-4 py-2"
           >
             Close
           </Button>
+          {actions}
         </DialogFooter>
       </DialogContent>
     </Dialog>
